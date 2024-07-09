@@ -1,6 +1,17 @@
 function myip
-    curl -$1 ifconfig.me
+    curl -$argv ifconfig.me
     echo ""
+end
+
+function vpn
+   set -l argc (count $argv)
+   if test $argc -eq 0
+    sudo tailscale set --exit-node=
+   else if test $argv[1] = "none"
+    sudo tailscale set --exit-node=
+   else
+    sudo tailscale set --exit-node=$argv[1]
+   end
 end
 
 function hb

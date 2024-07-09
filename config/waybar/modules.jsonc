@@ -63,7 +63,7 @@
 			"default": ""
         },
         "persistent-workspaces": {
-            "*": 3
+            "*": 0
         }       
     },
 
