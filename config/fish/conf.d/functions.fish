@@ -10,6 +10,7 @@ function vpn
    else if test $argv[1] = "none"
     sudo tailscale set --exit-node=
    else
+    sudo tailscale up
     sudo tailscale set --exit-node=$argv[1]
    end
 end
