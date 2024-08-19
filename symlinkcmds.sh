@@ -1,3 +1,4 @@
+#!/bin/bash
 ln -sf ~/dotfiles/scripts/ ~/.scripts
 ln -sf ~/dotfiles/config/* ~/.config/
-sudo ln -sf ~/dotfiles/etc/* /etc
+sudo cp -r ~/dotfiles/etc/* /etc
