@@ -66,6 +66,43 @@
           inherit hyprland;
         };
       };
+
+      matevono = lib-unstable.nixosSystem{
+
+        inherit system;
+        modules = [
+          ./system/matevono/configuration.nix
+          chaotic.nixosModules.default
+
+          #chaotic.homeManagerModules.default
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+
+            # TODO replace ryan with your own username
+            home-manager.users.mate = import ./system/matevono/home;
+            home-manager.backupFileExtension = "nixbk";
+            home-manager.extraSpecialArgs = {
+              inherit pkgs;
+              inherit pkgs-unstable;
+              inherit hyprland;
+            };
+          }
+        ];
+
+        specialArgs = {
+          inherit pkgs-unstable;
+          inherit hyprland;
+        };
+
+
+
+
+      };
+
+
+
     };
   };
 }

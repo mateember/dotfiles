@@ -87,3 +87,17 @@ function prompt_shell
     end
 end
 
+function pm
+    if test "$argv[1]" = 'b' -o "$argv[1]" = 'balanced'
+        echo 'balanced' | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = 'l' -o "$argv[1]" = 'lowpower'
+        echo 'low-power' | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = 'p' -o "$argv[1]" = 'performance'
+        echo 'performance' | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = 'c' -o "$argv[1]" = 'check'
+        cat /sys/firmware/acpi/platform_profile
+    else
+        echo "Usage: pm [b|balanced] [l|lowpower] [p|performance] [c|check]"
+    end
+end
+
