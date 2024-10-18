@@ -297,14 +297,14 @@
               command = "${pkgs.systemd}/bin/poweroff";
               options = ["NOPASSWD"];
             }
-            {
+           /* {
               command = "/run/current-system/sw/bin/tee /sys/firmware/acpi/platform_profile";
               options = ["NOPASSWD"];
             }
             {
               command = "/run/current-system/sw/bin/tee /sys/bus/platform/drivers/ideapad_acpi/VPC????\:??/conservation_mode";
               options = ["NOPASSWD"];
-            }
+            }*/
           ];
           users = ["mate"];
         }
