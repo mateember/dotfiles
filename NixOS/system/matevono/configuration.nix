@@ -97,7 +97,6 @@
         useOSProber = true;
         efiSupport = true;
         device = "nodev";
-        
 
         theme =
           pkgs.fetchFromGitHub
@@ -179,7 +178,6 @@
 
   # Services & SystemD
 
-  
   services = {
     gnome.gnome-keyring.enable = true;
     flatpak.enable = true;
@@ -200,7 +198,6 @@
       enable = true;
       displayManager.gdm.enable = true;
       desktopManager.gnome.enable = true;
-    
     };
     desktopManager.plasma6.enable = false;
     displayManager = {

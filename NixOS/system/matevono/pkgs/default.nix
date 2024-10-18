@@ -88,7 +88,6 @@
       tldr
     ]);
 
-
   environment.gnome.excludePackages = with pkgs; [
     gnome-tour
     gnome-connections
@@ -96,5 +95,4 @@
     gnome.geary # email reader. Up to 24.05. Starting from 24.11 the package name is just geary.
     evince # document viewer
   ];
-
 }

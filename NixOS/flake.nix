@@ -67,8 +67,7 @@
         };
       };
 
-      matevono = lib-unstable.nixosSystem{
-
+      matevono = lib-unstable.nixosSystem {
         inherit system;
         modules = [
           ./system/matevono/configuration.nix
@@ -95,14 +94,7 @@
           inherit pkgs-unstable;
           inherit hyprland;
         };
-
-
-
-
       };
-
-
-
     };
   };
 }
