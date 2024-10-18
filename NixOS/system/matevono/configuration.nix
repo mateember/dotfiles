@@ -16,6 +16,7 @@
     bluetooth.enable = true; # enables support for Bluetooth
     bluetooth.powerOnBoot = true;
     bluetooth.settings.General.Experimental = true;
+    pulseaudio.enable = false;
 
     sane = {
       enable = true;
