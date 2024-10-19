@@ -23,6 +23,13 @@
       extraBackends = [pkgs.sane-airscan];
       openFirewall = true;
     };
+    firmware = [
+    (
+  pkgs.runCommand "edid.bin" { } ''
+    mkdir -p $out/lib/firmware/edid
+    cp ${../firmware/edid/customedid.bin} $out/lib/firmware/edid/customedid.bin
+  ''
+    )];
     #  xone.enable = true;
     #  xpadneo.enable = true;
 
@@ -65,7 +72,7 @@
     extraModulePackages = with config.boot.kernelPackages; [xpadneo xone v4l2loopback];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash"];
+    kernelParams = ["splash" "drm.edid_firmware=DP-1:edid/customedid.bin"];
 
     kernelModules = ["tcp_bbr" "v4l2loopback"];
     kernel.sysctl = {
