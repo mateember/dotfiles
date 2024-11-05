@@ -3,7 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
-  hyprland,
+  
   ...
 }: {
   imports = [
@@ -27,7 +27,7 @@
     (
   pkgs.runCommand "edid.bin" { } ''
     mkdir -p $out/lib/firmware/edid
-    cp ${../firmware/edid/customedid.bin} $out/lib/firmware/edid/customedid.bin
+   cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
   ''
     )];
     #  xone.enable = true;
@@ -49,8 +49,8 @@
     settings = {
       auto-optimise-store = true;
       allowed-users = ["mate"];
-      substituters = ["https://hyprland.cachix.org"];
-      trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+      #substituters = ["https://hyprland.cachix.org"];
+      #trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
     };
     gc = {
       automatic = true;
@@ -72,7 +72,7 @@
     extraModulePackages = with config.boot.kernelPackages; [xpadneo xone v4l2loopback];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash" "drm.edid_firmware=DP-1:edid/customedid.bin"];
+    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin"];
 
     kernelModules = ["tcp_bbr" "v4l2loopback"];
     kernel.sysctl = {
@@ -115,6 +115,22 @@
             sha256 = "sha256-LGQahTnS6v23big5KC8LHS709zLXgp3QYcJ1lBTl2SM=";
           }
           + "/nixos";
+        extraEntries = ''
+           menuentry "Arch Linux" --class archlinux{
+             set root=(hd0,gpt1)  # Replace with the correct identifier if necessary
+             linux /vmlinuz-linux root=UUID=487332e4-403c-4418-9717-3fe5a0eea16f rw rootflags=subvol=/archroot "drm.edid_firmware=DP-1:edid/custom.bin"
+             initrd /initramfs-linux.img
+
+           }
+
+          menuentry "Arch Linux LTS" --class archlinux{
+             set root=(hd3,gpt1)  # Replace with the correct identifier if necessary
+             linux /vmlinuz-linux-lts root=UUID=487332e4-403c-4418-9717-3fe5a0eea16f rw rootflags=subvol=/archroot "drm.edid_firmware=DP-1:edid/custom.bin"
+             initrd /initramfs-linux-lts.img
+
+           }
+
+        '';
       };
     };
   };
@@ -209,9 +225,9 @@
     };
     desktopManager.plasma6.enable = false;
     displayManager = {
-      sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
+      #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      defaultSession = "hyprland";
+      #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
       sddm.wayland.enable = true;
 
@@ -281,7 +297,7 @@
       xdgOpenUsePortal = true;
       enable = true;
       config.common.default = "gnome";
-      extraPortals = [pkgs-unstable.kdePackages.xdg-desktop-portal-kde pkgs-unstable.xdg-desktop-portal-gtk pkgs.xdg-desktop-portal-hyprland];
+      extraPortals = [pkgs-unstable.kdePackages.xdg-desktop-portal-kde];
     };
   };
   #Sudo

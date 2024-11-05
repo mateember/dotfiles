@@ -13,7 +13,7 @@
       enable = true;
       enableFishIntegration = true;
     };
-    fish.enable = true;
+    fish.enable = false;
   };
 
   home.packages =
