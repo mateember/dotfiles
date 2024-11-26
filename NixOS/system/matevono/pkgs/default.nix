@@ -60,6 +60,7 @@
       zen-browser.packages."${system}".specific
       edid-decode
       gnome-tweaks
+      vlc
 
       #(callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
@@ -91,6 +92,7 @@
       github-desktop
       firefox
       tldr
+      jetbrains-toolbox
     ]);
 
   environment.gnome.excludePackages = with pkgs; [

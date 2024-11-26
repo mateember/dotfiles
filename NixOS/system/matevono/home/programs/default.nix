@@ -23,7 +23,6 @@
       git-credential-oauth
       ranger
       glxinfo
-      blueman
       wlogout
       trash-cli
       qt5ct
@@ -42,7 +41,6 @@
       wl-clipboard
       cliphist
       # hyprcursor
-      jetbrains-toolbox
       arduino-ide
     ]);
 

@@ -269,7 +269,7 @@
       };
     };
 
-    blueman.enable = true;
+    blueman.enable = false;
 
     gvfs.enable = true;
     tumbler.enable = true;
@@ -300,6 +300,12 @@
         to = 1764;
       }
     ];
+  };
+
+  environment = {
+    variables = {
+      QT_QPA_PLATFORMTHEME = "qt6ct";
+    };
   };
 
   virtualisation = {
