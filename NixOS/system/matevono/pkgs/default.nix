@@ -4,6 +4,7 @@
   pkgs,
   pkgs-unstable,
   hyprland,
+  zen-browser,
   ...
 }: {
   nixpkgs.overlays = [
@@ -55,6 +56,10 @@
       networkmanagerapplet
       v4l-utils
       icu
+      gnome-terminal
+      zen-browser.packages."${system}".specific
+      edid-decode
+      gnome-tweaks
 
       #(callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy

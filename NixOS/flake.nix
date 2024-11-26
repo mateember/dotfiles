@@ -12,6 +12,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    zen-browser.url = "github:0xc000022070/zen-browser-flake";
   };
 
   outputs = {
@@ -21,6 +22,7 @@
     home-manager,
     chaotic,
     hyprland,
+    zen-browser,
     ...
   }: let
     system = "x86_64-linux";
@@ -93,6 +95,7 @@
         specialArgs = {
           inherit pkgs-unstable;
           inherit hyprland;
+          inherit zen-browser;
         };
       };
     };

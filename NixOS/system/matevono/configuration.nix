@@ -3,7 +3,6 @@
   lib,
   pkgs,
   pkgs-unstable,
-  
   ...
 }: {
   imports = [
@@ -24,12 +23,13 @@
       openFirewall = true;
     };
     firmware = [
-    (
-  pkgs.runCommand "edid.bin" { } ''
-    mkdir -p $out/lib/firmware/edid
-   cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
-  ''
-    )];
+      (
+        pkgs.runCommandNoCC "customedid.bin" {compressFirmware = false;} ''
+           mkdir -p $out/lib/firmware/edid
+          cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
+        ''
+      )
+    ];
     #  xone.enable = true;
     #  xpadneo.enable = true;
 
@@ -69,10 +69,10 @@
     consoleLogLevel = 3;
 
     kernelPackages = pkgs.linuxPackages_latest;
-    extraModulePackages = with config.boot.kernelPackages; [xpadneo xone v4l2loopback];
+    extraModulePackages = with config.boot.kernelPackages; [ xone v4l2loopback];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin"];
+    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
 
     kernelModules = ["tcp_bbr" "v4l2loopback"];
     kernel.sysctl = {
@@ -94,6 +94,13 @@
         })
       ];
     };
+
+  /*  initrd.extraFiles."/lib/firmware/edid/customedid.bin".source = (
+      pkgs.runCommand "customedid.bin" {} ''
+        mkdir -p $out/lib/firmware/edid
+        cp ${./firmware/customedid.bin} $out/lib/firmware/edid/customedid.bin
+      ''
+    );*/
 
     loader = {
       efi = {
@@ -320,14 +327,16 @@
               command = "${pkgs.systemd}/bin/poweroff";
               options = ["NOPASSWD"];
             }
-           /* {
+            /*
+              {
               command = "/run/current-system/sw/bin/tee /sys/firmware/acpi/platform_profile";
               options = ["NOPASSWD"];
             }
             {
               command = "/run/current-system/sw/bin/tee /sys/bus/platform/drivers/ideapad_acpi/VPC????\:??/conservation_mode";
               options = ["NOPASSWD"];
-            }*/
+            }
+            */
           ];
           users = ["mate"];
         }
