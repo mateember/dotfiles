@@ -69,7 +69,7 @@
     consoleLogLevel = 3;
 
     kernelPackages = pkgs.linuxPackages_latest;
-    extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback];
+    extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
     kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
@@ -120,8 +120,8 @@
           {
             owner = "Coopydood";
             repo = "HyperFluent-GRUB-Theme";
-            rev = "869b62584c1a05e711db72cb5a621538424d29f7";
-            sha256 = "sha256-LGQahTnS6v23big5KC8LHS709zLXgp3QYcJ1lBTl2SM=";
+            rev = "62e525ea2aa250e3f37669d68eb355b6cc997d64";
+            sha256 = "sha256-Als4Tp6VwzwHjUyC62mYyiej1pZL9Tzj4uhTRoL+U9Q=";
           }
           + "/nixos";
         extraEntries = ''
@@ -309,7 +309,14 @@
   };
 
   virtualisation = {
-    libvirtd.enable = true;
+    libvirtd = {
+      enable = true;
+      qemu = {
+        swtpm.enable = true;
+        ovmf.enable = true;
+        ovmf.packages = [pkgs.OVMFFull.fd];
+      };
+    };
     containers.enable = true;
     podman = {
       enable = false;
@@ -323,6 +330,7 @@
 
     docker = {
       enable = true;
+      storageDriver = "btrfs";
       daemon.settings = {
         #ipv6 = true;
       };

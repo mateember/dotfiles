@@ -31,7 +31,7 @@
   fileSystems."/home/mate/Games" = {
     device = "/dev/disk/by-uuid/487332e4-403c-4418-9717-3fe5a0eea16f";
     fsType = "btrfs";
-    options = ["subvol=Games"];
+    options = ["subvol=Games" "x-gvfs-trash" "user"];
   };
 
   fileSystems."/boot" = {
@@ -40,7 +40,11 @@
     options = ["fmask=0022" "dmask=0022"];
   };
 
-  swapDevices = [];
+  swapDevices = [
+    {
+      device = "/home/mate/.swap/swapfile";
+    }
+  ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
