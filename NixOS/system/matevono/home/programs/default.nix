@@ -18,8 +18,7 @@
 
   home.packages =
     (with pkgs; [
-      dunst
-
+      #dunst
       git-credential-oauth
       ranger
       glxinfo
@@ -42,6 +41,10 @@
       cliphist
       # hyprcursor
       arduino-ide
+
+      #gnome
+      gnomeExtensions.ddterm
+      gnomeExtensions.desktop-icons-ng-ding
     ]);
 
   services.kdeconnect.enable = true;

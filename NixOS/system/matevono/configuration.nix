@@ -190,23 +190,32 @@
   security.rtkit.enable = true;
 
   #User
-  users.users.mate = {
-    isNormalUser = true;
-    extraGroups = [
-      "flatpak"
-      "disk"
-      "qemu"
-      "kvm"
-      "libvirtd"
-      "sshd"
-      "networkmanager"
-      "wheel"
-      "audio"
-      "video"
-      "libvirtd"
-      "docker"
-    ];
-    shell = pkgs.fish;
+  users = {
+    groups.mate = {
+      name = "mate"; 
+      gid = 1000;
+    };
+
+    users.mate = {
+      isNormalUser = true;
+      extraGroups = [
+        "mate"
+        "flatpak"
+        "disk"
+        "qemu"
+        "kvm"
+        "libvirtd"
+        "sshd"
+        "networkmanager"
+        "wheel"
+        "audio"
+        "video"
+        "libvirtd"
+        "docker"
+        "podman"
+      ];
+      shell = pkgs.fish;
+    };
   };
 
   # Services & SystemD
@@ -236,6 +245,8 @@
     };
 
     gnome.gnome-keyring.enable = true;
+    gnome.gnome-browser-connector.enable = true;
+
     flatpak.enable = true;
     #lactd.enable = true;
 
@@ -342,7 +353,7 @@
     portal = {
       xdgOpenUsePortal = true;
       enable = true;
-      config.common.default = "gnome";
+      #config.common.default = "gnome";
       extraPortals = [pkgs-unstable.kdePackages.xdg-desktop-portal-kde];
     };
   };
@@ -389,11 +400,10 @@
 
   fonts = {
     packages = with pkgs; [
-      jetbrains-mono
-      fira-code
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.fira-code
       roboto
       openmoji-color
-      (nerdfonts.override {fonts = ["JetBrainsMono" "FiraCode"];})
     ];
 
     fontconfig = {

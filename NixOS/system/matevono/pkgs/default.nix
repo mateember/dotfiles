@@ -18,7 +18,7 @@
     fish.enable = true;
     zsh.enable = true;
     steam.enable = true;
-   # steam.extraCompatPackages = [pkgs.proton-ge-bin];
+    # steam.extraCompatPackages = [pkgs.proton-ge-bin];
     xfconf.enable = true;
     dconf.enable = true;
     nix-ld = {
@@ -187,15 +187,18 @@
       spice-protocol
       win-virtio
       win-spice
+      gjs
 
-      #(callPackage ./sddm-bluish {}).sddm-bluish
+      (callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
 
       #Development packages
+      file
       github-desktop
       valgrind
       llvm
       clang
+      unzip
       gdb
       git
       cmake
