@@ -24,7 +24,6 @@
       glxinfo
       wlogout
       trash-cli
-      qt5ct
       qt6ct
       nwg-look
       pyenv

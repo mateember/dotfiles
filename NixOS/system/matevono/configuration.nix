@@ -192,7 +192,7 @@
   #User
   users = {
     groups.mate = {
-      name = "mate"; 
+      name = "mate";
       gid = 1000;
     };
 
