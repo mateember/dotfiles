@@ -21,6 +21,10 @@
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
     xfconf.enable = true;
     dconf.enable = true;
+    nautilus-open-any-terminal = {
+      enable = true;
+      terminal = "ptyxis";
+    };
     nix-ld = {
       enable = true;
       #package = pkgs.nix-ld-rs;
@@ -158,6 +162,8 @@
       sshfs-fuse
       killall
       btop
+      usbutils
+      acpi
       fzf
       podman-tui
       dive
@@ -172,12 +178,12 @@
       networkmanagerapplet
       v4l-utils
       icu
-      gnome-terminal
       gnome-boxes
       qemu
-      zen-browser.packages."${system}".specific
+      zen-browser.packages."${system}".default
       edid-decode
       gnome-tweaks
+      nautilus-python
       vlc
       microsoft-edge
       virt-manager
@@ -213,6 +219,7 @@
       libxml2
     ])
     ++ (with pkgs-unstable; [
+      ptyxis
       bat
       lact
       kdePackages.polkit-kde-agent-1

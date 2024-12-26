@@ -6,6 +6,7 @@ alias vencord='sh -c "$(curl -sS https://raw.githubusercontent.com/Vendicated/Ve
 alias upd="yay ; flatpak update"
 alias nixrbd="sudo nixos-rebuild switch --flake ~/dotfiles/NixOS"
 alias nixupd="sudo nix flake update --flake ~/dotfiles/NixOS; sudo nixos-rebuild switch --flake ~/dotfiles/NixOS"
+alias nixgb="sudo nix-collect-garbage -d"
 alias uxplay="uxplay -fps 75 -n PC -avdec -async -vsync no"
 alias neofetch="fastfetch -c ~/.config/fastfetch/custom.jsonc"
 alias cat="bat"

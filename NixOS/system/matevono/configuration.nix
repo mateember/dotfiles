@@ -3,6 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
+  nixos-cosmic,
   ...
 }: {
   imports = [
@@ -49,6 +50,9 @@
     settings = {
       auto-optimise-store = true;
       allowed-users = ["mate"];
+      substituters = ["https://cosmic.cachix.org/"];
+      trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE="];
+
       #substituters = ["https://hyprland.cachix.org"];
       #trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
     };
@@ -124,7 +128,8 @@
             sha256 = "sha256-Als4Tp6VwzwHjUyC62mYyiej1pZL9Tzj4uhTRoL+U9Q=";
           }
           + "/nixos";
-        extraEntries = ''
+        /*
+          extraEntries = ''
            menuentry "Arch Linux" --class archlinux{
              set root=(hd0,gpt1)  # Replace with the correct identifier if necessary
              linux /vmlinuz-linux root=UUID=487332e4-403c-4418-9717-3fe5a0eea16f rw rootflags=subvol=/archroot "drm.edid_firmware=DP-1:edid/custom.bin"
@@ -140,6 +145,7 @@
            }
 
         '';
+        */
       };
     };
   };
@@ -267,6 +273,7 @@
       desktopManager.gnome.enable = true;
     };
     desktopManager.plasma6.enable = false;
+    desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;

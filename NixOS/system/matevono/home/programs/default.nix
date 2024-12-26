@@ -28,6 +28,7 @@
       nwg-look
       pyenv
       ookla-speedtest
+      arp-scan
     ])
     ++ (with pkgs-unstable; [
       vscode

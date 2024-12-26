@@ -2,6 +2,9 @@
   description = "My NixOS flake";
 
   inputs = {
+    nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
+
+    nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nur.url = "github:nix-community/NUR";
@@ -23,6 +26,7 @@
     chaotic,
     hyprland,
     zen-browser,
+    nixos-cosmic,
     ...
   }: let
     system = "x86_64-linux";
@@ -74,6 +78,7 @@
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
+          nixos-cosmic.nixosModules.default
 
           #chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
