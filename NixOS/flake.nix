@@ -16,6 +16,7 @@
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    ghostty.url = "github:ghostty-org/ghostty";
   };
 
   outputs = {
@@ -27,6 +28,7 @@
     hyprland,
     zen-browser,
     nixos-cosmic,
+    ghostty,
     ...
   }: let
     system = "x86_64-linux";
@@ -56,7 +58,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
 
-            # TODO replace ryan with your own username
+            
             home-manager.users.mate = import ./system/matenix/home;
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {
@@ -86,13 +88,15 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
 
-            # TODO replace ryan with your own username
+            
             home-manager.users.mate = import ./system/matevono/home;
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {
               inherit pkgs;
               inherit pkgs-unstable;
               inherit hyprland;
+              inherit zen-browser;
+              inherit ghostty;
             };
           }
         ];

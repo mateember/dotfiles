@@ -3,6 +3,8 @@
   pkgs,
   pkgs-unstable,
   hyprland,
+  zen-browser,
+  ghostty,
   ...
 }: {
   programs = {
@@ -29,6 +31,8 @@
       pyenv
       ookla-speedtest
       arp-scan
+      zen-browser.packages."${system}".default
+      #ghostty.packages."${system}".default
     ])
     ++ (with pkgs-unstable; [
       vscode

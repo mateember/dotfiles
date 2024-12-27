@@ -4,7 +4,6 @@
   pkgs,
   pkgs-unstable,
   hyprland,
-  zen-browser,
   ...
 }: {
   nixpkgs.overlays = [
@@ -180,7 +179,6 @@
       icu
       gnome-boxes
       qemu
-      zen-browser.packages."${system}".default
       edid-decode
       gnome-tweaks
       nautilus-python
