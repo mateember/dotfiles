@@ -7,7 +7,10 @@
   ...
 }: {
   nixpkgs.overlays = [
+    
   ];
+
+  
 
   #Chaotic AUR
   chaotic.mesa-git.enable = false;
@@ -17,6 +20,7 @@
     fish.enable = true;
     zsh.enable = true;
     steam.enable = true;
+    virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
     xfconf.enable = true;
     dconf.enable = true;
@@ -184,7 +188,6 @@
       nautilus-python
       vlc
       microsoft-edge
-      virt-manager
       virt-viewer
       spice
       spice-gtk

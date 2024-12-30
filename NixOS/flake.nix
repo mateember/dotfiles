@@ -2,7 +2,7 @@
   description = "My NixOS flake";
 
   inputs = {
-    nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
+    #nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
 
     nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";

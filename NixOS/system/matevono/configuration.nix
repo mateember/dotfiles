@@ -273,7 +273,7 @@
       desktopManager.gnome.enable = true;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = true;
+    desktopManager.cosmic.enable = false;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
@@ -297,7 +297,7 @@
     #openssh.enable = true;
 
     printing.enable = true;
-    printing.drivers = [pkgs.epson-escpr];
+    #printing.drivers = [pkgs.epson-escpr];
   };
 
   # Open ports in the firewall.
