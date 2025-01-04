@@ -4,7 +4,6 @@
   pkgs-unstable,
   hyprland,
   zen-browser,
-  ghostty,
   ...
 }: {
   programs = {
@@ -24,10 +23,10 @@
       git-credential-oauth
       ranger
       glxinfo
-      wlogout
+      #wlogout
       trash-cli
       qt6ct
-      nwg-look
+      #nwg-look
       pyenv
       ookla-speedtest
       arp-scan
@@ -37,12 +36,13 @@
     ++ (with pkgs-unstable; [
       vscode
       neovim
+      openboard
       fastfetch
-      swww
-      waybar
+      #swww
+      #waybar
       distrobox
-      wl-clipboard
-      cliphist
+      #wl-clipboard
+      #cliphist
       # hyprcursor
       arduino-ide
 

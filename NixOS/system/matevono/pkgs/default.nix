@@ -7,10 +7,7 @@
   ...
 }: {
   nixpkgs.overlays = [
-    
   ];
-
-  
 
   #Chaotic AUR
   chaotic.mesa-git.enable = false;
@@ -26,7 +23,7 @@
     dconf.enable = true;
     nautilus-open-any-terminal = {
       enable = true;
-      terminal = "ptyxis";
+      terminal = "ghostty";
     };
     nix-ld = {
       enable = true;
@@ -157,6 +154,7 @@
       wget
       nano
       tree
+      ghostty
       starship
       zoxide
       kdePackages.qtstyleplugin-kvantum
@@ -221,21 +219,25 @@
     ])
     ++ (with pkgs-unstable; [
       ptyxis
+      wl-clipboard-rs
       bat
-      lact
-      kdePackages.polkit-kde-agent-1
+      #lact
+      #kdePackages.polkit-kde-agent-1
       kdePackages.kirigami
       polkit_gnome
       kitty
-      alacritty
+      #alacritty
       github-desktop
       firefox
       tldr
+      freerdp
+      bc
       jetbrains-toolbox
     ]);
 
   environment.gnome.excludePackages = with pkgs; [
     gnome-tour
+    gnome-console
     gnome-connections
     epiphany # web browser
     geary # email reader. Up to 24.05. Starting from 24.11 the package name is just geary.

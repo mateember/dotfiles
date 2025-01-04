@@ -16,7 +16,6 @@
     bluetooth.enable = true; # enables support for Bluetooth
     bluetooth.powerOnBoot = true;
     bluetooth.settings.General.Experimental = true;
-    pulseaudio.enable = false;
 
     sane = {
       enable = true;
@@ -197,6 +196,7 @@
 
   #User
   users = {
+    groups.libvirtd.members = ["root"];
     groups.mate = {
       name = "mate";
       gid = 1000;
@@ -227,6 +227,7 @@
   # Services & SystemD
 
   services = {
+    pulseaudio.enable = false;
     power-profiles-daemon.enable = false;
     tlp = {
       enable = true;
@@ -318,6 +319,7 @@
         to = 1764;
       }
     ];
+    trustedInterfaces = ["virbr0" "vnet3"];
   };
 
   environment = {
@@ -330,11 +332,13 @@
     libvirtd = {
       enable = true;
       qemu = {
+        vhostUserPackages = [pkgs.virtiofsd];
         swtpm.enable = true;
         ovmf.enable = true;
         ovmf.packages = [pkgs.OVMFFull.fd];
       };
     };
+    spiceUSBRedirection.enable = true;
     containers.enable = true;
     podman = {
       enable = false;
@@ -390,6 +394,10 @@
             }
             {
               command = "/run/current-system/sw/bin/tee /sys/firmware/acpi/platform_profile";
+              options = ["NOPASSWD"];
+            }
+            {
+              command = "/home/mate/scripts/winapps/bin/winapps";
               options = ["NOPASSWD"];
             }
           ];

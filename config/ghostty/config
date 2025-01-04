@@ -1,0 +1,4 @@
+font-family = "JetBrainsMono Nerd Font Mono"
+gtk-adwaita = true
+theme=Dark+
+gtk-single-instance = true
