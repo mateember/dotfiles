@@ -298,7 +298,7 @@
     #openssh.enable = true;
 
     printing.enable = true;
-    #printing.drivers = [pkgs.epson-escpr];
+    printing.drivers = [pkgs.epson-escpr];
   };
 
   # Open ports in the firewall.

@@ -1,14 +1,12 @@
 {
   pkgs,
   config,
-  hyprland,
   pkgs-unstable,
   ...
 }: {
   wayland.windowManager.hyprland = {
-    enable = true;
+    enable = false;
     systemd.enable = true;
-    package = hyprland.packages.${pkgs.system}.hyprland;
     xwayland.enable = true;
 
     extraConfig = ''

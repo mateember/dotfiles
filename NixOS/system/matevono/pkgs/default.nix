@@ -3,7 +3,6 @@
   lib,
   pkgs,
   pkgs-unstable,
-  hyprland,
   ...
 }: {
   nixpkgs.overlays = [
@@ -16,7 +15,10 @@
   programs = {
     fish.enable = true;
     zsh.enable = true;
-    steam.enable = true;
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+    };
     virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
     xfconf.enable = true;
@@ -154,7 +156,6 @@
       wget
       nano
       tree
-      ghostty
       starship
       zoxide
       kdePackages.qtstyleplugin-kvantum
@@ -221,6 +222,8 @@
       ptyxis
       wl-clipboard-rs
       bat
+      ghostty
+      konsole
       #lact
       #kdePackages.polkit-kde-agent-1
       kdePackages.kirigami

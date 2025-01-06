@@ -90,7 +90,6 @@
             home-manager.extraSpecialArgs = {
               inherit pkgs;
               inherit pkgs-unstable;
-              inherit hyprland;
               inherit zen-browser;
             };
           }
@@ -98,7 +97,6 @@
 
         specialArgs = {
           inherit pkgs-unstable;
-          inherit hyprland;
           inherit zen-browser;
         };
       };
