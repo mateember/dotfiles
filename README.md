@@ -1,2 +1,2 @@
 # dotfiles
- My dotfiles with my NixOS config
+  Dotfiles with my NixOS config
