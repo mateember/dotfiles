@@ -166,6 +166,7 @@
       btop
       usbutils
       acpi
+      lm_sensors
       fzf
       podman-tui
       dive
@@ -173,6 +174,8 @@
       kdePackages.extra-cmake-modules
       pavucontrol
       appimage-run
+      okular
+      evince
       alsa-utils
       playerctl
       pamixer
@@ -194,7 +197,8 @@
       win-virtio
       win-spice
       gjs
-
+      ripgrep
+      fd
       (callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
 

@@ -30,12 +30,16 @@
       pyenv
       ookla-speedtest
       arp-scan
+      nitch
       zen-browser.packages."${system}".default
+      xorg.xkill
+      xorg.xeyes
       #ghostty.packages."${system}".default
     ])
     ++ (with pkgs-unstable; [
       vscode
       neovim
+      celluloid
       openboard
       fastfetch
       #swww
@@ -45,6 +49,7 @@
       #cliphist
       # hyprcursor
       arduino-ide
+      python3
 
       #gnome
       gnomeExtensions.ddterm

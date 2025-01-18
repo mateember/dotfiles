@@ -3,3 +3,4 @@ gtk-adwaita = true
 theme=Dark+
 gtk-single-instance = true
 link-url = true
+background-opacity = 0.8

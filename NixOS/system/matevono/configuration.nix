@@ -72,7 +72,7 @@
     consoleLogLevel = 3;
 
     kernelPackages = pkgs.linuxPackages_latest;
-    extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo];
+    extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
     kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
@@ -274,7 +274,7 @@
       desktopManager.gnome.enable = true;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = false;
+    desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
@@ -325,6 +325,7 @@
   environment = {
     variables = {
       QT_QPA_PLATFORMTHEME = "qt6ct";
+      EDITOR = "nvim";
     };
   };
 
