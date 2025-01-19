@@ -40,26 +40,39 @@
       neovim
       celluloid
       openboard
-      hyprshot
       fastfetch
-      waybar
-      hyprpaper
-      swww
       distrobox
       wl-clipboard
       brightnessctl
       cliphist
-      hyprcursor
-      hypridle
       arduino-ide
       python3
       zellij
       foot
       alacritty
+      # nwg-panel
+
+
+
+
+
+
+      #Hyprland Stuff
+      hyprcursor
+      # waypaper
       rofi-wayland
-      waypaper
       hyprshade
-      nwg-panel
+      hyprlock
+      hypridle
+      hyprshot
+      swww
+      hyprpaper
+      waybar
+
+
+
+
+
 
       #gnome
       gnomeExtensions.ddterm

@@ -24,6 +24,8 @@ fi
 # Initialize the current image index
 CURRENT_INDEX=0
 
+swww-daemon
+
 # Loop indefinitely
 while true; do
     # Set the current image as the wallpaper
