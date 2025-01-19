@@ -19,14 +19,13 @@
 
   home.packages =
     (with pkgs; [
-      #dunst
+      dunst
       git-credential-oauth
       ranger
       glxinfo
-      #wlogout
+      wlogout
       trash-cli
-      qt6ct
-      #nwg-look
+      nwg-look
       pyenv
       ookla-speedtest
       arp-scan
@@ -42,14 +41,21 @@
       celluloid
       openboard
       fastfetch
-      #swww
-      #waybar
+      swww
+      waybar
       distrobox
-      #wl-clipboard
-      #cliphist
-      # hyprcursor
+      wl-clipboard
+      brightnessctl
+      cliphist
+      hyprcursor
       arduino-ide
       python3
+      zellij
+      foot
+      alacritty
+      rofi-wayland
+      waypaper
+      nwg-panel
 
       #gnome
       gnomeExtensions.ddterm
@@ -57,4 +63,5 @@
     ]);
 
   services.kdeconnect.enable = true;
+  services.blueman-applet.enable = false;
 }

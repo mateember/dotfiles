@@ -270,14 +270,16 @@
     # Plasma, SDDM
     xserver = {
       enable = true;
-      displayManager.gdm.enable = true;
-      desktopManager.gnome.enable = true;
+      desktopManager.gnome.enable = false;
+      displayManager.gdm.enable = false;
     };
     desktopManager.plasma6.enable = false;
     desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
+      cosmic-greeter.enable = true;
+
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
       sddm.wayland.enable = true;
@@ -288,7 +290,7 @@
       };
     };
 
-    blueman.enable = false;
+    blueman.enable = true;
 
     gvfs.enable = true;
     tumbler.enable = true;
@@ -362,11 +364,12 @@
 
   xdg = {
     menus.enable = true;
+    # autostart.enable = false;
     portal = {
       xdgOpenUsePortal = true;
       enable = true;
       #config.common.default = "gnome";
-      extraPortals = [pkgs-unstable.kdePackages.xdg-desktop-portal-kde];
+      extraPortals = [pkgs-unstable.kdePackages.xdg-desktop-portal-kde pkgs.xdg-desktop-portal-hyprland];
     };
   };
   #Sudo

@@ -28,11 +28,13 @@
     // Modules Right    
     "modules-right": [
         "wireplumber",
-        "network",
         "cpu",
         "memory",
-//        "bluetooth",
+        "bluetooth",
+        "network",
+	"backlight",
 //        "idle_inhibitor",
+        "battery",
         "tray",
         "custom/exit",
         "clock"

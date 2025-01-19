@@ -22,13 +22,13 @@
     
     "custom/browser": {
         "format": "",
-        "on-click": "com.brave.Browser",
+        "on-click": "zen",
         "tooltip": false
     },
 
     "custom/terminal": {
         "format": "",
-        "on-click": "alacritty",
+        "on-click": "kitty",
         "tooltip": false
     },
 
@@ -67,7 +67,15 @@
         }       
     },
 
- 
+    //Brightness
+	"backlight": {
+    "device": "intel_backlight",
+"format": "{percent}% {icon}",
+    "format-icons": ["󰃞", "󰃠"],
+    "on-scroll-up":   "brightnessctl s 1%+",
+    "on-scroll-down": "brightnessctl s 1%-",
+    "on-click-right": "brightnessctl s 0"
+},
 
     //Audio
 
@@ -87,7 +95,7 @@
 
        "network": {
         "format": "{ifname}",
-        "format-wifi": "   {signalStrength}%",
+        "format-wifi": "",
         "format-ethernet": "󰈀  {ifname}",
         "format-disconnected": "Disconnected",
         "tooltip-format": " {ifname} via {gwaddri}",
@@ -95,7 +103,8 @@
         "tooltip-format-ethernet": " {ifname}\nIP: {ipaddr}\n up: {bandwidthUpBits} down: {bandwidthDownBits}",
         "tooltip-format-disconnected": "Disconnected",
         "max-length": 50,
-        "on-click": "nm-connection-editor"
+        "on-click": "nm-connection-editor",
+	"on-click-right": "cosmic-settings"
     },
 
      // CPU / Memory
@@ -116,13 +125,27 @@
 
        // Bluetooth
     "bluetooth": {
-        "format": " {status}",
+        "format": " On",
         "format-disabled": " Disabled",
         "format-off": " Off",
         "interval": 30,
         "on-click": "blueman-manager",
-        "format-no-controller": ""
+	"on-click-right": "cosmic-settings",
+        "format-no-controller": "Error"
     },
+
+    "battery": {
+        	"states": {
+            		"warning": 30,
+            		"critical": 15
+        	},
+        	"format": "{icon} {capacity}%",
+        	"format-charging": "󰂄 {capacity}%",
+        	"format-plugged": "󰂄 {capacity}%",
+        	"format-alt": "{time} {icon}",
+        	"format-full": "󱟢 {capacity}%",
+        	"format-icons": ["󰁹", "󰂀", "󱊣"]
+	},
 
 
     // Power Menu

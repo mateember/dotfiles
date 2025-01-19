@@ -19,9 +19,15 @@
       enable = true;
       remotePlay.openFirewall = true;
     };
+    nm-applet.enable = false;
+    hyprland = {
+      enable = true;
+      withUWSM = true;
+      xwayland.enable = true;
+    };
     virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
-    xfconf.enable = true;
+    xfconf.enable = false;
     dconf.enable = true;
     nautilus-open-any-terminal = {
       enable = true;
@@ -154,6 +160,7 @@
     (with pkgs; [
       vim
       wget
+      snixembed
       nano
       tree
       starship
@@ -173,6 +180,8 @@
       podman-compose
       kdePackages.extra-cmake-modules
       pavucontrol
+      kdePackages.dolphin 
+      nautilus
       appimage-run
       okular
       evince
@@ -180,7 +189,6 @@
       playerctl
       pamixer
       which
-      networkmanagerapplet
       v4l-utils
       icu
       gnome-boxes
@@ -198,6 +206,7 @@
       win-spice
       gjs
       ripgrep
+      libsixel
       fd
       (callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
@@ -240,6 +249,7 @@
       freerdp
       bc
       jetbrains-toolbox
+      qt6ct
     ]);
 
   environment.gnome.excludePackages = with pkgs; [
