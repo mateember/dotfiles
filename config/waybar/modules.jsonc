@@ -4,7 +4,7 @@
     //Rofi Launcher
 
     "custom/appmenu": {
-        "format": "󰣇",
+        "format": "",
     "on-click": "rofi -show drun -theme $HOME/.config/rofi/launcher.rasi",
     "on-click-right": "rofi -show drun -theme $HOME/.config/rofi/launcher.rasi"
 

@@ -40,6 +40,7 @@
       neovim
       celluloid
       openboard
+      hyprshot
       fastfetch
       swww
       waybar
