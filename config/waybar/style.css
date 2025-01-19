@@ -180,6 +180,12 @@ window#waybar {
 }
 
 
+#idle_inhibitor{
+
+    margin: 0px 18px 0px 0px;
+    font-size: 115%;
+}
+
 
 
 #clock {

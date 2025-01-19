@@ -42,13 +42,15 @@
       openboard
       hyprshot
       fastfetch
-      swww
       waybar
+      hyprpaper
+      swww
       distrobox
       wl-clipboard
       brightnessctl
       cliphist
       hyprcursor
+      hypridle
       arduino-ide
       python3
       zellij
@@ -56,6 +58,7 @@
       alacritty
       rofi-wayland
       waypaper
+      hyprshade
       nwg-panel
 
       #gnome

@@ -232,7 +232,6 @@
       libxml2
     ])
     ++ (with pkgs-unstable; [
-      ptyxis
       wl-clipboard-rs
       bat
       ghostty

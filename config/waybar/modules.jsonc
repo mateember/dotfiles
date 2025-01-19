@@ -158,6 +158,14 @@
         "tooltip-format": "Wlogout / Lock session"
     },
 
+"idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+        "activated": "",
+        "deactivated": ""
+    }
+},
+
 
        // Clock
 
