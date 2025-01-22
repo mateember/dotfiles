@@ -111,24 +111,23 @@
     bat
     gh
     trash-cli
-
+    ddclient
 
     jellyfin
     jellyfin-web
     jellyfin-ffmpeg
   ];
 
-
   systemd.units."dev-tpmrm0.device".enable = false;
   systemd.services = {
     "set_fb_blank_1" = {
-    description = "Set framebuffer blank state to 1";
-    enable = true;
-    after = [ "multi-user.target" ];
-    script = "echo 1 > /sys/class/graphics/fb0/blank";
-    wantedBy = ["multi-user.target"];
-  };
+      description = "Set framebuffer blank state to 1";
+      enable = true;
+      after = ["multi-user.target"];
+      script = "echo 1 > /sys/class/graphics/fb0/blank";
+      wantedBy = ["multi-user.target"];
     };
+  };
   services = {
     tailscale.enable = true;
 
@@ -137,10 +136,31 @@
       openFirewall = true;
       user = "mate";
     };
+    nginx = {
+      enable = true;
 
-  logind.lidSwitch = "ignore"; 
+    virtualHosts."127.0.0.1" = {
+    locations."/" = {
+      return = "200 '<html><body>It works</body></html>'";
+      extraConfig = ''
+        default_type text/html;
+      '';
+    };
+  };
+    };
+
+    ddclient.enable = true;
+    ddclient.configFile = "/home/mate/.local/ddclient/ddclient.conf";
+
+    logind.lidSwitch = "ignore";
   };
 
+  security = {
+    acme = {
+      acceptTerms = true;
+      defaults.email = "attilathetroll@gmail.com";
+    };
+  };
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
