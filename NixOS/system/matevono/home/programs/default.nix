@@ -52,11 +52,6 @@
       alacritty
       # nwg-panel
 
-
-
-
-
-
       #Hyprland Stuff
       hyprcursor
       # waypaper
@@ -68,11 +63,6 @@
       swww
       hyprpaper
       waybar
-
-
-
-
-
 
       #gnome
       gnomeExtensions.ddterm

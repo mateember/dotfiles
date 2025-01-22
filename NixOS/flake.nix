@@ -100,6 +100,12 @@
           inherit zen-browser;
         };
       };
+      homelab = lib.nixosSystem {
+        inherit system;
+        modules = [
+          ./system/homelab/configuration.nix
+        ];
+      };
     };
   };
 }

@@ -271,10 +271,10 @@
     xserver = {
       enable = true;
       desktopManager.gnome.enable = false;
-      displayManager.gdm.enable = false;
+      displayManager.gdm.enable = true;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = true;
+    desktopManager.cosmic.enable = false;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;

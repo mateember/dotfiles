@@ -180,7 +180,7 @@
       podman-compose
       kdePackages.extra-cmake-modules
       pavucontrol
-      kdePackages.dolphin 
+      kdePackages.dolphin
       nautilus
       appimage-run
       okular
