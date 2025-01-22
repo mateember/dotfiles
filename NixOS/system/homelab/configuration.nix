@@ -100,6 +100,9 @@
     wget
     neovim
     fish
+    starship
+    zoxide
+    git
     vbetool
   ];
 
