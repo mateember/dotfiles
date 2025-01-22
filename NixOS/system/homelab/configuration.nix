@@ -107,6 +107,7 @@
     zellij
     tmux
     vbetool
+    trash-cli
   ];
 
   systemd.services."de-tpmrm0.device".enabled = false;
