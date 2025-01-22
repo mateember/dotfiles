@@ -110,7 +110,7 @@
     trash-cli
   ];
 
-  systemd.services."de-tpmrm0.device".enabled = false;
+  systemd.services."de-tpmrm0.device".enable = false;
   services = {
     tailscale.enable = true;
 
