@@ -119,7 +119,6 @@
     description = "Set framebuffer blank state to 1";
     after = [ "multi-user.target" ];
     script = "/bin/sh -c \"echo 1 > /sys/class/graphics/fb0/blank\"";
-    restart = true;
   };
     };
   services = {
