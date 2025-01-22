@@ -24,6 +24,6 @@ text_composition_strategy legacy
 
 
 # BEGIN_KITTY_THEME
-# Adwaita darker
+# 1984 Dark
 include current-theme.conf
 # END_KITTY_THEME

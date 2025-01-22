@@ -31,7 +31,7 @@
     dconf.enable = true;
     nautilus-open-any-terminal = {
       enable = true;
-      terminal = "ghostty";
+      terminal = "kitty";
     };
     nix-ld = {
       enable = true;
