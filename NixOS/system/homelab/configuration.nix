@@ -53,7 +53,7 @@
 
     firewall = {
       enable = true;
-      allowedTCPPorts = [];
+      allowedTCPPorts = [443];
       allowedUDPPortRanges = [
       ];
     };
