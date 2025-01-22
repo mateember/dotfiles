@@ -31,7 +31,7 @@
   fileSystems."/mnt/khdd" = {
     device = "/dev/disk/by-uuid/B2F2-B28F";
     fsType = "exfat";
-    options = ["users"];
+    options = ["users" "nofail"];
   };
 
   swapDevices = [];

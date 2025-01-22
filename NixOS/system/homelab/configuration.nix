@@ -95,6 +95,7 @@
 
   programs = {
     fish.enable = true;
+    nix-ld.enable = true;
   };
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
@@ -105,13 +106,17 @@
     zoxide
     git
     fastfetch
+    speedtest-cli
     zellij
     tmux
     vbetool
     bat
     gh
     trash-cli
+    wirelesstools
+    btop
     ddclient
+    iw
 
     jellyfin
     jellyfin-web
@@ -136,23 +141,42 @@
       openFirewall = true;
       user = "mate";
     };
+
+    nextcloud = {
+      enable = false;
+      package = pkgs.nextcloud30;
+      hostName = "hl.kmate.org";
+        config.adminpassFile = "/etc/nextcloud-admin-pass";
+      database.createLocally = true;
+      https = true;
+    };
+
     nginx = {
       enable = true;
+      recommendedProxySettings = true;
+      recommendedTlsSettings = true;
 
-    virtualHosts."127.0.0.1" = {
-    locations."/" = {
-      return = "200 '<html><body>It works</body></html>'";
-      extraConfig = ''
-        default_type text/html;
-      '';
-    };
-  };
+      virtualHosts."hl.kmate.org" = {
+        enableACME = true;
+        forceSSL = true;
+        locations."/jellyfin" = {
+          proxyPass = "http://127.0.0.1:8096";
+        };
+        locations."/films" = {
+          proxyPass = "http://127.0.0.1:8181";
+        };
+      };
     };
 
     ddclient.enable = true;
     ddclient.configFile = "/home/mate/.local/ddclient/ddclient.conf";
 
     logind.lidSwitch = "ignore";
+    logind.powerKey = "poweroff";
+  };
+
+  virtualisation.docker = {
+    enable = true;
   };
 
   security = {
@@ -178,7 +202,7 @@
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
+  networking.firewall.enable = false;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
