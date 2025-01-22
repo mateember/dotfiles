@@ -113,7 +113,7 @@
   ];
 
 
-  systemd.unit."dev-tpmrm0.device".enable = false;
+  systemd.units."dev-tpmrm0.device".enable = false;
   systemd.services = {
     "set_fb_blank_1" = {
     description = "Set framebuffer blank state to 1";
