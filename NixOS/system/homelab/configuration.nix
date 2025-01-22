@@ -103,9 +103,13 @@
     starship
     zoxide
     git
+    fastfetch
+    zellij
+    tmux
     vbetool
   ];
 
+  systemd.services."de-tpmrm0.device".enabled = false;
   services = {
     tailscale.enable = true;
 
