@@ -117,6 +117,7 @@
   systemd.services = {
     "set_fb_blank_1" = {
     description = "Set framebuffer blank state to 1";
+    enable = true;
     after = [ "multi-user.target" ];
     script = "echo 1 > /sys/class/graphics/fb0/blank";
   };
