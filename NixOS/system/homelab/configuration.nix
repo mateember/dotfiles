@@ -109,7 +109,13 @@
     tmux
     vbetool
     bat
+    gh
     trash-cli
+
+
+    jellyfin
+    jellyfin-web
+    jellyfin-ffmpeg
   ];
 
 
@@ -125,6 +131,12 @@
     };
   services = {
     tailscale.enable = true;
+
+    jellyfin = {
+      enable = true;
+      openFirewall = true;
+      user = "mate";
+    };
 
   logind.lidSwitch = "ignore"; 
   };

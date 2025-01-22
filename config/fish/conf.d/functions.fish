@@ -110,7 +110,9 @@ function screenoff
     set current_state (cat /sys/class/graphics/fb0/blank)
     if test $current_state -eq 0
         echo 1 | sudo tee /sys/class/graphics/fb0/blank
+        echo "Turning screen off"
     else
         echo 0 | sudo tee /sys/class/graphics/fb0/blank
+        echo "Turning screen on"
     end
 end

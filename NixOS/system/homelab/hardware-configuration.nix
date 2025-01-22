@@ -28,6 +28,12 @@
     options = ["fmask=0077" "dmask=0077"];
   };
 
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/B2F2-B28F";
+    fsType = "exfat";
+    options = ["users"];
+  };
+
   swapDevices = [];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
