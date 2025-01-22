@@ -28,7 +28,7 @@
     options = ["fmask=0077" "dmask=0077"];
   };
 
-  fileSystems."/" = {
+  fileSystems."/mnt/khdd" = {
     device = "/dev/disk/by-uuid/B2F2-B28F";
     fsType = "exfat";
     options = ["users"];
