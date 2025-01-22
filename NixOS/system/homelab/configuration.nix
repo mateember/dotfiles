@@ -120,6 +120,7 @@
     enable = true;
     after = [ "multi-user.target" ];
     script = "echo 1 > /sys/class/graphics/fb0/blank";
+    wantedBy = ["mult-user.target"];
   };
     };
   services = {
