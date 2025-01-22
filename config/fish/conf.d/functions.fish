@@ -104,3 +104,13 @@ end
 function cm
     echo "$argv[1]" | sudo tee /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode
 end
+
+
+function screenoff
+    set current_state (cat /sys/class/graphics/fb0/blank)
+    if test $current_state -eq 0
+        echo 1 | sudo tee /sys/class/graphics/fb0/blank
+    else
+        echo 0 | sudo tee /sys/class/graphics/fb0/blank
+    end
+end

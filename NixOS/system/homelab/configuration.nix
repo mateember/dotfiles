@@ -25,7 +25,7 @@
       "net.ipv4.tcp_rmem" = "4096 87380 1073741824";
       "net.ipv4.tcp_wmem" = "4096 87380 1073741824";
     };
-    kernelParams = ["consoleblank=60"];
+    kernelParams = [];
     loader = {
       efi = {
         canTouchEfiVariables = true;
@@ -112,7 +112,16 @@
     trash-cli
   ];
 
-  systemd.services."dev-tpmrm0.device".enable = false;
+
+  systemd.unit."dev-tpmrm0.device".enable = false;
+  systemd.services = {
+    "set_fb_blank_1" = {
+    description = "Set framebuffer blank state to 1";
+    after = [ "multi-user.target" ];
+    execStart = "/bin/sh -c \"echo 1 > /sys/class/graphics/fb0/blank\"";
+    restart = true;
+  };
+    };
   services = {
     tailscale.enable = true;
 
