@@ -25,6 +25,7 @@
       "net.ipv4.tcp_rmem" = "4096 87380 1073741824";
       "net.ipv4.tcp_wmem" = "4096 87380 1073741824";
     };
+    kernelParams = ["consoleblank=60"];
     loader = {
       efi = {
         canTouchEfiVariables = true;
@@ -107,6 +108,7 @@
     zellij
     tmux
     vbetool
+    bat
     trash-cli
   ];
 
@@ -114,9 +116,7 @@
   services = {
     tailscale.enable = true;
 
-    logind.extraConfig = ''
-    HandleLidSwitch=ignore
-  '';
+  logind.lidSwitch = "ignore"; 
   };
 
   # Some programs need SUID wrappers, can be configured further or are
