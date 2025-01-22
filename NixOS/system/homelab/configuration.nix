@@ -118,7 +118,7 @@
     "set_fb_blank_1" = {
     description = "Set framebuffer blank state to 1";
     after = [ "multi-user.target" ];
-    script = "/bin/sh -c \"echo 1 > /sys/class/graphics/fb0/blank\"";
+    script = "echo 1 > /sys/class/graphics/fb0/blank";
   };
     };
   services = {
