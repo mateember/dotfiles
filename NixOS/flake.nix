@@ -7,6 +7,7 @@
     nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
@@ -27,6 +28,7 @@
     hyprland,
     zen-browser,
     nixos-cosmic,
+    vscode-server,
     ...
   }: let
     system = "x86_64-linux";
@@ -103,8 +105,13 @@
       homelab = lib.nixosSystem {
         inherit system;
         modules = [
+          vscode-server.nixosModules.default
           ./system/homelab/configuration.nix
         ];
+
+        specialArgs = {
+          inherit pkgs-unstable;
+        };
       };
     };
   };

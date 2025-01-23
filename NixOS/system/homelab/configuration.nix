@@ -4,6 +4,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   ...
 }: {
   imports = [
@@ -48,7 +49,17 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Enable networking
-  networking.networkmanager.enable = true;
+  networking = {
+    networkmanager.enable = true;
+
+    firewall = {
+      enable = false;
+      trustedInterfaces = [];
+      allowedTCPPorts = [443 61208];
+      allowedUDPPortRanges = [
+      ];
+    };
+  };
 
   # Set your time zone.
   time.timeZone = "Europe/Budapest";
@@ -81,7 +92,7 @@
   users.users.mate = {
     isNormalUser = true;
     description = "Máté Tamás Kiss";
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["networkmanager" "wheel" "docker"];
     shell = pkgs.fish;
     packages = with pkgs; [];
   };
@@ -95,6 +106,7 @@
 
   programs = {
     fish.enable = true;
+    nix-ld.enable = true;
   };
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
@@ -105,13 +117,20 @@
     zoxide
     git
     fastfetch
+    speedtest-cli
     zellij
     tmux
     vbetool
     bat
     gh
     trash-cli
+    wirelesstools
+    glances
+    btop
     ddclient
+    iw
+    gcc
+    distrobox
 
     jellyfin
     jellyfin-web
@@ -127,32 +146,63 @@
       script = "echo 1 > /sys/class/graphics/fb0/blank";
       wantedBy = ["multi-user.target"];
     };
+
+    "glances-manual" = {
+      description = "Glances manual";
+      enable = true;
+      after = ["multi-user.target"];
+      script = "/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu";
+      wantedBy = ["multi-user.target"];
+    };
   };
   services = {
     tailscale.enable = true;
+    vscode-server.enable = true;
 
     jellyfin = {
       enable = true;
       openFirewall = true;
       user = "mate";
     };
+
+    nextcloud = {
+      enable = false;
+      package = pkgs.nextcloud30;
+      hostName = "hl.kmate.org";
+      config.adminpassFile = "/etc/nextcloud-admin-pass";
+      database.createLocally = true;
+      https = true;
+    };
+
     nginx = {
       enable = true;
+      recommendedProxySettings = true;
+      recommendedTlsSettings = true;
 
-    virtualHosts."127.0.0.1" = {
-    locations."/" = {
-      return = "200 '<html><body>It works</body></html>'";
-      extraConfig = ''
-        default_type text/html;
-      '';
-    };
-  };
+      virtualHosts."hl.kmate.org" = {
+        enableACME = true;
+        forceSSL = true;
+        locations."/jellyfin" = {
+          proxyPass = "http://127.0.0.1:8096";
+        };
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:8888";
+        };
+        locations."/films" = {
+          proxyPass = "http://127.0.0.1:8181";
+        };
+      };
     };
 
     ddclient.enable = true;
     ddclient.configFile = "/home/mate/.local/ddclient/ddclient.conf";
 
     logind.lidSwitch = "ignore";
+    logind.powerKey = "poweroff";
+  };
+
+  virtualisation.docker = {
+    enable = true;
   };
 
   security = {
@@ -169,22 +219,5 @@
   #   enableSSHSupport = true;
   # };
 
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  #  services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "24.11"; # Did you read the comment?
 }
