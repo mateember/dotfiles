@@ -110,7 +110,10 @@
         ];
 
 
- 
+      specialArgs = {
+          inherit pkgs-unstable;
+          
+        };
       
 
 
