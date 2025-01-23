@@ -71,7 +71,7 @@
   boot = {
     consoleLogLevel = 3;
 
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_6_12;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
@@ -270,7 +270,7 @@
     # Plasma, SDDM
     xserver = {
       enable = true;
-      desktopManager.gnome.enable = false;
+      desktopManager.gnome.enable = true;
       displayManager.gdm.enable = true;
     };
     desktopManager.plasma6.enable = false;
@@ -278,7 +278,7 @@
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      cosmic-greeter.enable = true;
+      cosmic-greeter.enable = false;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
