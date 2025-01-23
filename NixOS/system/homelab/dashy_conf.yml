@@ -23,17 +23,20 @@ sections:
     widgets:
       - type: clock
         id: 0_513_clock
+        format: hu-HU
       - type: weather
         options:
           apiKey: efdbade728b37086877a5e83442004db
           city: Budapest 
         id: 1_513_weather
       - type: gl-current-cpu
+        useProxy: true
         options:
-          hostname: http://192.168.130.2:61208
-      - type: gl-current-mem-speedometer
+          hostname: http://host.docker.internal:61208
+      - type: gl-mem-speedometer
+        useProxy: true
         options:
-          hostname: http://192.168.130.2:61208
+          hostname: http://host.docker.internal:61208
 
 
     filteredItems: []
@@ -89,54 +92,26 @@ sections:
         url: http://stackoverflow.com/
         id: 1_892_stackoverflow
       - &ref_6
-        title: CloudFlare
-        icon: favicon
-        url: https://dash.cloudflare.com/
+        title: Namecheap 
+        icon: si-namecheap 
+        url: https://namecheap.com
         statusCheckAcceptCodes: '403'
-        id: 2_892_cloudflare
-      - &ref_7
-        title: DigitalOcean
-        icon: favicon
-        url: https://cloud.digitalocean.com/
-        id: 3_892_digitalocean
-      - &ref_8
-        title: Netlify
-        icon: favicon
-        url: https://app.netlify.com/
-        id: 4_892_netlify
-      - &ref_9
-        title: CodeSandbox
-        icon: favicon
-        url: https://codesandbox.io/dashboard
-        id: 5_892_codesandbox
-      - &ref_10
-        title: Hack the Box
-        icon: favicon
-        url: https://www.hackthebox.com/home
-        id: 6_892_hackthebox
+        id: 2_892_namecheap
       - &ref_11
         title: Documentation
         subItems:
-          - title: JavaScript
-            url: https://developer.mozilla.org
-            icon: si-javascript
+          - title: NixOs Wiki 
+            url: https://wiki.nixos.org
+            icon: si-nixos
             color: '#F7DF1E'
-          - title: TypeScript
-            url: https://www.typescriptlang.org/docs
-            icon: si-typescript
-            color: '#3178C6'
-          - title: Svelt
-            url: https://svelte.dev/docs
-            icon: si-svelte
+          - title: Arch Wiki 
+            url: https://wiki.archlinux.org
+            icon: si-archlinux
+            color: '#066bd1'
+          - title: Wikipedia
+            url: https://wikipedia.com
+            icon: si-wikipedia
             color: '#FF3E00'
-          - title: Go
-            url: https://go.dev/doc
-            icon: si-go
-            color: '#00ADD8'
-          - title: Rust
-            url: https://doc.rust-lang.org/reference
-            icon: si-rust
-            color: '#000000'
           - title: Docker
             url: https://docs.docker.com/
             icon: si-docker
@@ -146,10 +121,6 @@ sections:
       - *ref_4
       - *ref_5
       - *ref_6
-      - *ref_7
-      - *ref_8
-      - *ref_9
-      - *ref_10
       - *ref_11
   - name: Social & News
     icon: far fa-thumbs-up
@@ -194,13 +165,7 @@ sections:
         icon: si-bbc
         url: https://bbc.co.uk/news
         id: 7_1118_news
-      - &ref_20
-        title: Crypto Prices
-        icon: fab fa-bitcoin
-        url: https://www.livecoinwatch.com/
-        description: Real-time crypto prices and read-only portfolio
-        provider: Live Coin Watch
-        id: 8_1118_cryptoprices
+    
     filteredItems:
       - *ref_12
       - *ref_13
@@ -210,4 +175,3 @@ sections:
       - *ref_17
       - *ref_18
       - *ref_19
-      - *ref_20

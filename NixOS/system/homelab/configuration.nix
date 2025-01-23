@@ -53,8 +53,9 @@
     networkmanager.enable = true;
 
     firewall = {
-      enable = true;
-      allowedTCPPorts = [443];
+      enable = false;
+      trustedInterfaces = [];
+      allowedTCPPorts = [443 61208];
       allowedUDPPortRanges = [
       ];
     };
@@ -128,6 +129,7 @@
     btop
     ddclient
     iw
+    gcc
     distrobox
 
     jellyfin
@@ -144,17 +146,18 @@
       script = "echo 1 > /sys/class/graphics/fb0/blank";
       wantedBy = ["multi-user.target"];
     };
+
+    "glances-manual" = {
+      description = "Glances manual";
+      enable = true;
+      after = ["multi-user.target"];
+      script = "/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu";
+      wantedBy = ["multi-user.target"];
+    };
   };
   services = {
     tailscale.enable = true;
     vscode-server.enable = true;
-
-    glances = {
-      enable = true;
-      extraArgs = ["-w" "--disable-webui"];
-      openFirewall = true;
-      package = pkgs-unstable.glances;
-    };
 
     jellyfin = {
       enable = true;

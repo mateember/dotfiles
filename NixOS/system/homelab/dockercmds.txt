@@ -38,19 +38,9 @@ docker run -d \
   -v /home/mate/dotfiles/NixOS/system/homelab/dashy_conf.yml:/app/user-data/conf.yml \
   --name dashy \
   --restart=unless-stopped \
+  --add-host=host.docker.internal:host-gateway \
   lissy93/dashy:latest
 
 
 
- docker run -d \
- --name glances \ 
- --restart unless-stopped \ 
- -v /var/run/docker.sock:/var/run/docker.sock:ro \
- -p 61208:61208 \
- --pid host \ 
- --privileged \ 
- -e GLANCES_OPT=-w \ 
- -e PUID=1000 \ 
- -e PGID=1000 \  
- -e TZ=Europe/Budapest \ 
- nicolargo/glances:latest
+

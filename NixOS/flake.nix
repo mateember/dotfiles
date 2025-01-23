@@ -109,14 +109,9 @@
           ./system/homelab/configuration.nix
         ];
 
-
-      specialArgs = {
+        specialArgs = {
           inherit pkgs-unstable;
-          
         };
-      
-
-
       };
     };
   };
