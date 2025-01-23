@@ -108,6 +108,12 @@
           vscode-server.nixosModules.default
           ./system/homelab/configuration.nix
         ];
+
+
+ 
+      };
+
+
       };
     };
   };

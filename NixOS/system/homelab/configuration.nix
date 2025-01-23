@@ -4,6 +4,7 @@
 {
   config,
   pkgs,
+  pkgs-unstable,
   ...
 }: {
   imports = [
@@ -90,7 +91,7 @@
   users.users.mate = {
     isNormalUser = true;
     description = "Máté Tamás Kiss";
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["networkmanager" "wheel" "docker"];
     shell = pkgs.fish;
     packages = with pkgs; [];
   };
@@ -123,9 +124,11 @@
     gh
     trash-cli
     wirelesstools
+    glances
     btop
     ddclient
     iw
+    distrobox
 
     jellyfin
     jellyfin-web
@@ -145,6 +148,13 @@
   services = {
     tailscale.enable = true;
     vscode-server.enable = true;
+
+    glances = {
+      enable = true;
+      extraArgs = ["-w" "--disable-webui"];
+      openFirewall = true;
+      package = pkgs-unstable.glances;
+    };
 
     jellyfin = {
       enable = true;
@@ -171,6 +181,9 @@
         forceSSL = true;
         locations."/jellyfin" = {
           proxyPass = "http://127.0.0.1:8096";
+        };
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:8888";
         };
         locations."/films" = {
           proxyPass = "http://127.0.0.1:8181";
