@@ -270,15 +270,15 @@
     # Plasma, SDDM
     xserver = {
       enable = true;
-      desktopManager.gnome.enable = true;
-      displayManager.gdm.enable = true;
+      desktopManager.gnome.enable = false;
+      displayManager.gdm.enable = false;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = false;
+    desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      cosmic-greeter.enable = false;
+      cosmic-greeter.enable = true;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
@@ -374,7 +374,7 @@
   };
   #Sudo
   security = {
-    pam.services.mate.enableGnomeKeyring = true;
+    pam.services.cosmic-greeter.enableGnomeKeyring = true;
     sudo = {
       enable = true;
       extraRules = [
