@@ -7,7 +7,6 @@ appConfig:
   statusCheck: false
   theme: one-dark
   fontAwesomeKey: c94dc2b452
-  customCss: '.clock p.time { font-size: 3rem !important; }'
   layout: vertical
   iconSize: small
   auth:
@@ -22,8 +21,9 @@ sections:
       hideForGuests: false
     widgets:
       - type: clock
-        id: 0_513_clock
         format: hu-HU
+        hideDate: false
+        use12Hour: false
       - type: weather
         options:
           apiKey: efdbade728b37086877a5e83442004db
