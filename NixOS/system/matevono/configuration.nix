@@ -71,7 +71,7 @@
   boot = {
     consoleLogLevel = 3;
 
-    kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_6_12;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
@@ -271,10 +271,10 @@
     xserver = {
       enable = true;
       desktopManager.gnome.enable = false;
-      displayManager.gdm.enable = true;
+      displayManager.gdm.enable = false;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = false;
+    desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
@@ -374,7 +374,7 @@
   };
   #Sudo
   security = {
-    pam.services.mate.enableGnomeKeyring = true;
+    pam.services.cosmic-greeter.enableGnomeKeyring = true;
     sudo = {
       enable = true;
       extraRules = [
