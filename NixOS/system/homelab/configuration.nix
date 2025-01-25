@@ -94,6 +94,7 @@
     description = "Máté Tamás Kiss";
     extraGroups = ["networkmanager" "wheel" "docker"];
     shell = pkgs.fish;
+    linger = true;
     packages = with pkgs; [];
   };
 
@@ -138,21 +139,38 @@
   ];
 
   systemd.units."dev-tpmrm0.device".enable = false;
-  systemd.services = {
-    "set_fb_blank_1" = {
-      description = "Set framebuffer blank state to 1";
-      enable = true;
-      after = ["multi-user.target"];
-      script = "echo 1 > /sys/class/graphics/fb0/blank";
-      wantedBy = ["multi-user.target"];
-    };
+  systemd = {
+    user.services = {
+      "kshare" = {
+        enable = true;
+        after = ["network.target"];
+        wantedBy = ["default.target"];
+        description = "Http File server";
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = ''/home/mate/goserver/ghfs -l 8181 --prefix /films -r /mnt/khdd/kshare '';
+        };
+      };
 
-    "glances-manual" = {
-      description = "Glances manual";
-      enable = true;
-      after = ["multi-user.target"];
-      script = "/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu";
-      wantedBy = ["multi-user.target"];
+      "glances-manual" = {
+        description = "Glances manual";
+        enable = true;
+        after = ["multi-user.target" "network.target"];
+	 serviceConfig = {
+          Type = "simple";
+          ExecStart = '' /run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu'';
+        };
+        wantedBy = ["default.target"];
+      };
+    };
+    services = {
+      "set_fb_blank_1" = {
+        description = "Set framebuffer blank state to 1";
+        enable = true;
+        after = ["multi-user.target"];
+        script = "echo 1 > /sys/class/graphics/fb0/blank";
+        wantedBy = ["multi-user.target"];
+      };
     };
   };
   services = {
@@ -160,7 +178,7 @@
     vscode-server.enable = true;
 
     jellyfin = {
-      enable = true;
+      enable = false;
       openFirewall = true;
       user = "mate";
     };

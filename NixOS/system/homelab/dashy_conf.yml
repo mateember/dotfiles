@@ -33,7 +33,7 @@ sections:
         useProxy: true
         options:
           hostname: http://host.docker.internal:61208
-      - type: gl-mem-speedometer
+      - type: gl-current-mem
         useProxy: true
         options:
           hostname: http://host.docker.internal:61208
@@ -72,11 +72,19 @@ sections:
         url: http://homelab.tailba7efc.ts.net:8384/
         target: sametab
         id: 3_836_syncthing
+      - &ref_4
+        title: OpenSpeedTest
+        icon: si-speedtest
+        url: http://homelab.tailba7efc.ts.net:3000/
+        target: sametab
+        id: 3_836_openspeedtest       
     filteredItems:
       - *ref_0
       - *ref_1
       - *ref_2
       - *ref_3
+      - &ref_4
+
     icon: fas fa-cloud
   - name: Dev & Cloud
     icon: far fa-code

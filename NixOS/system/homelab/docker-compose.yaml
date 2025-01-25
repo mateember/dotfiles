@@ -1,0 +1,80 @@
+
+services:
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    container_name: syncthing
+    hostname: HomeServer
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    ports:
+      - "8384:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    volumes:
+      - /var/lib/syncthing:/config
+      - /mnt/khdd:/data
+    restart: unless-stopped
+
+  openspeedtest:
+    image: openspeedtest/latest
+    container_name: openspeedtest
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    volumes:
+      - /var/lib/qbittorrent/appdata:/config
+      - /mnt/khdd/kshare:/downloads
+    restart: unless-stopped
+
+  dashy:
+    image: lissy93/dashy:latest
+    container_name: dashy
+    ports:
+      - "8888:8080"
+    volumes:
+      - /home/mate/dotfiles/NixOS/system/homelab/dashy_conf.yml:/app/user-data/conf.yml
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    user: 1000:1000
+    ports:
+    - "8096:8096"
+    group_add:
+      - "303"
+      - "26"
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    volumes:
+      - /var/lib/jellyfin:/config
+      - /var/lib/jellyfin/cache:/cache
+      - type: bind
+        source: /mnt/khdd/kshare
+        target: /media
+      # Optional - extra fonts to be used during transcoding with subtitle burn-in
+     # - type: bind
+       # source: /path/to/fonts
+     #   target: /usr/local/share/fonts/custom
+     #   read_only: true
+    restart: 'unless-stopped'
+
