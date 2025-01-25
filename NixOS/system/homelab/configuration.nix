@@ -89,13 +89,20 @@
   console.keyMap = "hu";
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.mate = {
-    isNormalUser = true;
-    description = "Máté Tamás Kiss";
-    extraGroups = ["networkmanager" "wheel" "docker"];
-    shell = pkgs.fish;
-    linger = true;
-    packages = with pkgs; [];
+  users = {
+    groups = {
+      mate.gid = 1000;
+    };
+    users = {
+      mate = {
+        isNormalUser = true;
+        description = "Máté Tamás Kiss";
+        extraGroups = ["networkmanager" "wheel" "docker"];
+        shell = pkgs.fish;
+        linger = true;
+        packages = with pkgs; [];
+      };
+    };
   };
 
   security.tpm2.enable = false;
@@ -148,7 +155,18 @@
         description = "Http File server";
         serviceConfig = {
           Type = "simple";
-          ExecStart = ''/home/mate/goserver/ghfs -l 8181 --prefix /films -r /mnt/khdd/kshare '';
+          ExecStart = ''/home/mate/goserver/ghfs -l 7777 --prefix /films -r /mnt/khdd/kshare '';
+        };
+      };
+
+      "kshare_home" = {
+        enable = true;
+        after = ["network.target"];
+        wantedBy = ["default.target"];
+        description = "Http File server";
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = ''/home/mate/goserver/ghfs -l 8181 -r /home/mate --global-upload --global-delete --global-archive'';
         };
       };
 
@@ -156,9 +174,9 @@
         description = "Glances manual";
         enable = true;
         after = ["multi-user.target" "network.target"];
-	 serviceConfig = {
+        serviceConfig = {
           Type = "simple";
-          ExecStart = '' /run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu'';
+          ExecStart = ''/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu'';
         };
         wantedBy = ["default.target"];
       };
@@ -207,7 +225,7 @@
           proxyPass = "http://127.0.0.1:8888";
         };
         locations."/films" = {
-          proxyPass = "http://127.0.0.1:8181";
+          proxyPass = "http://127.0.0.1:7777";
         };
       };
     };

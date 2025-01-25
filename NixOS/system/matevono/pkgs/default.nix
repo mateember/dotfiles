@@ -186,7 +186,7 @@
       okular
       evince
       alsa-utils
-      dig	
+      dig
       playerctl
       pamixer
       which

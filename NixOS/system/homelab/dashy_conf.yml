@@ -61,6 +61,11 @@ sections:
         url: https://hl.kmate.org/films
         target: sametab
         id: 1_836_filmek
+      - &ref_20
+        title: Home Files
+        icon: fas fa-file
+        url: http://homelab.tailba7efc.ts.net:8181/
+        target: sametab
       - &ref_2
         title: qBittorent
         icon: si-qbittorrent
