@@ -10,6 +10,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ./configs/nginx_block.nix
   ];
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
@@ -215,6 +216,15 @@
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
 
+      commonHttpConfig = ''
+
+
+
+
+        log_format bot_logs '$remote_addr - $http_user_agent - $request';
+
+
+      '';
       virtualHosts."hl.kmate.org" = {
         enableACME = true;
         forceSSL = true;
@@ -227,6 +237,19 @@
         locations."/films" = {
           proxyPass = "http://127.0.0.1:7777";
         };
+
+        extraConfig = ''
+
+          if ($bad_bot) { return 444; }
+          if ($bad_urls) { return 444; }
+
+          access_log /var/log/nginx/crawlers.log bot_logs if=$bad_bot;
+          access_log /var/log/nginx/bots.log bot_logs if=$bad_urls;
+
+
+
+
+        '';
       };
     };
 

@@ -50,7 +50,7 @@ services:
     ports:
       - "8888:8080"
     volumes:
-      - /home/mate/dotfiles/NixOS/system/homelab/dashy_conf.yml:/app/user-data/conf.yml
+      - /home/mate/dotfiles/NixOS/system/homelab/configs/dashy_conf.yml:/app/user-data/conf.yml
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

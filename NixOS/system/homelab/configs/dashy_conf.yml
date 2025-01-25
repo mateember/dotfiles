@@ -37,9 +37,8 @@ sections:
         useProxy: true
         options:
           hostname: http://host.docker.internal:61208
-
-
     filteredItems: []
+
   - name: Services
     displayData:
       sortBy: default
@@ -61,56 +60,58 @@ sections:
         url: https://hl.kmate.org/films
         target: sametab
         id: 1_836_filmek
-      - &ref_20
+      - &ref_2
         title: Home Files
         icon: fas fa-file
         url: http://homelab.tailba7efc.ts.net:8181/
         target: sametab
-      - &ref_2
+      - &ref_3
         title: qBittorent
         icon: si-qbittorrent
         url: http://homelab.tailba7efc.ts.net:8080/
         id: 2_836_qbittorent
-      - &ref_3
+      - &ref_4
         title: Syncthing
         icon: si-syncthing
         url: http://homelab.tailba7efc.ts.net:8384/
         target: sametab
         id: 3_836_syncthing
-      - &ref_4
+      - &ref_5
         title: OpenSpeedTest
         icon: si-speedtest
         url: http://homelab.tailba7efc.ts.net:3000/
         target: sametab
-        id: 3_836_openspeedtest       
+        id: 4_836_openspeedtest
     filteredItems:
       - *ref_0
       - *ref_1
       - *ref_2
       - *ref_3
-      - &ref_4
+      - *ref_4
+      - *ref_5
 
     icon: fas fa-cloud
+
   - name: Dev & Cloud
     icon: far fa-code
     items:
-      - &ref_4
+      - &ref_6
         title: GitHub
         icon: favicon
         url: https://github.com/
         id: 0_892_github
-      - &ref_5
+      - &ref_7
         title: StackOverflow
         icon: favicon
         url: http://stackoverflow.com/
         id: 1_892_stackoverflow
-      - &ref_6
-        title: Namecheap 
-        icon: si-namecheap 
+      - &ref_8
+        title: Namecheap
+        icon: si-namecheap
         url: https://namecheap.com
         statusCheckAcceptCodes: '403'
         id: 2_892_namecheap
-      - &ref_11
+      - &ref_9
         title: Documentation
         subItems:
           - title: NixOs Wiki 
@@ -131,60 +132,55 @@ sections:
             color: '#2496ED'
         id: 7_892_documentation
     filteredItems:
-      - *ref_4
-      - *ref_5
       - *ref_6
-      - *ref_11
+      - *ref_7
+      - *ref_8
+      - *ref_9
+
   - name: Social & News
     icon: far fa-thumbs-up
     items:
-      - &ref_12
+      - &ref_10
         title: Discord
         icon: si-discord
         url: https://discord.com/channels/
         id: 0_1118_discord
-      - &ref_13
+      - &ref_11
         title: Mastodon
         icon: si-mastodon
         url: https://mastodon.social/
         id: 1_1118_mastodon
-      - &ref_14
+      - &ref_12
         title: Reddit
         icon: si-reddit
         url: https://www.reddit.com/
         id: 2_1118_reddit
-      - &ref_15
+      - &ref_13
         title: HackerNews
         icon: si-ycombinator
         url: https://news.ycombinator.com/
         id: 3_1118_hackernews
-      - &ref_16
+      - &ref_14
         title: Twitter
         icon: si-twitter
         url: https://twitter.com/
         id: 4_1118_twitter
-      - &ref_17
+      - &ref_15
         title: YouTube
         icon: si-youtube
         url: https://youtube.com/
         id: 5_1118_youtube
-      - &ref_18
+      - &ref_16
         title: Instagram
         icon: si-instagram
         url: https://www.instagram.com/
         id: 6_1118_instagram
-      - &ref_19
-        title: News
-        icon: si-bbc
-        url: https://bbc.co.uk/news
-        id: 7_1118_news
-    
     filteredItems:
+      - *ref_10
+      - *ref_11
       - *ref_12
       - *ref_13
       - *ref_14
       - *ref_15
       - *ref_16
-      - *ref_17
-      - *ref_18
-      - *ref_19
+
