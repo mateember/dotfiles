@@ -54,7 +54,7 @@
     networkmanager.enable = true;
 
     firewall = {
-      enable = false;
+      enable = true;
       trustedInterfaces = [];
       allowedTCPPorts = [443 61208];
       allowedUDPPortRanges = [
@@ -156,7 +156,7 @@
         description = "Http File server";
         serviceConfig = {
           Type = "simple";
-          ExecStart = ''/home/mate/goserver/ghfs -l 7777 --prefix /films -r /mnt/khdd/kshare '';
+          ExecStart = ''/home/mate/goserver/ghfs --config /home/mate/goserver/ghfs.conf'';
         };
       };
 
@@ -167,7 +167,7 @@
         description = "Http File server";
         serviceConfig = {
           Type = "simple";
-          ExecStart = ''/home/mate/goserver/ghfs -l 8181 -r /home/mate --global-upload --global-delete --global-archive'';
+          ExecStart = ''/home/mate/goserver/ghfs -l 8181 -r /home/mate --global-upload --global-mkdir --global-delete --global-archive'';
         };
       };
 
@@ -217,25 +217,23 @@
       recommendedTlsSettings = true;
 
       commonHttpConfig = ''
-
-
-
-
-        log_format bot_logs '$remote_addr - $http_user_agent - $request';
-
-
+	log_format bot_logs '$remote_addr - $http_user_agent - $request';
+	limit_conn_zone $binary_remote_addr zone=addr:10m;
       '';
       virtualHosts."hl.kmate.org" = {
         enableACME = true;
         forceSSL = true;
         locations."/jellyfin" = {
           proxyPass = "http://127.0.0.1:8096";
+	  extraConfig = ''  limit_conn addr 20; '';
         };
         locations."/" = {
           proxyPass = "http://127.0.0.1:8888";
+	  extraConfig = ''  limit_conn addr 10; '';
         };
         locations."/films" = {
           proxyPass = "http://127.0.0.1:7777";
+	  extraConfig = ''  limit_conn addr 10; '';
         };
 
         extraConfig = ''
