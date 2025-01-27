@@ -179,6 +179,7 @@
       dive
       podman-compose
       kdePackages.extra-cmake-modules
+      uv
       pavucontrol
       kdePackages.dolphin
       nautilus

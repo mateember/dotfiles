@@ -213,11 +213,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1737704314,
-        "narHash": "sha256-zta8jvOQ2wRCZmiwFEnS5iCulWAh8e+fLUlQxrgOBjM=",
+        "lastModified": 1737762889,
+        "narHash": "sha256-5HGG09bh/Yx0JA8wtBMAzt0HMCL1bYZ93x4IqzVExio=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a0428685572b134f6594e7d7f5db5e1febbab2d7",
+        "rev": "daf04c5950b676f47a794300657f1d3d14c1a120",
         "type": "github"
       },
       "original": {
@@ -300,11 +300,11 @@
         "xdph": "xdph"
       },
       "locked": {
-        "lastModified": 1737742925,
-        "narHash": "sha256-HWOwfp/S9UZOYQ9507+AKasC+80R0Brqfdz+heUNuXs=",
+        "lastModified": 1737772541,
+        "narHash": "sha256-sQmBGoi4WK3XLj8sOK4ZJeKrlkIPjHV76qTwDloVddQ=",
         "ref": "refs/heads/main",
-        "rev": "80b2fd135b45f2c2e41ceb312314908f6a3e7b30",
-        "revCount": 5718,
+        "rev": "354d4594de6a14e89ab337681dac2d898bc18cbf",
+        "revCount": 5722,
         "submodules": true,
         "type": "git",
         "url": "https://github.com/hyprwm/Hyprland"
@@ -731,11 +731,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1737745048,
-        "narHash": "sha256-BeeLG0e7IU1Sa3zOD7fdf7YTl+MEr3GJmA+IaGMhT0w=",
+        "lastModified": 1737805563,
+        "narHash": "sha256-FeO6Gxl9XaWq4Ys/bc1VeWOlhrhep1U9MZmOeGc8+v8=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "c02d5131744a975c489a559a172f149cbf8a3435",
+        "rev": "5a9dbaee1ccf4ca6dca5e3c32ac0f2d33455a8b3",
         "type": "github"
       },
       "original": {
@@ -928,11 +928,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1737688749,
-        "narHash": "sha256-c67wGumgDSYe6T6OJOKP15H2ODxItUXXekQqDSPjEa0=",
+        "lastModified": 1737782128,
+        "narHash": "sha256-jGnAm7ielzT/LFN34WpJY42Gued3TMOi/z8A4zQoL3Q=",
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "44a3c15f50dba8073feca64ec500daa44d9f366d",
+        "rev": "3c6e47b39a34f6bb0be2bb52e79168970e91f32a",
         "type": "github"
       },
       "original": {
