@@ -3,6 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
+  hyprland,
   ...
 }: {
   nixpkgs.overlays = [
@@ -24,6 +25,8 @@
       enable = true;
       withUWSM = true;
       xwayland.enable = true;
+      # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+      # portalPackage = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
     };
     virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
@@ -35,7 +38,6 @@
     };
     nix-ld = {
       enable = true;
-      #package = pkgs.nix-ld-rs;
       libraries = with pkgs; [
         SDL
         SDL2
@@ -44,7 +46,6 @@
         SDL2_ttf
         SDL_image
         SDL_mixer
-        SDL_ttf
         alsa-lib
         at-spi2-atk
         at-spi2-core
@@ -243,13 +244,15 @@
       kdePackages.kirigami
       polkit_gnome
       kitty
+      mangohud
       #alacritty
       github-desktop
       firefox
       tldr
       freerdp
       bc
-      jetbrains-toolbox
+      jetbrains.clion
+      jetbrains.pycharm-professional
       qt6ct
     ]);
 

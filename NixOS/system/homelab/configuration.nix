@@ -217,23 +217,23 @@
       recommendedTlsSettings = true;
 
       commonHttpConfig = ''
-	log_format bot_logs '$remote_addr - $http_user_agent - $request';
-	limit_conn_zone $binary_remote_addr zone=addr:10m;
+        log_format bot_logs '$remote_addr - $http_user_agent - $request';
+        limit_conn_zone $binary_remote_addr zone=addr:10m;
       '';
       virtualHosts."hl.kmate.org" = {
         enableACME = true;
         forceSSL = true;
         locations."/jellyfin" = {
           proxyPass = "http://127.0.0.1:8096";
-	  extraConfig = ''  limit_conn addr 20; '';
+          extraConfig = ''limit_conn addr 20; '';
         };
         locations."/" = {
           proxyPass = "http://127.0.0.1:8888";
-	  extraConfig = ''  limit_conn addr 10; '';
+          extraConfig = ''limit_conn addr 10; '';
         };
         locations."/films" = {
           proxyPass = "http://127.0.0.1:7777";
-	  extraConfig = ''  limit_conn addr 10; '';
+          extraConfig = ''limit_conn addr 10; '';
         };
 
         extraConfig = ''

@@ -4,6 +4,7 @@
   pkgs,
   pkgs-unstable,
   nixos-cosmic,
+  hyprland,
   ...
 }: {
   imports = [
@@ -49,11 +50,8 @@
     settings = {
       auto-optimise-store = true;
       allowed-users = ["mate"];
-      substituters = ["https://cosmic.cachix.org/"];
-      trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE="];
-
-      #substituters = ["https://hyprland.cachix.org"];
-      #trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+      substituters = ["https://cosmic.cachix.org/" "https://hyprland.cachix.org"];
+      trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
     };
     gc = {
       automatic = true;
@@ -71,7 +69,7 @@
   boot = {
     consoleLogLevel = 3;
 
-    kernelPackages = pkgs.linuxPackages_6_12;
+    kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];

@@ -7,6 +7,7 @@
     nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
@@ -93,6 +94,7 @@
               inherit pkgs;
               inherit pkgs-unstable;
               inherit zen-browser;
+              inherit hyprland;
             };
           }
         ];
@@ -100,6 +102,7 @@
         specialArgs = {
           inherit pkgs-unstable;
           inherit zen-browser;
+          inherit hyprland;
         };
       };
       homelab = lib.nixosSystem {
