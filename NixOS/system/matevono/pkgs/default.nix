@@ -22,7 +22,7 @@
     };
     nm-applet.enable = false;
     hyprland = {
-      enable = true;
+      enable = false;
       withUWSM = true;
       xwayland.enable = true;
       # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;

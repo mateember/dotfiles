@@ -268,7 +268,7 @@
     # Plasma, SDDM
     xserver = {
       enable = true;
-      desktopManager.gnome.enable = false;
+      desktopManager.gnome.enable = true;
       displayManager.gdm.enable = false;
     };
     desktopManager.plasma6.enable = false;
