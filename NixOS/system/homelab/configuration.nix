@@ -55,9 +55,18 @@
 
     firewall = {
       enable = true;
+
       trustedInterfaces = [];
       allowedTCPPorts = [443 61208];
+      allowedUDPPorts = [];
+      allowedTCPPortRanges = [
+        # {from = 26910; to = 26912; }
+      ];
       allowedUDPPortRanges = [
+        {
+          from = 26910;
+          to = 26912;
+        }
       ];
     };
   };
@@ -116,6 +125,10 @@
   programs = {
     fish.enable = true;
     nix-ld.enable = true;
+    steam = {
+      enable = false;
+      dedicatedServer.openFirewall = true;
+    };
   };
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
@@ -135,10 +148,12 @@
     trash-cli
     wirelesstools
     glances
+    unzip
     btop
     ddclient
     iw
     gcc
+    steamcmd
     distrobox
 
     jellyfin

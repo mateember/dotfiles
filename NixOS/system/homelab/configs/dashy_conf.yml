@@ -24,21 +24,23 @@ sections:
         format: hu-HU
         hideDate: false
         use12Hour: false
+        id: 0_513_clock
       - type: weather
         options:
           apiKey: efdbade728b37086877a5e83442004db
-          city: Budapest 
+          city: Budapest
         id: 1_513_weather
       - type: gl-current-cpu
         useProxy: true
         options:
           hostname: http://host.docker.internal:61208
+        id: 2_513_glcurrentcpu
       - type: gl-current-mem
         useProxy: true
         options:
           hostname: http://host.docker.internal:61208
+        id: 3_513_glcurrentmem
     filteredItems: []
-
   - name: Services
     displayData:
       sortBy: default
@@ -65,23 +67,36 @@ sections:
         icon: fas fa-file
         url: http://homelab.tailba7efc.ts.net:8181/
         target: sametab
+        id: 2_836_homefiles
       - &ref_3
         title: qBittorent
         icon: si-qbittorrent
         url: http://homelab.tailba7efc.ts.net:8080/
-        id: 2_836_qbittorent
+        id: 3_836_qbittorent
       - &ref_4
         title: Syncthing
         icon: si-syncthing
         url: http://homelab.tailba7efc.ts.net:8384/
         target: sametab
-        id: 3_836_syncthing
+        id: 4_836_syncthing
       - &ref_5
         title: OpenSpeedTest
         icon: si-speedtest
         url: http://homelab.tailba7efc.ts.net:3000/
         target: sametab
-        id: 4_836_openspeedtest
+        id: 5_836_openspeedtest
+      - &ref_6
+        title: 7D2D Dashboard
+        icon: si-framework7
+        url: http://homelab.tailba7efc.ts.net:9999/app
+        target: sametab
+        id: 6_836_dddashboard
+      - &ref_7
+        title: Moonlight Panel
+        icon: si-mega
+        url: https://matewin11.tailba7efc.ts.net:47990/
+        target: sametab
+        id: 7_836_moonlightpanel
     filteredItems:
       - *ref_0
       - *ref_1
@@ -89,36 +104,36 @@ sections:
       - *ref_3
       - *ref_4
       - *ref_5
-
+      - *ref_6
+      - *ref_7
     icon: fas fa-cloud
-
   - name: Dev & Cloud
     icon: far fa-code
     items:
-      - &ref_6
+      - &ref_8
         title: GitHub
         icon: favicon
         url: https://github.com/
         id: 0_892_github
-      - &ref_7
+      - &ref_9
         title: StackOverflow
         icon: favicon
         url: http://stackoverflow.com/
         id: 1_892_stackoverflow
-      - &ref_8
+      - &ref_10
         title: Namecheap
         icon: si-namecheap
         url: https://namecheap.com
         statusCheckAcceptCodes: '403'
         id: 2_892_namecheap
-      - &ref_9
+      - &ref_11
         title: Documentation
         subItems:
-          - title: NixOs Wiki 
+          - title: NixOs Wiki
             url: https://wiki.nixos.org
             icon: si-nixos
             color: '#F7DF1E'
-          - title: Arch Wiki 
+          - title: Arch Wiki
             url: https://wiki.archlinux.org
             icon: si-archlinux
             color: '#066bd1'
@@ -130,57 +145,55 @@ sections:
             url: https://docs.docker.com/
             icon: si-docker
             color: '#2496ED'
-        id: 7_892_documentation
+        id: 3_892_documentation
     filteredItems:
-      - *ref_6
-      - *ref_7
       - *ref_8
       - *ref_9
-
+      - *ref_10
+      - *ref_11
   - name: Social & News
     icon: far fa-thumbs-up
     items:
-      - &ref_10
+      - &ref_12
         title: Discord
         icon: si-discord
         url: https://discord.com/channels/
         id: 0_1118_discord
-      - &ref_11
+      - &ref_13
         title: Mastodon
         icon: si-mastodon
         url: https://mastodon.social/
         id: 1_1118_mastodon
-      - &ref_12
+      - &ref_14
         title: Reddit
         icon: si-reddit
         url: https://www.reddit.com/
         id: 2_1118_reddit
-      - &ref_13
+      - &ref_15
         title: HackerNews
         icon: si-ycombinator
         url: https://news.ycombinator.com/
         id: 3_1118_hackernews
-      - &ref_14
+      - &ref_16
         title: Twitter
         icon: si-twitter
         url: https://twitter.com/
         id: 4_1118_twitter
-      - &ref_15
+      - &ref_17
         title: YouTube
         icon: si-youtube
         url: https://youtube.com/
         id: 5_1118_youtube
-      - &ref_16
+      - &ref_18
         title: Instagram
         icon: si-instagram
         url: https://www.instagram.com/
         id: 6_1118_instagram
     filteredItems:
-      - *ref_10
-      - *ref_11
       - *ref_12
       - *ref_13
       - *ref_14
       - *ref_15
       - *ref_16
-
+      - *ref_17
+      - *ref_18
