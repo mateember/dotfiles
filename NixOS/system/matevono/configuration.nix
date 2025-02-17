@@ -294,7 +294,8 @@
     tumbler.enable = true;
 
     tailscale.enable = true;
-    tailscale.useRoutingFeatures = "client";
+    tailscale.useRoutingFeatures = "both";
+    tailscale.openFirewall = true;
     #openssh.enable = true;
 
     printing.enable = true;
