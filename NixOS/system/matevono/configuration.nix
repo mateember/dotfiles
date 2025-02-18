@@ -44,7 +44,6 @@
     };
     */
   };
-
   #flake and nix setting
   nix = {
     settings = {
@@ -188,9 +187,6 @@
   };
 
   # Enable CUPS to print documents.
-
-  #Pipewire
-  security.rtkit.enable = true;
 
   #User
   users = {
@@ -373,6 +369,7 @@
   };
   #Sudo
   security = {
+    rtkit.enable = true;
     pam.services.cosmic-greeter.enableGnomeKeyring = true;
     sudo = {
       enable = true;

@@ -6,9 +6,6 @@
   hyprland,
   ...
 }: {
-  nixpkgs.overlays = [
-  ];
-
   #Chaotic AUR
   chaotic.mesa-git.enable = false;
   chaotic.mesa-git.fallbackSpecialisation = false;
@@ -251,6 +248,7 @@
       tldr
       freerdp
       bc
+      geekbench
       jetbrains.clion
       jetbrains.pycharm-professional
       qt6ct

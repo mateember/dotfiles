@@ -45,6 +45,7 @@
       config.allowUnfree = true;
       localSystem = {inherit system;};
     };
+  
   in {
     nixosConfigurations = {
       matenix = lib-unstable.nixosSystem {
@@ -81,7 +82,6 @@
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
           nixos-cosmic.nixosModules.default
-
           #chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
           {
@@ -97,7 +97,7 @@
               inherit hyprland;
             };
           }
-        ];
+					];
 
         specialArgs = {
           inherit pkgs-unstable;
