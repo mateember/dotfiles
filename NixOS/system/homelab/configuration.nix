@@ -143,6 +143,7 @@
     zellij
     tmux
     vbetool
+    killall
     bat
     gh
     trash-cli
@@ -248,7 +249,10 @@
         };
         locations."/films" = {
           proxyPass = "http://127.0.0.1:7777";
-          extraConfig = ''limit_conn addr 10; '';
+          extraConfig = ''
+            limit_conn addr 10;
+            client_max_body_size 12G;
+          '';
         };
 
         extraConfig = ''
@@ -284,13 +288,14 @@
           "map to guest" = "bad user";
         };
         "public" = {
-          "path" = "/mnt/khdd/kshare";
+          "path" = "/mnt/khdd";
           "browseable" = "yes";
           "read only" = "no";
           "guest ok" = "yes";
           "guest only" = "yes";
           "create mask" = "0644";
           "directory mask" = "0755";
+          "force user" = "mate";
         };
       };
     };
