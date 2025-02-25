@@ -45,7 +45,6 @@
       config.allowUnfree = true;
       localSystem = {inherit system;};
     };
-  
   in {
     nixosConfigurations = {
       matenix = lib-unstable.nixosSystem {
@@ -97,7 +96,7 @@
               inherit hyprland;
             };
           }
-					];
+        ];
 
         specialArgs = {
           inherit pkgs-unstable;

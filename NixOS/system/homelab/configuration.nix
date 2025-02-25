@@ -210,6 +210,7 @@
   };
   services = {
     tailscale.enable = true;
+    tailscale.openFirewall = true;
     vscode-server.enable = true;
 
     jellyfin = {
