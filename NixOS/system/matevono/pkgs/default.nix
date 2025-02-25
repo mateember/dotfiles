@@ -19,7 +19,7 @@
     };
     nm-applet.enable = false;
     hyprland = {
-      enable = false;
+      enable = true;
       withUWSM = true;
       xwayland.enable = true;
       # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
@@ -182,7 +182,6 @@
       kdePackages.dolphin
       nautilus
       appimage-run
-      okular
       evince
       alsa-utils
       dig
@@ -235,7 +234,8 @@
       wl-clipboard-rs
       bat
       ghostty
-      konsole
+      kdePackages.konsole
+      kdePackages.okular
       #lact
       #kdePackages.polkit-kde-agent-1
       kdePackages.kirigami
