@@ -4,6 +4,7 @@
   pkgs,
   pkgs-unstable,
   hyprland,
+  winapps,
   ...
 }: {
   #Chaotic AUR
@@ -195,6 +196,8 @@
       edid-decode
       gnome-tweaks
       nautilus-python
+      winapps.packages."${system}".winapps
+      winapps.packages."${system}".winapps-launcher # optional
       vlc
       microsoft-edge
       virt-viewer
@@ -245,8 +248,9 @@
       #alacritty
       github-desktop
       firefox
+      brave
       tldr
-      freerdp
+      freerdp3
       bc
       geekbench
       jetbrains.clion

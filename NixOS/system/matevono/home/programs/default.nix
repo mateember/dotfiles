@@ -66,9 +66,10 @@
 
       #gnome
       gnomeExtensions.ddterm
+      gnomeExtensions.gsconnect
       gnomeExtensions.desktop-icons-ng-ding
     ]);
 
-  services.kdeconnect.enable = true;
+  # services.kdeconnect.enable = true;
   services.blueman-applet.enable = false;
 }

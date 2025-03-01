@@ -18,6 +18,10 @@
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    winapps = {
+      url = "github:winapps-org/winapps";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
   outputs = {
@@ -30,6 +34,7 @@
     zen-browser,
     nixos-cosmic,
     vscode-server,
+    winapps,
     ...
   }: let
     system = "x86_64-linux";
@@ -45,7 +50,6 @@
       config.allowUnfree = true;
       localSystem = {inherit system;};
     };
-  
   in {
     nixosConfigurations = {
       matenix = lib-unstable.nixosSystem {
@@ -97,12 +101,13 @@
               inherit hyprland;
             };
           }
-					];
+        ];
 
         specialArgs = {
           inherit pkgs-unstable;
           inherit zen-browser;
           inherit hyprland;
+          inherit winapps;
         };
       };
       homelab = lib.nixosSystem {
