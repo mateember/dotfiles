@@ -127,3 +127,4 @@ services:
         hard: "10240"
 
     restart: unless-stopped # INFO - NEVER USE WITH START_MODE=4 or START_MODE=0
+    # restart: no # INFO - NEVER USE WITH START_MODE=4 or START_MODE=0

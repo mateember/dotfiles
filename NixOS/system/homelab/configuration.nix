@@ -293,10 +293,10 @@
           "browseable" = "yes";
           "read only" = "no";
           "guest ok" = "yes";
-          "guest only" = "yes";
+          "guest only" = "no";
           "create mask" = "0644";
           "directory mask" = "0755";
-          "force user" = "mate";
+	  "writeable" = "yes";
         };
       };
     };
