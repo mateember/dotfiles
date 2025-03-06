@@ -14,6 +14,7 @@
   programs = {
     fish.enable = true;
     zsh.enable = true;
+    fuse.userAllowOther = true;
     steam = {
       enable = true;
       remotePlay.openFirewall = true;
@@ -193,6 +194,7 @@
       icu
       gnome-boxes
       qemu
+      rclone
       edid-decode
       gnome-tweaks
       nautilus-python

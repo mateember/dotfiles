@@ -151,22 +151,51 @@
   networking.useDHCP = false;
   networking.networkmanager.enable = true;
 
-  systemd.network = {
-    enable = false;
+  systemd = {
+    user.services = {
+      rclone-icloud = {
+        enable = true;
+        description = "rclone: Remote FUSE filesystem for cloud storage config";
+        after = ["network-online.target"];
+        wantedBy = ["network-online.target"];
 
-    networks."10-lan" = {
-      matchConfig.Name = "enp7s0";
-      networkConfig.DHCP = "yes";
-      networkConfig.IPv6AcceptRA = true;
-      networkConfig.DNS = "192.168.1.173";
-      routes = [
-        {
-          InitialCongestionWindow = 30;
-          InitialAdvertisedReceiveWindow = 70;
-          #TCPCongestionControlAlgorithm = "bbr";
-        }
-      ];
-      linkConfig.RequiredForOnline = "routable";
+        serviceConfig = {
+          Type = "notify";
+          ExecStartPre = ''/run/current-system/sw/bin/mkdir -p /home/mate/Documents/Egyetem/iCloud/'';
+          ExecStart = ''
+            ${pkgs.rclone}/bin/rclone mount \
+              --config=/home/mate/.config/rclone/rclone.conf \
+              --vfs-cache-mode full \
+              --vfs-cache-max-size 100M \
+              --log-level INFO \
+              --log-file /tmp/rclone-59.log \
+              --umask 022 \
+              --allow-other \
+              59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
+          '';
+          ExecStop = ''/run/current-system/sw/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
+                 Environment = [ "PATH=/run/wrappers/bin/:$PATH" ];
+ 
+        };
+      };
+    };
+    network = {
+      enable = false;
+
+      networks."10-lan" = {
+        matchConfig.Name = "enp7s0";
+        networkConfig.DHCP = "yes";
+        networkConfig.IPv6AcceptRA = true;
+        networkConfig.DNS = "192.168.1.173";
+        routes = [
+          {
+            InitialCongestionWindow = 30;
+            InitialAdvertisedReceiveWindow = 70;
+            #TCPCongestionControlAlgorithm = "bbr";
+          }
+        ];
+        linkConfig.RequiredForOnline = "routable";
+      };
     };
   };
 
