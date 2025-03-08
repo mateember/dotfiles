@@ -34,15 +34,13 @@
     #  xone.enable = true;
     #  xpadneo.enable = true;
 
-    /*
-      opengl = {
-      package = pkgs-unstable.mesa.drivers;
-
-      # if you also want 32-bit support
-      driSupport32Bit = true;
-      package32 = pkgs-unstable.pkgsi686Linux.mesa.drivers;
+    graphics = {
+      enable = true;
+      enable32Bit = true;
+      extraPackages = with pkgs; [
+        intel-compute-runtime
+      ];
     };
-    */
   };
   #flake and nix setting
   nix = {
@@ -107,7 +105,7 @@
     loader = {
       efi = {
         canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot/efi"; # ← use the same mount point here.
+        efiSysMountPoint = "/boot/"; # ← use the same mount point here.
       };
 
       grub = {
@@ -174,8 +172,7 @@
               59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
           '';
           ExecStop = ''/run/current-system/sw/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
-                 Environment = [ "PATH=/run/wrappers/bin/:$PATH" ];
- 
+          Environment = ["PATH=/run/wrappers/bin/:$PATH"];
         };
       };
     };

@@ -296,7 +296,7 @@
           "guest only" = "no";
           "create mask" = "0644";
           "directory mask" = "0755";
-	  "writeable" = "yes";
+          "writeable" = "yes";
         };
       };
     };

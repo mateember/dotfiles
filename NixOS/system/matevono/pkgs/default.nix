@@ -177,6 +177,7 @@
       fzf
       podman-tui
       dive
+      efibootmgr
       podman-compose
       kdePackages.extra-cmake-modules
       uv
@@ -244,6 +245,7 @@
       #lact
       #kdePackages.polkit-kde-agent-1
       kdePackages.kirigami
+      davinci-resolve
       polkit_gnome
       kitty
       mangohud
