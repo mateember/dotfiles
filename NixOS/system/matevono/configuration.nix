@@ -164,13 +164,17 @@
             ${pkgs.rclone}/bin/rclone mount \
               --config=/home/mate/.config/rclone/rclone.conf \
               --vfs-cache-mode full \
-              --vfs-cache-max-size 100M \
+              --vfs-cache-max-size 1000M \
+              --vfs-cache-max-age=9999h \
               --log-level INFO \
               --log-file /tmp/rclone-59.log \
               --umask 022 \
               --allow-other \
+	      --rc \
               59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
           '';
+          Restart = "always";
+          RestartSec = "30s";
           ExecStop = ''/run/current-system/sw/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
           Environment = ["PATH=/run/wrappers/bin/:$PATH"];
         };
@@ -268,7 +272,7 @@
 
         #Optional helps save long term battery health
         #START_CHARGE_THRESH_BAT0 = 40; # 40 and bellow it starts to charge
-        STOP_CHARGE_THRESH_BAT0 = 80; # 80 and above it stops charging
+        # STOP_CHARGE_THRESH_BAT0 = 80; # 80 and above it stops charging
       };
     };
 
@@ -405,6 +409,14 @@
           commands = [
             {
               command = "${pkgs.systemd}/bin/systemctl suspend";
+              options = ["NOPASSWD"];
+            }
+            {
+              command = "/run/current-system/sw/bin/tlp";
+              options = ["NOPASSWD"];
+            }
+            {
+              command = "/run/current-system/sw/bin/tlp-stat";
               options = ["NOPASSWD"];
             }
             {
