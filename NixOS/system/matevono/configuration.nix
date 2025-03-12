@@ -159,7 +159,7 @@
 
         serviceConfig = {
           Type = "notify";
-          ExecStartPre = ''/run/current-system/sw/bin/mkdir -p /home/mate/Documents/Egyetem/iCloud/'';
+          ExecStartPre = ''/run/current-system/sw/bin/mkdir -p /home/mate/Documents/Egyetem/iCloud/ '';
           ExecStart = ''
             ${pkgs.rclone}/bin/rclone mount \
               --config=/home/mate/.config/rclone/rclone.conf \
@@ -175,7 +175,7 @@
           '';
           Restart = "always";
           RestartSec = "30s";
-          ExecStop = ''/run/current-system/sw/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
+          ExecStop = ''/run/wrappers/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
           Environment = ["PATH=/run/wrappers/bin/:$PATH"];
         };
       };
@@ -235,6 +235,7 @@
         "qemu"
         "kvm"
         "libvirtd"
+        "fuse"
         "sshd"
         "networkmanager"
         "wheel"

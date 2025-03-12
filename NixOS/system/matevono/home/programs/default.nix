@@ -30,7 +30,6 @@
       ookla-speedtest
       arp-scan
       nitch
-      zen-browser.packages."${system}".default
       xorg.xkill
       xorg.xeyes
       #ghostty.packages."${system}".default
