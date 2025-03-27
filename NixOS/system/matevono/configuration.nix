@@ -289,6 +289,12 @@
       alsa.support32Bit = true;
       pulse.enable = true;
       jack.enable = true;
+      extraConfig.pipewire = { 
+      "default.clock.quantum"= 32;
+"default.clock.min-quantum" = 32;
+"default.clock.max-quantum" = 32;
+
+      };
     };
 
     xserver.xkb.layout = "hu";
@@ -297,14 +303,14 @@
     xserver = {
       enable = true;
       desktopManager.gnome.enable = true;
-      displayManager.gdm.enable = false;
+      displayManager.gdm.enable = true;
     };
     desktopManager.plasma6.enable = false;
     desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      cosmic-greeter.enable = true;
+      cosmic-greeter.enable = false;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
