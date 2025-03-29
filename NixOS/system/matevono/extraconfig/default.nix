@@ -1,13 +1,10 @@
 {
-    config,
-    lib,
-    pkgs,
-    ...
-}: 
-{
-
-    imports = [
-        ./udev.nix
-    ];
-
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [
+    ./udev.nix
+  ];
 }

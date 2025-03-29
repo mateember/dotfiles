@@ -162,17 +162,17 @@
           Type = "notify";
           ExecStartPre = ''/run/current-system/sw/bin/mkdir -p /home/mate/Documents/Egyetem/iCloud/ '';
           ExecStart = ''
-            ${pkgs.rclone}/bin/rclone mount \
-              --config=/home/mate/.config/rclone/rclone.conf \
-              --vfs-cache-mode full \
-              --vfs-cache-max-size 1000M \
-              --vfs-cache-max-age=9999h \
-              --log-level INFO \
-              --log-file /tmp/rclone-59.log \
-              --umask 022 \
-              --allow-other \
-	      --rc \
-              59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
+                 ${pkgs.rclone}/bin/rclone mount \
+                   --config=/home/mate/.config/rclone/rclone.conf \
+                   --vfs-cache-mode full \
+                   --vfs-cache-max-size 1000M \
+                   --vfs-cache-max-age=9999h \
+                   --log-level INFO \
+                   --log-file /tmp/rclone-59.log \
+                   --umask 022 \
+                   --allow-other \
+            --rc \
+                   59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
           '';
           Restart = "always";
           RestartSec = "30s";
@@ -291,11 +291,10 @@
       alsa.support32Bit = true;
       pulse.enable = true;
       jack.enable = true;
-      extraConfig.pipewire = { 
-      "default.clock.quantum"= 32;
-"default.clock.min-quantum" = 32;
-"default.clock.max-quantum" = 32;
-
+      extraConfig.pipewire = {
+        "default.clock.quantum" = 32;
+        "default.clock.min-quantum" = 32;
+        "default.clock.max-quantum" = 32;
       };
     };
 

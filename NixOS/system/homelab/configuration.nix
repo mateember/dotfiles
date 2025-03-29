@@ -152,6 +152,7 @@
     neovim
     fish
     starship
+    lazygit
     zoxide
     git
     fastfetch

@@ -226,6 +226,7 @@
       unzip
       gdb
       git
+      lazygit
       cmake
       gcc
       gnumake
@@ -237,13 +238,12 @@
       curl
       libxml2
 
-     #Default
+      #Default
       sox
       tinycc
       netcat-openbsd
       rtl-sdr
       gnuradio
-
     ])
     ++ (with pkgs-unstable; [
       wl-clipboard-rs
