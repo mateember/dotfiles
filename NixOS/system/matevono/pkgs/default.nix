@@ -236,6 +236,14 @@
       nix-prefetch-git
       curl
       libxml2
+
+     #Default
+      sox
+      tcc
+      netcat-openbsd
+      rtl-sdr
+      gnuradio
+
     ])
     ++ (with pkgs-unstable; [
       wl-clipboard-rs

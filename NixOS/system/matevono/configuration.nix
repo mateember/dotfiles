@@ -11,6 +11,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./pkgs
+    ./extraconfig
   ];
 
   hardware = {
@@ -245,6 +246,7 @@
         "libvirt"
         "docker"
         "podman"
+        "plugdev"
       ];
       shell = pkgs.fish;
     };
