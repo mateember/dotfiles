@@ -14,7 +14,7 @@ services:
       - "22000:22000/udp"
       - "21027:21027/udp"
     volumes:
-      - /var/lib/syncthing:/config
+      - /home/mate/randomfiles/syncthing:/config
       - /mnt/khdd:/data
     restart: unless-stopped
 
@@ -40,7 +40,7 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
     volumes:
-      - /var/lib/qbittorrent/appdata:/config
+      - /home/mate/randomfiles/qbittorrent/appdata:/config
       - /mnt/khdd/kshare:/downloads
     restart: unless-stopped
 
@@ -66,8 +66,8 @@ services:
     devices:
       - /dev/dri/renderD128:/dev/dri/renderD128
     volumes:
-      - /var/lib/jellyfin:/config
-      - /var/lib/jellyfin/cache:/cache
+      - /home/mate/randomfiles/jellyfin:/config
+      - /home/mate/randomfiles/jellyfin/cache:/cache
       - type: bind
         source: /mnt/khdd/kshare
         target: /media
