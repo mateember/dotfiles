@@ -12,7 +12,23 @@
     ./hardware-configuration.nix
     ./configs/nginx_block.nix
   ];
-  nix.settings.experimental-features = ["nix-command" "flakes"];
+
+  nix = {
+    settings = {
+      auto-optimise-store = true;
+      allowed-users = ["mate"];
+    };
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
+    extraOptions = ''
+      experimental-features = nix-command flakes
+      keep-outputs = true
+      keep-derivations = true
+    '';
+  };
 
   # Bootloader.
 

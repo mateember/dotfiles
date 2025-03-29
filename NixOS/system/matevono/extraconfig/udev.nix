@@ -2,6 +2,7 @@
     config,
     lib,
     pkgs,
+    ...
 }: 
 {
 
@@ -134,6 +135,6 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="1f4d", ATTRS{idProduct}=="d286", ENV{ID_SOF
 # PROlectrix DV107669 (FC0012)
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="1f4d", ATTRS{idProduct}=="d803", ENV{ID_SOFTWARE_RADIO}="1", MODE="0660", GROUP="plugdev"
 
-    ''
+    '';
 
 }

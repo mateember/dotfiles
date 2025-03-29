@@ -239,7 +239,7 @@
 
      #Default
       sox
-      tcc
+      tinycc
       netcat-openbsd
       rtl-sdr
       gnuradio
