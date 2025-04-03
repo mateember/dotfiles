@@ -40,6 +40,10 @@
       enable32Bit = true;
       extraPackages = with pkgs; [
         intel-compute-runtime
+        vpl-gpu-rt
+        libvdpau-va-gl
+        intel-media-driver
+        intel-vaapi-driver
       ];
     };
   };
@@ -69,7 +73,7 @@
 
     kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
-    blacklistedKernelModules = ["xpad"];
+    blacklistedKernelModules = ["xpad" ];
     initrd.kernelModules = [];
     kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
 
@@ -335,6 +339,9 @@
 
     printing.enable = true;
     printing.drivers = [pkgs.epson-escpr];
+
+    avahi.publish.enable = true;
+    avahi.publish.userServices = true;
   };
 
   # Open ports in the firewall.
@@ -343,10 +350,16 @@
   networking.firewall = {
     enable = true;
     allowedUDPPorts = [24642];
+    allowedTCPPorts = [47984 47989 47990 48010];
+
     allowedUDPPortRanges = [
       {
         from = 1714;
         to = 1764;
+      }
+      {
+        from = 47998;
+        to = 48000;
       }
     ];
     allowedTCPPortRanges = [
@@ -457,6 +470,12 @@
           systemd
         ]}:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
       '';
+    };
+    wrappers.sunshine = {
+      owner = "root";
+      group = "root";
+      capabilities = "cap_sys_admin+p";
+      source = "${pkgs.sunshine}/bin/sunshine";
     };
   };
 

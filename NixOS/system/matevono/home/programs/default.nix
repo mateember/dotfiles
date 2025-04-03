@@ -35,7 +35,10 @@
       #ghostty.packages."${system}".default
     ])
     ++ (with pkgs-unstable; [
-      vscode
+      vscode-fhs
+      zed-editor-fhs
+      sunshine
+      brave
       neovim
       celluloid
       openboard

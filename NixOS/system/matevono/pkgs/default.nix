@@ -193,6 +193,7 @@
       pamixer
       which
       v4l-utils
+      libva-utils
       icu
       gnome-boxes
       qemu
@@ -206,6 +207,7 @@
       microsoft-edge
       virt-viewer
       spice
+      mutter
       spice-gtk
       spice-protocol
       win-virtio
@@ -222,6 +224,7 @@
       github-desktop
       valgrind
       llvm
+      xterm
       clang
       unzip
       gdb
@@ -261,7 +264,6 @@
       #alacritty
       github-desktop
       firefox
-      brave
       tldr
       freerdp3
       bc

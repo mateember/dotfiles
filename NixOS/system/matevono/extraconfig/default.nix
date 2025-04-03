@@ -5,6 +5,6 @@
   ...
 }: {
   imports = [
-    ./udev.nix
+    #./udev.nix
   ];
 }
