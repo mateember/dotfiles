@@ -229,6 +229,7 @@
     tailscale.enable = true;
     tailscale.openFirewall = true;
     vscode-server.enable = true;
+    fail2ban.enable = true;
 
     jellyfin = {
       enable = false;
