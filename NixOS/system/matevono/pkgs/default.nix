@@ -195,6 +195,7 @@
       v4l-utils
       libva-utils
       icu
+      jellyfin-ffmpeg
       gnome-boxes
       qemu
       rclone

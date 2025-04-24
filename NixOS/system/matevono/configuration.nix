@@ -54,6 +54,7 @@
       allowed-users = ["mate"];
       substituters = ["https://cosmic.cachix.org/" "https://hyprland.cachix.org" "https://winapps.cachix.org/"];
       trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g="];
+      download-buffer-size = 1024288000;
     };
     gc = {
       automatic = true;
@@ -73,7 +74,7 @@
 
     kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
-    blacklistedKernelModules = ["xpad" ];
+    blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
     kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
 

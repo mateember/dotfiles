@@ -14,7 +14,7 @@
     home-manager = {
       #url = "github:nix-community/home-manager/release-24.05";
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
@@ -95,7 +95,7 @@
             home-manager.users.mate = import ./system/matevono/home;
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {
-              inherit pkgs;
+              #inherit pkgs;
               inherit pkgs-unstable;
               inherit zen-browser;
               inherit hyprland;
