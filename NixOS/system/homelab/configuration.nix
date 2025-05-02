@@ -156,6 +156,7 @@
     zoxide
     git
     fastfetch
+    rclone
     speedtest-cli
     zellij
     tmux
@@ -181,38 +182,63 @@
 
   systemd.units."dev-tpmrm0.device".enable = false;
   systemd = {
-    user.services = {
-      "kshare" = {
-        enable = true;
-        after = ["network.target"];
-        wantedBy = ["default.target"];
-        description = "Http File server";
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = ''/home/mate/goserver/ghfs --config /home/mate/goserver/ghfs.conf'';
+    user = {
+      timers = {
+        "rclone-sync" = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "daily";
+            Persistent = true;
+          };
         };
       };
-
-      "kshare_home" = {
-        enable = true;
-        after = ["network.target"];
-        wantedBy = ["default.target"];
-        description = "Http File server";
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = ''/home/mate/goserver/ghfs -l 8181 -r /home/mate --global-upload --global-mkdir --global-delete --global-archive'';
+      services = {
+        "kshare" = {
+          enable = true;
+          after = ["network.target"];
+          wantedBy = ["default.target"];
+          description = "Http File server";
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = ''/home/mate/goserver/ghfs --config /home/mate/goserver/ghfs.conf'';
+          };
         };
-      };
 
-      "glances-manual" = {
-        description = "Glances manual";
-        enable = true;
-        after = ["multi-user.target" "network.target"];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = ''/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu'';
+        "kshare_home" = {
+          enable = true;
+          after = ["network.target"];
+          wantedBy = ["default.target"];
+          description = "Http File server";
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = ''/home/mate/goserver/ghfs -l 8181 -r /home/mate --global-upload --global-mkdir --global-delete --global-archive'';
+          };
         };
-        wantedBy = ["default.target"];
+
+        "rclone-sync" = {
+          enable = true;
+          description = "rclone Sync Gdrive to Onedrive";
+          after = ["network-online.target"];
+          wantedBy = ["network-online.target"];
+
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = ''
+              ${pkgs.rclone}/bin/rclone sync GDrive101:/onyx BMEOffice:/onyx  -v '';
+            Environment = ["PATH=/run/wrappers/bin/:$PATH"];
+          };
+        };
+
+        "glances-manual" = {
+          description = "Glances manual";
+          enable = true;
+          after = ["multi-user.target" "network.target"];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = ''/run/current-system/sw/bin/glances --port 61208 --webserver --disable-plugin gpu'';
+          };
+          wantedBy = ["default.target"];
+        };
       };
     };
     services = {
