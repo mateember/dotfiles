@@ -3,7 +3,7 @@
   lib,
   pkgs,
   pkgs-unstable,
-  nixos-cosmic,
+  # nixos-cosmic,
   hyprland,
   ...
 }: {
@@ -312,11 +312,11 @@
       displayManager.gdm.enable = true;
     };
     desktopManager.plasma6.enable = false;
-    desktopManager.cosmic.enable = true;
+    # desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      cosmic-greeter.enable = false;
+      # cosmic-greeter.enable = false;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
@@ -423,7 +423,7 @@
   #Sudo
   security = {
     rtkit.enable = true;
-    pam.services.cosmic-greeter.enableGnomeKeyring = true;
+    # pam.services.cosmic-greeter.enableGnomeKeyring = true;
     sudo = {
       enable = true;
       extraRules = [

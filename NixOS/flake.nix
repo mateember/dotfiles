@@ -4,10 +4,10 @@
   inputs = {
     #nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
 
-    nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
+    # nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs";
+    # nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
@@ -32,7 +32,7 @@
     chaotic,
     hyprland,
     zen-browser,
-    nixos-cosmic,
+    #nixos-cosmic,
     vscode-server,
     winapps,
     ...
@@ -85,7 +85,7 @@
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
-          nixos-cosmic.nixosModules.default
+          # nixos-cosmic.nixosModules.default
           #chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
           {
