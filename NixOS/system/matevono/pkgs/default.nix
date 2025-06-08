@@ -184,9 +184,12 @@
       uv
       pavucontrol
       kdePackages.dolphin
+      kdePackages.kwalletmanager
       nautilus
       appimage-run
       evince
+      wineWowPackages.stable
+      wineWowPackages.waylandFull
       alsa-utils
       dig
       playerctl
@@ -205,7 +208,6 @@
       winapps.packages."${system}".winapps
       winapps.packages."${system}".winapps-launcher # optional
       vlc
-      microsoft-edge
       virt-viewer
       spice
       mutter
@@ -258,7 +260,6 @@
       #lact
       #kdePackages.polkit-kde-agent-1
       kdePackages.kirigami
-      davinci-resolve
       polkit_gnome
       kitty
       mangohud

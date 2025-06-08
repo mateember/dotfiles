@@ -308,15 +308,16 @@
     # Plasma, SDDM
     xserver = {
       enable = true;
-      desktopManager.gnome.enable = true;
-      displayManager.gdm.enable = true;
     };
     desktopManager.plasma6.enable = false;
-    # desktopManager.cosmic.enable = true;
+    desktopManager.gnome.enable = true;
+    desktopManager.cosmic.enable = true;
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      # cosmic-greeter.enable = false;
+      gdm.enable = false;
+
+      cosmic-greeter.enable = true;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
@@ -392,7 +393,7 @@
     spiceUSBRedirection.enable = true;
     containers.enable = true;
     podman = {
-      enable = false;
+      enable = true;
 
       # Create a `docker` alias for podman, to use it as a drop-in replacement
       dockerCompat = true;
@@ -402,7 +403,7 @@
     };
 
     docker = {
-      enable = true;
+      enable = false;
       storageDriver = "btrfs";
       daemon.settings = {
         #ipv6 = true;
@@ -423,7 +424,8 @@
   #Sudo
   security = {
     rtkit.enable = true;
-    # pam.services.cosmic-greeter.enableGnomeKeyring = true;
+    pam.services.cosmic-greeter.enableGnomeKeyring = true;
+    pam.services.cosmic-greeter.kwallet.enable = true;
     sudo = {
       enable = true;
       extraRules = [
@@ -484,6 +486,7 @@
     packages = with pkgs; [
       nerd-fonts.jetbrains-mono
       nerd-fonts.fira-code
+      cantarell-fonts
       roboto
       openmoji-color
     ];

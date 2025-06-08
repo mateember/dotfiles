@@ -37,6 +37,8 @@
     ++ (with pkgs-unstable; [
       vscode-fhs
       zed-editor-fhs
+      hpp2plantuml
+      plantuml
       sunshine
       brave
       neovim
