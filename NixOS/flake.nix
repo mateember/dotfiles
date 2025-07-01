@@ -5,7 +5,7 @@
     # nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
 
     nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";

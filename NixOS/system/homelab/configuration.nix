@@ -160,7 +160,6 @@
     speedtest-cli
     zellij
     tmux
-    vbetool
     killall
     bat
     gh
