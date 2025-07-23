@@ -157,34 +157,6 @@
 
   systemd = {
     user.services = {
-      rclone-icloud = {
-        enable = true;
-        description = "rclone: Remote FUSE filesystem for cloud storage config";
-        after = ["network-online.target"];
-        wantedBy = ["network-online.target"];
-
-        serviceConfig = {
-          Type = "notify";
-          ExecStartPre = ''/run/current-system/sw/bin/mkdir -p /home/mate/Documents/Egyetem/iCloud/ '';
-          ExecStart = ''
-                 ${pkgs.rclone}/bin/rclone mount \
-                   --config=/home/mate/.config/rclone/rclone.conf \
-                   --vfs-cache-mode full \
-                   --vfs-cache-max-size 1000M \
-                   --vfs-cache-max-age=9999h \
-                   --log-level INFO \
-                   --log-file /tmp/rclone-59.log \
-                   --umask 022 \
-                   --allow-other \
-            --rc \
-                   59:/Rocketbook /home/mate/Documents/Egyetem/iCloud/
-          '';
-          Restart = "always";
-          RestartSec = "30s";
-          ExecStop = ''/run/wrappers/bin/fusermount -u /home/mate/Documents/Egyetem/iCloud/ '';
-          Environment = ["PATH=/run/wrappers/bin/:$PATH"];
-        };
-      };
     };
     network = {
       enable = false;

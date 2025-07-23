@@ -2,9 +2,6 @@
   description = "My NixOS flake";
 
   inputs = {
-    # nixpkgs-unstable.follows = "nixos-cosmic/nixpkgs"; # NOTE: change "nixpkgs" to "nixpkgs-stable" to use stable NixOS release
-
-    nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
@@ -31,7 +28,6 @@
     chaotic,
     hyprland,
     zen-browser,
-    nixos-cosmic,
     vscode-server,
     winapps,
     ...
@@ -84,7 +80,6 @@
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
-          nixos-cosmic.nixosModules.default
           # chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
           {

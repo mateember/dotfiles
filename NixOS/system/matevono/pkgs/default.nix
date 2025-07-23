@@ -177,6 +177,7 @@
       lm_sensors
       fzf
       podman-tui
+      rar
       dive
       efibootmgr
       podman-compose
@@ -270,8 +271,8 @@
       freerdp3
       bc
       geekbench
-      jetbrains.clion
-      jetbrains.pycharm-professional
+      # jetbrains.clion
+      # jetbrains.pycharm-professional
       qt6ct
     ]);
 
