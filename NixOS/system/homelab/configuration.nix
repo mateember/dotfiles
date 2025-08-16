@@ -241,12 +241,56 @@
       };
     };
     services = {
+      "dynadotdns" = {
+        enable = true;
+
+        after = ["network.target"];
+        description = "Update Dynadot DDNS for hl.kmate.org";
+
+        wantedBy = ["default.target"];
+
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = " /home/mate/randomfiles/ddclient/update.sh";
+        };
+      };
+
+      "dynadotcert" = {
+        description = "Update Dynadot SSL certificate";
+        wantedBy = ["default.target"];
+        after = ["network.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "/run/current-system/sw/bin/bash /home/mate/randomfiles/scripts/certcurl.sh";
+        };
+      };
+
       "set_fb_blank_1" = {
         description = "Set framebuffer blank state to 1";
         enable = true;
         after = ["multi-user.target"];
         script = "echo 1 > /sys/class/graphics/fb0/blank";
         wantedBy = ["multi-user.target"];
+      };
+    };
+
+    timers = {
+      "dynadotdns" = {
+        description = "Run Dynadot DDNS updater every 5 minutes";
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnBootSec = "1min";
+          OnUnitActiveSec = "5min";
+          Persistent = true;
+        };
+      };
+      "dynadotcert" = {
+        description = "Monthly Dynadot SSL certificate update";
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnCalendar = "monthly";
+          Persistent = true;
+        };
       };
     };
   };
@@ -281,8 +325,10 @@
         limit_conn_zone $binary_remote_addr zone=addr:10m;
       '';
       virtualHosts."hl.kmate.org" = {
-        enableACME = true;
+        # enableACME = true;
         forceSSL = true;
+        sslCertificateKey = "/var/ssl/privkey.key";
+        sslCertificate = "/var/ssl/fullchain.pem";
         locations."/jellyfin" = {
           proxyPass = "http://127.0.0.1:8096";
           extraConfig = ''limit_conn addr 20; '';
