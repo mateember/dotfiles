@@ -25,6 +25,7 @@
       openFirewall = true;
     };
     firmware = [
+      pkgs.sof-firmware
       (
         pkgs.runCommandNoCC "customedid.bin" {compressFirmware = false;} ''
            mkdir -p $out/lib/firmware/edid

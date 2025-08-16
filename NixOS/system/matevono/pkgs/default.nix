@@ -196,6 +196,7 @@
       playerctl
       pamixer
       which
+      lsof
       v4l-utils
       libva-utils
       icu
