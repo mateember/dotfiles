@@ -197,6 +197,9 @@
       pamixer
       which
       lsof
+      lshw
+      dmidecode
+      sync
       v4l-utils
       libva-utils
       icu
