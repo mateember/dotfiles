@@ -158,6 +158,8 @@
     fastfetch
     rclone
     speedtest-cli
+    lshw
+    dmidecode
     zellij
     tmux
     killall
