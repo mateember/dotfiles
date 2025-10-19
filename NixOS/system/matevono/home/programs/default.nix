@@ -40,6 +40,7 @@
       hpp2plantuml
       plantuml
       sunshine
+      uxplay
       brave
       neovim
       celluloid
@@ -59,7 +60,7 @@
       #Hyprland Stuff
       hyprcursor
       # waypaper
-      rofi-wayland
+      rofi
       hyprshade
       hyprlock
       hypridle

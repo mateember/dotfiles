@@ -176,7 +176,9 @@
       acpi
       lm_sensors
       fzf
+      octaveFull
       podman-tui
+      ddcutil
       rar
       dive
       efibootmgr

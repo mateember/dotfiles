@@ -152,9 +152,16 @@
   };
 
   #Networking
-  networking.hostName = "matevono";
-  networking.useDHCP = false;
-  networking.networkmanager.enable = true;
+
+  networking = {
+    useDHCP = false;
+    hostName = "matevono";
+    networkmanager = {
+      enable = true;
+
+      plugins = [pkgs.networkmanager-strongswan];
+    };
+  };
 
   systemd = {
     user.services = {
@@ -215,7 +222,9 @@
         "kvm"
         "libvirtd"
         "fuse"
+        "i2c"
         "sshd"
+        "users"
         "networkmanager"
         "wheel"
         "audio"
@@ -234,6 +243,7 @@
 
   services = {
     pulseaudio.enable = false;
+    ddccontrol.enable = true;
     power-profiles-daemon.enable = false;
     tlp = {
       enable = true;
@@ -262,6 +272,12 @@
 
     flatpak.enable = true;
     #lactd.enable = true;
+
+    strongswan = {
+      enable = true;
+    };
+
+    #strongswan-swanctl.enable = true;
 
     pipewire = {
       enable = true;
@@ -359,14 +375,13 @@
       qemu = {
         vhostUserPackages = [pkgs.virtiofsd];
         swtpm.enable = true;
-        ovmf.enable = true;
-        ovmf.packages = [pkgs.OVMFFull.fd];
+        
       };
     };
     spiceUSBRedirection.enable = true;
     containers.enable = true;
     podman = {
-      enable = true;
+      enable = false;
 
       # Create a `docker` alias for podman, to use it as a drop-in replacement
       dockerCompat = true;
@@ -376,7 +391,7 @@
     };
 
     docker = {
-      enable = false;
+      enable = true;
       storageDriver = "btrfs";
       daemon.settings = {
         #ipv6 = true;
