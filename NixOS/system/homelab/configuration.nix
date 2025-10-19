@@ -395,7 +395,7 @@
       enable = true;
       openFirewall = true;
     };
-    ddclient.enable = true;
+    ddclient.enable = false;
     ddclient.configFile = "/home/mate/randomfiles/ddclient/ddclient.conf";
 
     logind.lidSwitch = "ignore";
