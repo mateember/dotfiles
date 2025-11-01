@@ -1,10 +1,10 @@
 {config, ...}: {
   programs.git = {
     enable = true;
-    userName = "...";
-    userEmail = "...";
-    extraConfig = {
+    settings = {
       credential.helper = "gh";
+      user.name = "...";
+      user.email = "...";
     };
   };
 

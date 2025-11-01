@@ -1,7 +1,5 @@
 font-family = "JetBrainsMono Nerd Font Mono"
-gtk-adwaita = true
 theme=Dark+
-gtk-single-instance = true
 link-url = true
 background-opacity = 0.8
 window-decoration = true

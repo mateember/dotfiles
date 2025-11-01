@@ -164,6 +164,7 @@
       snixembed
       nano
       tree
+      gfortran
       starship
       zoxide
       kdePackages.qtstyleplugin-kvantum
@@ -176,7 +177,7 @@
       acpi
       lm_sensors
       fzf
-      octaveFull
+      (octaveFull.withPackages (opkgs: with opkgs; [symbolic control io signal]))
       podman-tui
       ddcutil
       rar
@@ -201,7 +202,7 @@
       lsof
       lshw
       dmidecode
-      sync
+      taler-sync
       v4l-utils
       libva-utils
       icu
@@ -220,7 +221,7 @@
       mutter
       spice-gtk
       spice-protocol
-      win-virtio
+      virtio-win
       win-spice
       gjs
       ripgrep
@@ -274,12 +275,12 @@
       github-desktop
       firefox
       tldr
-      freerdp3
+      freerdp
       bc
       geekbench
       # jetbrains.clion
       # jetbrains.pycharm-professional
-      qt6ct
+      qt6Packages.qt6ct
     ]);
 
   environment.gnome.excludePackages = with pkgs; [

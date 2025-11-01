@@ -27,7 +27,7 @@
     firmware = [
       pkgs.sof-firmware
       (
-        pkgs.runCommandNoCC "customedid.bin" {compressFirmware = false;} ''
+        pkgs.runCommand "customedid.bin" {compressFirmware = false;} ''
            mkdir -p $out/lib/firmware/edid
           cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
         ''
@@ -373,9 +373,9 @@
     libvirtd = {
       enable = true;
       qemu = {
+        package = pkgs.qemu_kvm;
         vhostUserPackages = [pkgs.virtiofsd];
         swtpm.enable = true;
-        
       };
     };
     spiceUSBRedirection.enable = true;

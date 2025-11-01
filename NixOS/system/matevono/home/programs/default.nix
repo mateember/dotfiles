@@ -22,7 +22,7 @@
       dunst
       git-credential-oauth
       ranger
-      glxinfo
+      mesa-demos
       wlogout
       trash-cli
       nwg-look

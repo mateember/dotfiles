@@ -3,6 +3,7 @@
   config,
   hyprland,
   pkgs-unstable,
+  system,
   ...
 }: {
   wayland.windowManager.hyprland = {
