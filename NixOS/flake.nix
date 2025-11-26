@@ -2,15 +2,20 @@
   description = "My NixOS flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
-      #url = "github:nix-community/home-manager/release-24.05";
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:nix-community/home-manager/release-25.11";
+      # url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    omarchy-nix = {
+      url = "github:henrysipp/omarchy-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
@@ -30,6 +35,7 @@
     zen-browser,
     vscode-server,
     winapps,
+    omarchy-nix,
     ...
   }: let
     system = "x86_64-linux";
@@ -75,17 +81,25 @@
         };
       };
 
-      matevono = lib-unstable.nixosSystem {
+      matevono = lib.nixosSystem {
         inherit system;
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
+          omarchy-nix.nixosModules.default
           # chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
           {
+            omarchy = {
+              full_name = "Máté Tamás Kiss";
+              email_address = "mate@kmate.org";
+              theme = "tokyo-night";
+            };
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-
+            home.manager.users.your-username = {
+              imports = [omarchy-nix.homeManagerModules.default]; # And this one
+            };
             home-manager.users.mate = import ./system/matevono/home;
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {

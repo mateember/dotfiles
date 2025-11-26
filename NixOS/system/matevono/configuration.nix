@@ -271,9 +271,7 @@
       };
     };
 
-
     gnome = {
-
       gnome-keyring.enable = true;
       gnome-browser-connector.enable = true;
       gnome-remote-desktop.enable = true;
@@ -283,7 +281,7 @@
       enable = false;
       openFirewall = true;
       defaultWindowManager = "${pkgs.gnome-session}/bin/gnome-session";
-      };
+    };
 
     flatpak.enable = true;
     #lactd.enable = true;
@@ -319,9 +317,9 @@
     displayManager = {
       #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
-      gdm.enable = false;
+      gdm.enable = true;
 
-      cosmic-greeter.enable = true;
+      cosmic-greeter.enable = false;
 
       #defaultSession = "";
       sddm.theme = "sddm-theme-bluish";
@@ -350,7 +348,6 @@
 
     avahi.publish.enable = true;
     avahi.publish.userServices = true;
-    
   };
 
   # Open ports in the firewall.
