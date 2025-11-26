@@ -164,6 +164,10 @@
   };
 
   systemd = {
+    services = {
+      gnome-remote-desktop.wantedBy = ["graphical.target"];
+    };
+
     user.services = {
     };
     network = {
@@ -267,8 +271,19 @@
       };
     };
 
-    gnome.gnome-keyring.enable = true;
-    gnome.gnome-browser-connector.enable = true;
+
+    gnome = {
+
+      gnome-keyring.enable = true;
+      gnome-browser-connector.enable = true;
+      gnome-remote-desktop.enable = true;
+    };
+
+    xrdp = {
+      enable = false;
+      openFirewall = true;
+      defaultWindowManager = "${pkgs.gnome-session}/bin/gnome-session";
+      };
 
     flatpak.enable = true;
     #lactd.enable = true;
@@ -318,6 +333,8 @@
       };
     };
 
+    getty.autologinUser = null;
+
     blueman.enable = true;
 
     gvfs.enable = true;
@@ -333,6 +350,7 @@
 
     avahi.publish.enable = true;
     avahi.publish.userServices = true;
+    
   };
 
   # Open ports in the firewall.
@@ -341,7 +359,7 @@
   networking.firewall = {
     enable = true;
     allowedUDPPorts = [24642];
-    allowedTCPPorts = [47984 47989 47990 48010];
+    allowedTCPPorts = [47984 47989 47990 48010 3389];
 
     allowedUDPPortRanges = [
       {
