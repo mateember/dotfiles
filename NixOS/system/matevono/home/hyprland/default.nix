@@ -6,7 +6,7 @@
 }: {
   wayland.windowManager.hyprland = {
     enable = false;
-    systemd.enable = true;
+    systemd.enable = false;
     xwayland.enable = true;
 
     extraConfig = ''

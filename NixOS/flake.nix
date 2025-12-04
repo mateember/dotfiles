@@ -86,21 +86,23 @@
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
-          omarchy-nix.nixosModules.default
+          # omarchy-nix.nixosModules.default
           # chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
           {
-            omarchy = {
-              full_name = "Máté Tamás Kiss";
-              email_address = "mate@kmate.org";
-              theme = "tokyo-night";
-            };
+            #  omarchy = {
+            #    full_name = "Máté Tamás Kiss";
+            #    email_address = "mate@kmate.org";
+            #    theme = "tokyo-night";
+            #  };
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home.manager.users.your-username = {
-              imports = [omarchy-nix.homeManagerModules.default]; # And this one
+            home-manager.users."mate" = {
+              imports = [
+		# omarchy-nix.homeManagerModules.default
+		 ./system/matevono/home
+		]; # And this one
             };
-            home-manager.users.mate = import ./system/matevono/home;
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {
               #inherit pkgs;

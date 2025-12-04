@@ -1,10 +1,8 @@
-{config, ...}: {
+{config, lib, ...}: {
   programs.git = {
     enable = true;
     settings = {
-      credential.helper = "gh";
-      user.name = "...";
-      user.email = "...";
+      credential.helper = lib.mkForce "gh";
     };
   };
 
