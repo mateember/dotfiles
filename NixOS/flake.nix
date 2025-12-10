@@ -23,6 +23,7 @@
       url = "github:winapps-org/winapps";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
   };
 
   outputs = {
@@ -36,6 +37,7 @@
     vscode-server,
     winapps,
     omarchy-nix,
+    hyprdynamicmonitors,
     ...
   }: let
     system = "x86_64-linux";
@@ -99,9 +101,9 @@
             home-manager.useUserPackages = true;
             home-manager.users."mate" = {
               imports = [
-		# omarchy-nix.homeManagerModules.default
-		 ./system/matevono/home
-		]; # And this one
+                # omarchy-nix.homeManagerModules.default
+                ./system/matevono/home
+              ]; # And this one
             };
             home-manager.backupFileExtension = "nixbk";
             home-manager.extraSpecialArgs = {
@@ -109,6 +111,7 @@
               inherit pkgs-unstable;
               inherit zen-browser;
               inherit hyprland;
+              inherit hyprdynamicmonitors;
             };
           }
         ];

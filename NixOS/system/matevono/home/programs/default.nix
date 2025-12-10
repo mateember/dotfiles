@@ -4,6 +4,7 @@
   pkgs-unstable,
   hyprland,
   zen-browser,
+  hyprdynamicmonitors,
   ...
 }: {
   programs = {
@@ -15,6 +16,13 @@
       enableFishIntegration = true;
     };
     fish.enable = false;
+    direnv = {
+      enable = true;
+      enableBashIntegration = true; # see note on other shells below
+      nix-direnv.enable = true;
+      enableZshIntegration = true; # Optional, if you use Zsh sometimes
+      enableFishIntegration = true; # This is TRUE by default if fish is enabled
+    };
   };
 
   home.packages =
@@ -23,8 +31,10 @@
       git-credential-oauth
       ranger
       mesa-demos
+      hyprdynamicmonitors.packages.${system}.default
       wlogout
       trash-cli
+      pwvucontrol
       nwg-look
       pyenv
       ookla-speedtest

@@ -75,20 +75,22 @@
     "format-icons": ["󰃞", "󰃠"],
     "on-scroll-up":   "brightnessctl s 1%+",
     "on-scroll-down": "brightnessctl s 1%-",
+	"reverse-scrolling": true,
     "on-click-right": "brightnessctl s 0"
 },
 
     //Audio
 
     "wireplumber": {
-        "scroll-step": 1,
+        "scroll-step": -1,
+	"reverse-scrolling": true,
 		"format": "{icon} {volume}%",
         	"format-muted": "󰝟",
 		"format-icons": {
 			"default": ["󰕿", "󰖀", "󰕾"]
 		},
 		"on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-		"on-click-right": "pavucontrol"
+		"on-click-right": "pwvucontrol"
   },
 
     
@@ -175,7 +177,8 @@
          "timezone": "Europe/Budapest",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
         // START CLOCK FORMAT
-        "format-alt": "{:%Y-%m-%d}"
+        "format-alt": "{:%Y-%m-%d}",
+	"on-click-right": "gnome-calendar"
         // END CLOCK FORMAT
     },
 

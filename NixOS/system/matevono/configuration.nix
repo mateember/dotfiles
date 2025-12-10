@@ -54,6 +54,7 @@
       auto-optimise-store = true;
       allowed-users = ["mate"];
       substituters = ["https://cosmic.cachix.org/" "https://hyprland.cachix.org" "https://winapps.cachix.org/"];
+      trusted-substituters = ["https://hyprland.cachix.org"];
       trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g="];
       download-buffer-size = 1024288000;
     };
@@ -169,6 +170,19 @@
     };
 
     user.services = {
+      polkit-gnome-authentication-agent-1 = {
+        description = "polkit-gnome-authentication-agent-1";
+        wantedBy = ["graphical-session.target"];
+        wants = ["graphical-session.target"];
+        after = ["graphical-session.target"];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+          Restart = "on-failure";
+          RestartSec = 1;
+          TimeoutStopSec = 10;
+        };
+      };
     };
     network = {
       enable = false;
@@ -315,7 +329,7 @@
     desktopManager.gnome.enable = true;
     desktopManager.cosmic.enable = true;
     displayManager = {
-      #sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
+      sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       sddm.enable = false;
       gdm.enable = true;
 
@@ -378,6 +392,7 @@
   };
 
   environment = {
+    sessionVariables.NIXOS_OZONE_WL = "1";
     variables = {
       QT_QPA_PLATFORMTHEME = "qt6ct";
       EDITOR = "nvim";
