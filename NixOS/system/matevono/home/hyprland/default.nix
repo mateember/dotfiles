@@ -2,8 +2,21 @@
   pkgs,
   config,
   pkgs-unstable,
+  stylix,
   ...
 }: {
+  stylix = {
+		enable = false;
+    polarity = "dark";
+    image = ./rm.png; 
+    targets.hyprland = {
+      enable = true;
+      colors = {
+        enable = true;
+      };
+    };
+  };
+
   wayland.windowManager.hyprland = {
     enable = false;
     systemd.enable = true;

@@ -5,6 +5,7 @@
   hyprland,
   zen-browser,
   hyprdynamicmonitors,
+  hyprshutdown,
   ...
 }: {
   programs = {
@@ -37,6 +38,7 @@
       pwvucontrol
       nwg-look
       pyenv
+      wtype
       ookla-speedtest
       arp-scan
       nitch
@@ -69,9 +71,8 @@
 
       #Hyprland Stuff
       hyprcursor
-      # waypaper
       rofi
-      hyprshade
+      hyprsunset
       hyprlock
       hypridle
       hyprshot

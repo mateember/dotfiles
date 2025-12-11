@@ -154,6 +154,7 @@
     };
   };
 
+  stylix.enable = false;
   # System packages
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages =

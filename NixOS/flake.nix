@@ -24,6 +24,9 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+    stylix = {
+      url = "github:nix-community/stylix/release-25.11";
+    };
   };
 
   outputs = {
@@ -38,6 +41,7 @@
     winapps,
     omarchy-nix,
     hyprdynamicmonitors,
+    stylix,
     ...
   }: let
     system = "x86_64-linux";
@@ -88,6 +92,8 @@
         modules = [
           ./system/matevono/configuration.nix
           chaotic.nixosModules.default
+          stylix.nixosModules.stylix
+
           # omarchy-nix.nixosModules.default
           # chaotic.homeManagerModules.default
           home-manager.nixosModules.home-manager
@@ -103,6 +109,7 @@
               imports = [
                 # omarchy-nix.homeManagerModules.default
                 ./system/matevono/home
+		stylix.homeModules.stylix
               ]; # And this one
             };
             home-manager.backupFileExtension = "nixbk";
