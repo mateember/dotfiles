@@ -398,8 +398,10 @@
     ddclient.enable = false;
     ddclient.configFile = "/home/mate/randomfiles/ddclient/ddclient.conf";
 
-    logind.lidSwitch = "ignore";
-    logind.powerKey = "poweroff";
+    logind.settings.Login = {
+      HandleLidSwitch = "ignore";
+      HandlePowerKey = "poweroff";
+    };
   };
 
   virtualisation.docker = {
