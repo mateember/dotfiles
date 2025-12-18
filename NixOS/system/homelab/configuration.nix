@@ -33,6 +33,7 @@
   # Bootloader.
 
   boot = {
+    initrd.systemd.tpm2.enable = false;
     consoleLogLevel = 3;
     kernelModules = ["tcp_bbr" "v4l2loopback"];
     kernel.sysctl = {
@@ -183,6 +184,7 @@
 
   systemd.units."dev-tpmrm0.device".enable = false;
   systemd = {
+    tpm2.enable = false;
     user = {
       timers = {
         "rclone-sync" = {
