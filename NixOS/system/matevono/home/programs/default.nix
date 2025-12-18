@@ -36,6 +36,7 @@
       wlogout
       trash-cli
       pwvucontrol
+      zenity
       nwg-look
       pyenv
       wtype
@@ -86,6 +87,6 @@
       gnomeExtensions.desktop-icons-ng-ding
     ]);
 
-  # services.kdeconnect.enable = true;
+  services.kdeconnect.enable = true;
   services.blueman-applet.enable = false;
 }

@@ -7,6 +7,15 @@
   winapps,
   ...
 }: {
+  imports = [
+    ./overlays/howdy.nix
+  ];
+
+  nixpkgs.config.allowInsecurePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "ventoy"
+    ];
+
   #Chaotic AUR
   chaotic.mesa-git.enable = false;
   chaotic.mesa-git.fallbackSpecialisation = false;
@@ -174,7 +183,9 @@
       fuse
       sshfs-fuse
       killall
+      pciutils
       btop
+      kdePackages.plasma-integration
       usbutils
       acpi
       lm_sensors
@@ -186,6 +197,7 @@
       dive
       efibootmgr
       podman-compose
+      ventoy
       kdePackages.extra-cmake-modules
       uv
       pavucontrol
@@ -232,6 +244,9 @@
       fd
       (callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
+      sddm-sugar-dark
+kdePackages.sddm
+kdePackages.sddm-kcm
 
       #Development packages
       file

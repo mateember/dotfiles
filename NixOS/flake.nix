@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    howdy-pr.url = "github:NixOS/nixpkgs?ref=pull/216245/head";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
@@ -42,6 +43,7 @@
     omarchy-nix,
     hyprdynamicmonitors,
     stylix,
+    howdy-pr,
     ...
   }: let
     system = "x86_64-linux";
@@ -109,7 +111,7 @@
               imports = [
                 # omarchy-nix.homeManagerModules.default
                 ./system/matevono/home
-		stylix.homeModules.stylix
+                stylix.homeModules.stylix
               ]; # And this one
             };
             home-manager.backupFileExtension = "nixbk";
@@ -128,6 +130,7 @@
           inherit zen-browser;
           inherit hyprland;
           inherit winapps;
+          inherit howdy-pr;
         };
       };
       homelab = lib.nixosSystem {

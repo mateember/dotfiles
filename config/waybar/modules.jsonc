@@ -19,6 +19,14 @@
         "tooltip": false
     },
 
+	"custom/external_brightness": {
+    "format": "{}", 
+    "exec": "~/.config/waybar/extmonbright.sh",
+    "on-click": "~/.config/waybar/extmonbright.sh input",
+    "interval": "once",
+    "tooltip": false
+},
+
     
     "custom/browser": {
         "format": "",
@@ -82,7 +90,7 @@
     //Audio
 
     "wireplumber": {
-        "scroll-step": -1,
+        "scroll-step": 1,
 	"reverse-scrolling": true,
 		"format": "{icon} {volume}%",
         	"format-muted": "󰝟",
@@ -99,7 +107,7 @@
        "network": {
         "format": "{ifname}",
         "format-wifi": "",
-        "format-ethernet": "󰈀  {ifname}",
+        "format-ethernet": "󰈀",
         "format-disconnected": "󱚵",
         "tooltip-format": " {ifname} via {gwaddri}",
         "tooltip-format-wifi": "  {ifname} @ {essid}\nIP: {ipaddr}\nStrength: {signalStrength}%\nFreq: {frequency}MHz\nUp: {bandwidthUpBits} Down: {bandwidthDownBits}",

@@ -6,9 +6,9 @@
   ...
 }: {
   stylix = {
-		enable = false;
+    enable = false;
     polarity = "dark";
-    image = ./rm.png; 
+    image = ./rm.png;
     targets.hyprland = {
       enable = true;
       colors = {
@@ -19,7 +19,7 @@
 
   wayland.windowManager.hyprland = {
     enable = false;
-    systemd.enable = true;
+    systemd.enable = false;
     xwayland.enable = true;
 
     extraConfig = ''

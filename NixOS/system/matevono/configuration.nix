@@ -38,6 +38,9 @@
 
     graphics = {
       enable = true;
+      package = pkgs-unstable.mesa;
+      package32 = pkgs-unstable.pkgsi686Linux.mesa;
+
       enable32Bit = true;
       extraPackages = with pkgs; [
         intel-compute-runtime
@@ -74,13 +77,13 @@
   boot = {
     consoleLogLevel = 3;
 
-    # kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e"];
+    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e" "i915.force_probe=!7d55" "xe.force_probe=7d55"];
 
-    kernelModules = ["tcp_bbr" "v4l2loopback"];
+    kernelModules = ["tcp_bbr"];
     kernel.sysctl = {
       "net.ipv4.tcp_congestion_control" = "bbr";
       "net.core.default_qdisc" = "fq";
@@ -330,15 +333,25 @@
     desktopManager.cosmic.enable = true;
     displayManager = {
       sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
-      sddm.enable = false;
       gdm.enable = true;
+      ly = {
+        enable = false;
+        settings = {
+          allow_empty_password = true;
+          animation = "doom";
+          auth_fails = 15;
+          battery_id = "BAT0";
+        };
+      };
 
       cosmic-greeter.enable = false;
 
       #defaultSession = "";
-      sddm.theme = "sddm-theme-bluish";
-      sddm.wayland.enable = true;
-
+      sddm = {
+        enable = false;
+        theme = "sugar-dark";
+        extraPackages = [pkgs.sddm-sugar-dark];
+      };
       autoLogin = {
         enable = false;
         user = "mate";
@@ -436,7 +449,16 @@
       xdgOpenUsePortal = true;
       enable = true;
       #config.common.default = "gnome";
-      extraPortals = [pkgs.kdePackages.xdg-desktop-portal-kde pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-gtk];
+      extraPortals = [pkgs.kdePackages.xdg-desktop-portal-kde pkgs.xdg-desktop-portal-gtk pkgs.xdg-desktop-portal-cosmic];
+
+      #   config = {
+      #     common = {
+      #       default = ["gtk"];
+      #     };
+      # hyprland = {
+      #   default = [ "hyprland" "kde" ];
+      # };
+      #   };
     };
   };
   #Sudo
