@@ -1,37 +1,52 @@
-#!/usr/bin/env fish
+#!/usr/bin/env bash
 
-function sunshine_toggle
-    set action $argv[1]
-    set width $SUNSHINE_CLIENT_WIDTH
-    set height $SUNSHINE_CLIENT_HEIGHT
-    set fps $SUNSHINE_CLIENT_FPS
+# 1. Help hyprctl find your active Hyprland session
+export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/$(id -u)/hypr/ | head -n 1)
 
-    # Fallbacks if Sunshine doesn't pass variables correctly
-    if test -z "$width"; set width 1920; end
-    if test -z "$height"; set height 1080; end
-    if test -z "$fps"; set fps 60; end
+# 2. Get variables from Sunshine (with defaults)
+WIDTH=${SUNSHINE_CLIENT_WIDTH:-1920}
+HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-1080}
+FPS=${SUNSHINE_CLIENT_FPS:-60}
 
-    switch $action
-        case "start"
-            # 1. Create the virtual monitor with PC's resolution
-            hyprctl output create headless
-            
-            # 2. Configure the monitor (Positioning it at 0x0)
-            # Syntax: monitor = name, res@fps, pos, scale
-            hyprctl keyword monitor "HEADLESS-1, {$width}x{$height}@{$fps}, 0x0, 1"
-            
-            # 3. (Optional) Move your current workspaces to the new monitor
-            for i in (hyprctl workspaces -j | jq '.[] | .id')
-                hyprctl dispatch moveworkspacetomonitor "$i HEADLESS-1"
-            end
+# 3. Position Calculation
+# Laptop logical width (2880 / 2) = 1440
+# X_POS = 1440 (directly to the right)
+# Y_POS = -500 (shifted "up" above the laptop screen's top edge)
+X_POS=1440
+Y_POS=-500
 
-        case "stop"
-            # 1. Remove the virtual monitor
-            hyprctl output remove HEADLESS-1
-            
-            # 2. Reset the laptop monitor if you disabled it
-            hyprctl keyword monitor "eDP-1, preferred, auto, 1"
-    end
-end
+case "$1" in
+    "start")
+        # A. Create the headless monitor
+        hyprctl output create headless REMOTE
+        sleep 0.2
+        
+        # B. Position the monitor (Right and Up)
+        # Format: Name, Res@FPS, XxY, Scale
+        hyprctl keyword monitor "REMOTE,${WIDTH}x${HEIGHT}@${FPS},${X_POS}x${Y_POS},1"
+        
+        # C. Fix: Force Software Cursor so Sunshine can see it
+        hyprctl keyword cursor:no_hardware_cursors true
+        
+        # D. Optional: Focus the new monitor immediately
+        hyprctl dispatch focusmonitor REMOTE
+        
+        echo "Started: REMOTE monitor at ${X_POS}x${Y_POS} with Software Cursor enabled."
+        ;;
 
-sunshine_toggle $argv
+    "stop")
+        # A. Remove the virtual monitor
+        hyprctl output remove REMOTE
+        
+        # B. Restore Laptop Monitor settings
+        hyprctl keyword monitor "eDP-1,2880x1800@120,0x0,2,vrr,1"
+        
+        # C. Restore Hardware Cursor for better performance
+        hyprctl keyword cursor:no_hardware_cursors false
+        
+        echo "Stopped: REMOTE monitor removed and hardware cursor restored."
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        ;;
+esac

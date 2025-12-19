@@ -23,14 +23,11 @@ in {
   services.howdy = {
     enable = true;
     package = prPkgs.howdy;
-    # settings = {
-    # Add your specific howdy settings here
-    # dark_threshold = 50;
-    # device_path = "/dev/video2"; # Example: you may need to specify your IR camera
-    # };
     settings = {
       video = {
+        timeout = 2;
         device_path = "/dev/video2";
+        dark_threshold = 65;
       };
     };
     # pam.enable = true; # Enables Howdy for general login/auth

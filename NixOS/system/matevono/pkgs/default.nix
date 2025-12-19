@@ -245,8 +245,8 @@
       (callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
       sddm-sugar-dark
-kdePackages.sddm
-kdePackages.sddm-kcm
+      kdePackages.sddm
+      kdePackages.sddm-kcm
 
       #Development packages
       file

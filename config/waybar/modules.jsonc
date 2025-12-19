@@ -84,7 +84,9 @@
     "on-scroll-up":   "brightnessctl s 1%+",
     "on-scroll-down": "brightnessctl s 1%-",
 	"reverse-scrolling": true,
-    "on-click-right": "brightnessctl s 0"
+    "on-click-right": "brightnessctl s 0",
+    "min-brightness": 5,
+    "min" : 5
 },
 
     //Audio

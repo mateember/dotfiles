@@ -43,6 +43,7 @@
       ookla-speedtest
       arp-scan
       nitch
+      jq
       xorg.xkill
       xorg.xeyes
       #ghostty.packages."${system}".default
@@ -80,6 +81,9 @@
       swww
       hyprpaper
       waybar
+
+      #ags
+      ags
 
       #gnome
       gnomeExtensions.ddterm
