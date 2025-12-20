@@ -14,6 +14,7 @@
     java.package = pkgs-unstable.jdk;
     ags = {
       enable = true;
+    # configDir = ../../../../config/ags;
 
       extraPackages = let
         # Create a shorthand for the astal libraries
@@ -21,6 +22,8 @@
       in [
         # 1. Add the Astal Libraries individually
         astalPkgs.astal3
+        astalPkgs.io
+        astalPkgs.astal4
         astalPkgs.hyprland
         astalPkgs.wireplumber
         astalPkgs.battery

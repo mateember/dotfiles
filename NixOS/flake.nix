@@ -30,6 +30,9 @@
     };
     ags.url = "github:Aylur/ags";
     astal.url = "github:aylur/astal";
+		  astal.inputs.nixpkgs.follows = "nixpkgs";
+  ags.inputs.nixpkgs.follows = "nixpkgs";
+
   };
 
   outputs = {
