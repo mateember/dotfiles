@@ -6,11 +6,37 @@
   zen-browser,
   hyprdynamicmonitors,
   hyprshutdown,
+  astal,
   ...
 }: {
   programs = {
     java.enable = true;
     java.package = pkgs-unstable.jdk;
+    ags = {
+      enable = true;
+
+      extraPackages = let
+        # Create a shorthand for the astal libraries
+        astalPkgs = astal.packages.${pkgs.system};
+      in [
+        # 1. Add the Astal Libraries individually
+        astalPkgs.astal3
+        astalPkgs.hyprland
+        astalPkgs.wireplumber
+        astalPkgs.battery
+        astalPkgs.network
+        astalPkgs.mpris
+        astalPkgs.notifd
+
+        # 2. Add normal packages using the standard pkgs prefix
+        # (This is much safer than 'with pkgs;' when troubleshooting)
+        pkgs.fzf
+        pkgs.brightnessctl
+        pkgs.libnotify
+        pkgs.jq
+        pkgs.curl
+      ];
+    };
 
     nix-index = {
       enable = true;
@@ -81,7 +107,6 @@
       swww
       hyprpaper
       waybar
-
 
       #gnome
       gnomeExtensions.ddterm

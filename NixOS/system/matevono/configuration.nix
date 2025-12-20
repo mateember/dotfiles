@@ -56,9 +56,9 @@
     settings = {
       auto-optimise-store = true;
       allowed-users = ["mate"];
-      substituters = ["https://cosmic.cachix.org/" "https://hyprland.cachix.org" "https://winapps.cachix.org/"];
-      trusted-substituters = ["https://hyprland.cachix.org"];
-      trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g="];
+      substituters = ["https://cosmic.cachix.org/" "https://hyprland.cachix.org" "https://winapps.cachix.org/" https://ags.cachix.org];
+      trusted-substituters = ["https://hyprland.cachix.org" https://ags.cachix.org];
+      trusted-public-keys = ["cosmic.cachix.org-1:Dya9IyXD4xdBehWjrkPv6rtxpmMdRel02smYzA85dPE=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" "winapps.cachix.org-1:HI82jWrXZsQRar/PChgIx1unmuEsiQMQq+zt05CD36g=" ags.cachix.org-1:naAvMrz0CuYqeyGNyLgE010iUiuf/qx6kYrUv3NwAJ8=];
       download-buffer-size = 1024288000;
     };
     gc = {

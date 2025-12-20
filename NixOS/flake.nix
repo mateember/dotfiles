@@ -28,6 +28,8 @@
     stylix = {
       url = "github:nix-community/stylix/release-25.11";
     };
+    ags.url = "github:Aylur/ags";
+    astal.url = "github:aylur/astal";
   };
 
   outputs = {
@@ -44,6 +46,8 @@
     hyprdynamicmonitors,
     stylix,
     howdy-pr,
+    ags,
+    astal,
     ...
   }: let
     system = "x86_64-linux";
@@ -112,6 +116,7 @@
                 # omarchy-nix.homeManagerModules.default
                 ./system/matevono/home
                 stylix.homeModules.stylix
+                ags.homeManagerModules.default
               ]; # And this one
             };
             home-manager.backupFileExtension = "nixbk";
@@ -121,6 +126,7 @@
               inherit zen-browser;
               inherit hyprland;
               inherit hyprdynamicmonitors;
+              inherit astal;
             };
           }
         ];
