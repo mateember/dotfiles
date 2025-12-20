@@ -84,6 +84,12 @@
 
       #ags
       ags
+      astal.astal3 # Base GTK3 library
+      astal.hyprland # To talk to Hyprland
+      astal.mpris # For media players
+      astal.battery # For battery info
+      astal.network # For wifi/ethernet
+      astal.wireplumber # For audio
 
       #gnome
       gnomeExtensions.ddterm
