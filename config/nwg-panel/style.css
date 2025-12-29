@@ -1,0 +1,207 @@
+/***** WAYBAR-STYLE THEME FOR NWG-PANEL *****/
+
+/* Global styling */
+* {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    font-weight: bold;
+}
+
+/* Recommended if panel "height" unset or smaller then your theme default button height */
+button {
+    margin: 2px;
+    border: none;
+    border-radius: 0px;
+}
+
+/* SwayTaskBar and SwayWorkspaces use custom widgets */
+#task-box {
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 15px;
+    margin: 5px 0px;
+}
+
+#task-box-focused {
+    background-color: #ffffff;
+    color: #000000;
+    padding-left: 4px;
+    padding-right: 4px;
+    border-radius: 15px;
+    margin: 5px 0px;
+}
+
+
+/***** MAIN PANEL STYLING *****/
+
+/* Sample button in sample config w/ no background nor border */
+#button-custom {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #f2f2f2;
+    border-radius: 100px;
+    padding: 1px 13px 0px 7px;
+    margin: 5px 14px 5px 14px;
+    opacity: 0.8;
+    border: 3px solid;
+}
+
+/* Top panel - waybar style with semi-transparent background */
+#panel-top {
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    border-radius: 15px;
+    margin: 8px 7px 0px 7px;
+}
+
+/* Bottom panel - waybar style */
+#panel-bottom {
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    border-radius: 15px;
+    margin: 0px 7px 8px 7px;
+}
+
+/* Controls window popup */
+#controls-window {
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+}
+#controls-window scale value {
+    color: #ffffff;
+}
+
+/* Brightness slider popup window */
+#brightness-popup {
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+}
+#brightness-popup box {
+    padding: 15px;
+}
+
+/* Executors styling */
+#executor-label {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    font-size: 16px;
+    color: #ffffff;
+    opacity: 0.8;
+    margin: 8px 15px 8px 0px;
+}
+
+/* Clock styling - waybar style */
+#clock {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    border-radius: 15px;
+    padding: 0px 8px 0px 8px;
+    margin: 5px 15px 5px 13px;
+    border: 3px solid;
+    border-style: solid;
+}
+
+/* Weather executor */
+#weather {
+    font-size: 16px;
+    color: #ffffff;
+    opacity: 0.8;
+    margin: 8px 15px 8px 0px;
+}
+
+/* Tray styling */
+#tray {
+    margin: 0px 15px 0px 5px;
+}
+
+#inner-tray {
+    margin: 0px 5px;
+}
+
+/* Workspace buttons - waybar style */
+#dwl-tag-box {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border-radius: 15px;
+    opacity: 0.8;
+    margin: 5px 0px;
+}
+
+#dwl-tag-occupied {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    color: #ffffff;
+    background-color: transparent;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 15px;
+    margin-right: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+#dwl-tag-free {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    color: #ffffff;
+    background-color: transparent;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 15px;
+    margin-right: 5px;
+    opacity: 0.8;
+}
+
+#dwl-tag-urgent {
+    font-family: "Roboto", "JetBrainsMono Nerd Font";
+    color: #ffffff;
+    background-color: #ee6600;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 15px;
+    margin-right: 5px;
+}
+
+#dwl-tag-selected {
+    background: #ffffff;
+    color: #000000;
+    border-radius: 15px;
+    min-width: 40px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hyprland/Sway workspaces - waybar style */
+#hyprland-workspaces button,
+#sway-workspaces button {
+    margin-right: 5px;
+    border-radius: 15px;
+    color: #ffffff;
+    transition: all 0.3s ease-in-out;
+    opacity: 1;
+    padding: 0px 8px;
+}
+
+#hyprland-workspaces button:hover,
+#sway-workspaces button:hover {
+    color: #000000;
+    background: #ffffff;
+    opacity: 0.7;
+}
+
+#hyprland-workspaces button.active,
+#sway-workspaces button.active,
+#hyprland-workspaces button.focused,
+#sway-workspaces button.focused {
+    color: #000000;
+    background: #ffffff;
+    min-width: 40px;
+    transition: all 0.3s ease-in-out;
+    opacity: 1.0;
+}
+
+/* Playerctl styling */
+#playerctl {
+    color: #ffffff;
+    opacity: 0.8;
+    margin: 0px 15px;
+}

@@ -13,8 +13,8 @@
     java.enable = true;
     java.package = pkgs-unstable.jdk;
     ags = {
-      enable = true;
-    # configDir = ../../../../config/ags;
+      enable = false;
+      # configDir = ../../../../config/ags;
 
       extraPackages = let
         # Create a shorthand for the astal libraries
@@ -67,6 +67,7 @@
       pwvucontrol
       zenity
       nwg-look
+      nwg-panel
       pyenv
       wtype
       ookla-speedtest

@@ -81,7 +81,7 @@
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e" "i915.force_probe=!7d55" "xe.force_probe=7d55"];
+    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e" "i915.enable_psr=0"];
 
     kernelModules = ["tcp_bbr"];
     kernel.sysctl = {
