@@ -405,7 +405,10 @@
   };
 
   environment = {
-    sessionVariables.NIXOS_OZONE_WL = "1";
+    sessionVariables = {
+      NIXOS_OZONE_WL = "1";
+      COSMIC_DATA_CONTROL_ENABLED = "1";
+    };
     variables = {
       QT_QPA_PLATFORMTHEME = "qt6ct";
       EDITOR = "nvim";

@@ -1,6 +1,8 @@
-{ pkgs, pkgs-unstable, ... }:
-
 {
+  pkgs,
+  pkgs-unstable,
+  ...
+}: {
   # 1. Tell NixOS to use the 'unstable' package set for COSMIC specifically
   # This ensures the 'cosmic' services find their packages in the unstable branch
   nixpkgs.overlays = [
