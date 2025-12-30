@@ -323,6 +323,8 @@
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
+      # enable sub_filter module for subpath rewriting (used by Jellyseerr workaround)
+      extraModules = [ pkgs.nginxModules.substitute ];
 
       commonHttpConfig = ''
         log_format bot_logs '$remote_addr - $http_user_agent - $request';
@@ -339,7 +341,41 @@
         };
         locations."/jellyseerr" = {
           proxyPass = "http://127.0.0.1:5055";
-          extraConfig = ''limit_conn addr 20; '';
+          extraConfig = ''
+            set $app 'jellyseerr';
+
+            # Remove /jellyseerr path to pass to the app
+            rewrite ^/jellyseerr/?(.*)$ /$1 break;
+
+            # Ensure the upstream sees uncompressed responses so sub_filter can modify HTML
+            proxy_set_header Accept-Encoding "";
+
+            # Redirect location headers back to the /jellyseerr subpath
+            proxy_redirect ^ /$app;
+            proxy_redirect /setup /$app/setup;
+            proxy_redirect /login /$app/login;
+
+            # Substitution filters to rewrite hardcoded paths to the /jellyseerr base
+            sub_filter_once off;
+            sub_filter_types *;
+            sub_filter 'href="/"' 'href="/$app"';
+            sub_filter 'href="/login"' 'href="/$app/login"';
+            sub_filter 'href:"/"' 'href:"/$app"';
+            sub_filter '\/_next' '\/$app\/_next';
+            sub_filter '/_next' '/$app/_next';
+            sub_filter '/api/v1' '/$app/api/v1';
+            sub_filter '/login/plex/loading' '/$app/login/plex/loading';
+            sub_filter '/images/' '/$app/images/';
+            sub_filter '/imageproxy/' '/$app/imageproxy/';
+            sub_filter '/avatarproxy/' '/$app/avatarproxy/';
+            sub_filter '/android-' '/$app/android-';
+            sub_filter '/apple-' '/$app/apple-';
+            sub_filter '/favicon' '/$app/favicon';
+            sub_filter '/logo_' '/$app/logo_';
+            sub_filter '/site.webmanifest' '/$app/site.webmanifest';
+
+            limit_conn addr 20;
+          '';
         };
 
         locations."/" = {
