@@ -323,8 +323,7 @@
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      # enable sub_filter module for subpath rewriting (used by Jellyseerr workaround)
-      extraModules = [pkgs.nginxModules.substitute];
+
 
       commonHttpConfig = ''
         log_format bot_logs '$remote_addr - $http_user_agent - $request';
