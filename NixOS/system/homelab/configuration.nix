@@ -337,6 +337,11 @@
           proxyPass = "http://127.0.0.1:8096";
           extraConfig = ''limit_conn addr 20; '';
         };
+        locations."/jellyseerr" = {
+          proxyPass = "http://127.0.0.1:5055";
+          extraConfig = ''limit_conn addr 20; '';
+        };
+
         locations."/" = {
           proxyPass = "http://127.0.0.1:8888";
           extraConfig = ''limit_conn addr 10; '';
