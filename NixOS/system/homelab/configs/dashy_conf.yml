@@ -56,6 +56,13 @@ sections:
         url: https://hl.kmate.org/jellyfin
         target: sametab
         id: 0_836_jellyfin
+      - &ref_19
+        title: Jellyseerr
+        description: Request manager (Jellyseerr)
+        icon: si-overleaf
+        url: https://hl.kmate.org/jellyseerr
+        target: sametab
+        id: 8_836_jellyseerr
       - &ref_1
         title: Filmek
         icon: fas fa-film
@@ -99,6 +106,7 @@ sections:
         id: 7_836_moonlightpanel
     filteredItems:
       - *ref_0
+      - *ref_19
       - *ref_1
       - *ref_2
       - *ref_3
