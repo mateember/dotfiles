@@ -59,4 +59,12 @@
   xdg.configFile."hypr/idle.sh".source = ./idle.sh;
   xdg.configFile."hypr/mocha.conf".source = ./mocha.conf;
   */
+
+  # Disable system ibus autostart via XDG override
+  xdg.configFile."autostart/ibus.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=IBus
+    Hidden=true
+  '';
 }

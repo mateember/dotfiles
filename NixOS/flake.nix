@@ -51,7 +51,7 @@
     ags,
     astal,
     ...
-  }: let
+  } @ inputs: let
     system = "x86_64-linux";
     lib = nixpkgs.lib;
     lib-unstable = nixpkgs-unstable.lib;
@@ -135,6 +135,7 @@
 
         specialArgs = {
           inherit pkgs-unstable;
+          inherit inputs;
           inherit zen-browser;
           inherit hyprland;
           inherit winapps;

@@ -30,21 +30,25 @@
     stateVersion = "25.11";
   };
 
-  systemd.user.services.bing-wallpaper = {
-    Unit = {
-      Description = "Download Bing Daily Wallpaper";
-      After = ["network-online.target"];
-      Wants = ["network-online.target"];
-    };
+  systemd.user = {
+    services = {
+      bing-wallpaper = {
+        Unit = {
+          Description = "Download Bing Daily Wallpaper";
+          After = ["network-online.target"];
+          Wants = ["network-online.target"];
+        };
 
-    Service = {
-      Type = "oneshot";
-      # Ensure the path matches where you saved the script
-      ExecStart = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.scripts/bingpaper.sh";
-    };
+        Service = {
+          Type = "oneshot";
+          # Ensure the path matches where you saved the script
+          ExecStart = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.scripts/bingpaper.sh";
+        };
 
-    Install = {
-      WantedBy = ["default.target"];
+        Install = {
+          WantedBy = ["default.target"];
+        };
+      };
     };
   };
 

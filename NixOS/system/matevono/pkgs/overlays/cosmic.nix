@@ -18,7 +18,4 @@
   # 2. Enable COSMIC
   services.desktopManager.cosmic.enable = true;
   services.displayManager.cosmic-greeter.enable = true;
-
-  # 3. Optional: Recommended for COSMIC performance
-  services.system76-scheduler.enable = true;
 }

@@ -173,6 +173,10 @@
     };
 
     user.services = {
+      "app-ibus-daemon@autostart" = {
+        enable = false;
+        unitConfig.ConditionPathExists = "/var/empty";
+      };
       polkit-gnome-authentication-agent-1 = {
         description = "polkit-gnome-authentication-agent-1";
         wantedBy = ["graphical-session.target"];
@@ -332,7 +336,7 @@
     desktopManager.gnome.enable = true;
     desktopManager.cosmic.enable = true;
     displayManager = {
-      sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
+      # sessionPackages = [hyprland.packages.${pkgs.system}.hyprland];
       gdm.enable = true;
       ly = {
         enable = false;
@@ -452,7 +456,7 @@
       xdgOpenUsePortal = true;
       enable = true;
       #config.common.default = "gnome";
-      extraPortals = [pkgs.kdePackages.xdg-desktop-portal-kde pkgs.xdg-desktop-portal-gtk pkgs.xdg-desktop-portal-cosmic];
+      extraPortals = [pkgs.kdePackages.xdg-desktop-portal-kde pkgs.xdg-desktop-portal-gtk];
 
       #   config = {
       #     common = {

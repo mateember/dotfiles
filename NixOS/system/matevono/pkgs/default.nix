@@ -5,10 +5,14 @@
   pkgs-unstable,
   hyprland,
   winapps,
+  inputs,
   ...
 }: {
+  disabledModules = ["programs/wayland/hyprland.nix"];
+
   imports = [
     ./overlays/howdy.nix
+    "${inputs.nixpkgs-unstable}/nixos/modules/programs/wayland/hyprland.nix"
   ];
 
   nixpkgs.config.allowInsecurePredicate = pkg:
@@ -21,6 +25,8 @@
   chaotic.mesa-git.fallbackSpecialisation = false;
 
   programs = {
+    uwsm.package = pkgs-unstable.uwsm;
+
     fish.enable = true;
     zsh.enable = true;
     fuse.userAllowOther = true;
@@ -33,10 +39,10 @@
       enable = true;
       withUWSM = true;
       xwayland.enable = true;
-      package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-      portalPackage = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
-      # package = pkgs-unstable.hyprland;
-      # portalPackage = pkgs-unstable.xdg-desktop-portal-hyprland;
+      # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+      # portalPackage = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
+      package = pkgs-unstable.hyprland;
+      portalPackage = pkgs-unstable.xdg-desktop-portal-hyprland;
     };
     virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
