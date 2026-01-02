@@ -29,9 +29,9 @@
   };
 
   fileSystems."/mnt/khdd" = {
-    device = "/dev/disk/by-uuid/B2F2-B28F";
-    fsType = "exfat";
-    options = ["users" "nofail" "exec" "rw" "uid=1000" "gid=1000"];
+    device = "/dev/disk/by-uuid/a9fc4cd0-2445-4cef-8c21-df72b1c1351b";
+    fsType = "ext4";
+    options = ["nofail" "defaults"];
   };
 
   swapDevices = [

@@ -142,8 +142,7 @@ services:
       - TZ=Europe/Budapest
     volumes:
       - /home/mate/randomfiles/bazarr:/config
-      - /mnt/khdd/kshare/Movies:/movies
-      - /mnt/khdd/kshare/Shows:/shows
+      - /mnt/khdd/kshare:/data 
     ports:
       - 6767:6767
     restart: unless-stopped
@@ -159,6 +158,26 @@ services:
     ports:
       - 5055:5055
     restart: unless-stopped
+
+  nextcloud-aio-mastercontainer:
+    image: nextcloud/all-in-one:latest
+    container_name: nextcloud-aio-mastercontainer
+    restart: always
+    ports:
+      - "8090:8080" 
+    environment:
+      - APACHE_PORT=11000
+      - APACHE_IP_BINDING=127.0.0.1
+      - SKIP_DOMAIN_VALIDATION=true
+      # ADD THIS LINE:
+      - NEXTCLOUD_DATADIR=/home/mate/randomfiles/nextcloud
+    volumes:
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer
 
   # 7dtdserver:
   #   image: vinanrra/7dtd-server
