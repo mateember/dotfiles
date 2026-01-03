@@ -124,7 +124,7 @@
       mate = {
         isNormalUser = true;
         description = "Máté Tamás Kiss";
-        extraGroups = ["networkmanager" "wheel" "docker"];
+        extraGroups = ["networkmanager" "wheel" "docker" "www-data"];
         shell = pkgs.fish;
         linger = true;
         packages = with pkgs; [];
