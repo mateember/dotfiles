@@ -329,7 +329,7 @@
         limit_conn_zone $binary_remote_addr zone=addr:10m;
       '';
       virtualHosts = {
-        "nextcloud.hl.kmate.org" = {
+        "nextcloud.kmate.org" = {
           forceSSL = true;
           sslCertificateKey = "/var/ssl/privkey.key";
           sslCertificate = "/var/ssl/fullchain.pem";
