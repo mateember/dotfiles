@@ -31,7 +31,7 @@
   fileSystems."/home/mate/Games" = {
     device = "/dev/disk/by-uuid/487332e4-403c-4418-9717-3fe5a0eea16f";
     fsType = "btrfs";
-    options = ["subvol=Games" "x-gvfs-trash" "user"];
+    options = ["subvol=Games" "x-gvfs-trash" "user" "exec" "defaults"];
   };
 
   fileSystems."/boot" = {

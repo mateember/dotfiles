@@ -324,7 +324,6 @@
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
 
-
       commonHttpConfig = ''
         log_format bot_logs '$remote_addr - $http_user_agent - $request';
         limit_conn_zone $binary_remote_addr zone=addr:10m;

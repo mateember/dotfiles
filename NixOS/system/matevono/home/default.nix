@@ -5,7 +5,7 @@
 }: {
   imports = [
     ./hyprland
-    ./programs
+    ./pkgs
     ./shell
     #./waybar
     #./dunst

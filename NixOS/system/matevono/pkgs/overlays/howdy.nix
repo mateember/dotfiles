@@ -28,7 +28,7 @@ in {
         timeout = 2;
         device_path = "/dev/video2";
         dark_threshold = 70;
-        certainty = 40;
+        certainty = 4.0;
       };
     };
     # pam.enable = true; # Enables Howdy for general login/auth

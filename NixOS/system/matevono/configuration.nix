@@ -81,7 +81,20 @@
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
-    kernelParams = ["splash" "drm.edid_firmware=eDP-1:edid/customedid.bin" "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin" "video=eDP-1:e" "i915.enable_psr=0"];
+    kernelParams = [
+      "splash"
+      "drm.edid_firmware=eDP-1:edid/customedid.bin"
+      "drm_kms_helper.edid_firmware=eDP-1:edid/customedid.bin"
+      "video=eDP-1:e"
+
+      # 1. Switch from i915 to Xe
+      "i915.force_probe=!*"
+      "xe.force_probe=*"
+
+      # 2. Disable PSR for both (Safe to keep both for transitions)
+      "i915.enable_psr=0"
+      "xe.enable_psr=0"
+    ];
 
     kernelModules = ["tcp_bbr"];
     kernel.sysctl = {
