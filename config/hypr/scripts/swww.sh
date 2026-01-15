@@ -1,58 +1,57 @@
 #!/usr/bin/env bash
 
-# Set the directory containing the images
+# --- CONFIGURATION ---
 IMAGE_DIR="$HOME/Pictures/BingWallpaper"
-
-# Set the transition duration in seconds
-TRANSITION_DURATION=10
-
-# Set the interval between image changes in minutes
+TRANSITION_STEP=10
 INTERVAL=7
-
-# Set the frame rate for the transition
 FPS=120
-pgrep -x swww-daemon > /dev/null || swww-daemon &
-# Ensure swww-daemon is running
-if ! pgrep -f "swww-daemon" > /dev/null; then
+
+# --- DAEMON CHECK ---
+if ! pgrep -x "swww-daemon" > /dev/null; then
     swww-daemon &
-    sleep 1 # Give the daemon a second to initialize
+    sleep 1.5 # Increased slightly to ensure socket is ready
 fi
 
-# Get a list of image files in the directory
+# Get image files
 IMAGES=($(find "$IMAGE_DIR" -type f \( -name "*.jpg" -o -name "*.png" \)))
 
-# Check if there are any images
 if [ ${#IMAGES[@]} -eq 0 ]; then
     echo "No images found in $IMAGE_DIR"
     exit 1
 fi
 
-# --- RANDOM INITIALIZATION ---
-# Pick a random starting index
-CURRENT_INDEX=$(( RANDOM % ${#IMAGES[@]} ))
+get_monitors() {
+    hyprctl monitors -j | jq -r '.[] | .name'
+}
 
-# Set the first image immediately without waiting
-swww img "${IMAGES[$CURRENT_INDEX]}"
+# --- INITIALIZATION ---
+# Small sleep between monitors prevents the "wayland buffer" warning
+for MONITOR in $(get_monitors); do
+    RANDOM_IMG="${IMAGES[$(( RANDOM % ${#IMAGES[@]} ))]}"
+    swww img -o "$MONITOR" "$RANDOM_IMG" --transition-type none > /dev/null 2>&1
+    sleep 0.2 
+done
 
-# Loop indefinitely
+# --- MAIN LOOP ---
 while true; do
-    # Wait for the specified interval
     sleep $((INTERVAL * 60))
 
-    # Calculate a random next image index
-    NEXT_INDEX=$(( RANDOM % ${#IMAGES[@]} ))
+    IS_FULLSCREEN=$(hyprctl activewindow -j | jq '.fullscreen' 2>/dev/null)
 
-    # Ensure we don't pick the same image twice in a row
-    while [ "$NEXT_INDEX" -eq "$CURRENT_INDEX" ] && [ ${#IMAGES[@]} -gt 1 ]; do
-        NEXT_INDEX=$(( RANDOM % ${#IMAGES[@]} ))
+    for MONITOR in $(get_monitors); do
+        NEXT_IMG="${IMAGES[$(( RANDOM % ${#IMAGES[@]} ))]}"
+        
+        if [ "$IS_FULLSCREEN" != "0" ] && [ "$IS_FULLSCREEN" != "false" ] && [ "$IS_FULLSCREEN" != "null" ]; then
+            # GAME MODE
+            swww img -o "$MONITOR" "$NEXT_IMG" --transition-type none > /dev/null 2>&1
+        else
+            # DESKTOP MODE
+            swww img -o "$MONITOR" "$NEXT_IMG" \
+                --transition-step "$TRANSITION_STEP" \
+                --transition-fps "$FPS" \
+                --transition-type random > /dev/null 2>&1
+        fi
+        # Tiny delay to allow the Wayland buffer to catch up
+        sleep 0.2
     done
-
-    # Set the next image as the wallpaper with a transition
-    swww img "${IMAGES[$NEXT_INDEX]}" \
-        --transition-step "$TRANSITION_DURATION" \
-        --transition-fps "$FPS" \
-        --transition-type random
-
-    # Update the current index for the next loop comparison
-    CURRENT_INDEX=$NEXT_INDEX
 done

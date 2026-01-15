@@ -42,7 +42,8 @@
 
   swapDevices = [
     {
-      device = "/home/mate/.swap/swapfile";
+      device = "/var/lib/swapfile";
+      size = 34816; # 34GB in MB
     }
   ];
 

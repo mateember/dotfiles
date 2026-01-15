@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 
-
 # 1. Check if a value was provided as an argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <value>"
@@ -10,29 +9,31 @@ fi
 
 VALUE=$1
 
-# 2. Check if ddccontrol is installed
-if ! command -v ddccontrol &> /dev/null; then
-    echo "Error: ddccontrol could not be found. Please install it first."
+# 2. Check if ddcutil is installed
+if ! command -v ddcutil >/dev/null 2>&1; then
+    echo "Error: ddcutil could not be found. Please install it first."
+    echo "Try: sudo apt install ddcutil"
     exit 1
 fi
 
 echo "Probing for monitors..."
 
-# 3. Run ddccontrol -p and extract the I2C device
-# We search for the pattern '/dev/i2c-[number]' and take the first match.
-# 2>/dev/null silences the verbose probing errors that ddccontrol often outputs.
-I2C_DEV=$(ddccontrol -p 2>/dev/null | grep -o '/dev/i2c-[0-9]*' | head -n 1)
+# 3. Detect the monitor and get the first display number
+# ddcutil detect is more reliable than manual grep on /dev/i2c-*
+DISPLAY_NUM=$(ddcutil detect --brief | grep "Display" | head -n 1 | awk '{print $2}')
 
 # 4. Verify we found a device
-if [ -z "$I2C_DEV" ]; then
-    echo "Error: No I2C monitor device found."
-    echo "Make sure the 'i2c-dev' kernel module is loaded (sudo modprobe i2c-dev)."
+if [ -z "$DISPLAY_NUM" ]; then
+    echo "Error: No DDC/CI capable monitor found."
+    echo "Check if the 'i2c-dev' kernel module is loaded: sudo modprobe i2c-dev"
+    echo "Also check permissions: Is your user in the 'i2c' group?"
     exit 1
 fi
 
-echo "Found monitor on: $I2C_DEV"
-echo "Setting register 0x10 (Brightness) to $VALUE..."
+echo "Found monitor as Display $DISPLAY_NUM"
+echo "Setting VCP feature 0x10 (Brightness) to $VALUE..."
 
 # 5. Run the final command
-# Note: ddccontrol often requires root privileges to write to i2c.
-ddccontrol -r 0x10 -w "$VALUE" dev:"$I2C_DEV"
+# --display identifies the monitor index found during detection
+# --sleep-multiplier can be added if your monitor is slow to respond (e.g., .5)
+ddcutil setvcp 10 "$VALUE" --display "$DISPLAY_NUM"

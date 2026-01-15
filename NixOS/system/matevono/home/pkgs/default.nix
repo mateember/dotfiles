@@ -76,6 +76,7 @@
       jq
       xorg.xkill
       xorg.xeyes
+      kdePackages.gwenview
       #ghostty.packages."${system}".default
     ])
     ++ (with pkgs-unstable; [
@@ -87,6 +88,7 @@
       uxplay
       brave
       neovim
+      kdePackages.kolourpaint
       celluloid
       openboard
       fastfetch

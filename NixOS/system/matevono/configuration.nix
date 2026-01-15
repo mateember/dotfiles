@@ -81,6 +81,7 @@
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
     initrd.kernelModules = [];
+    initrd.systemd.enable = true;
     kernelParams = [
       "splash"
       "drm.edid_firmware=eDP-1:edid/customedid.bin"
@@ -96,7 +97,7 @@
       "xe.enable_psr=0"
     ];
 
-    kernelModules = ["tcp_bbr"];
+    kernelModules = ["tcp_bbr" "i2c-dev"];
     kernel.sysctl = {
       "net.ipv4.tcp_congestion_control" = "bbr";
       "net.core.default_qdisc" = "fq";
@@ -182,6 +183,10 @@
 
   systemd = {
     services = {
+      upower.serviceConfig = {
+        ProtectSystem = lib.mkForce "no";
+        PrivateTmp = lib.mkForce false;
+      };
       gnome-remote-desktop.wantedBy = ["graphical.target"];
     };
 
@@ -272,6 +277,8 @@
         "docker"
         "podman"
         "plugdev"
+        "adbusers"
+        "i2c"
       ];
       shell = pkgs.fish;
     };
@@ -281,7 +288,6 @@
 
   services = {
     pulseaudio.enable = false;
-    ddccontrol.enable = true;
     power-profiles-daemon.enable = false;
     tlp = {
       enable = true;
@@ -304,7 +310,13 @@
         # STOP_CHARGE_THRESH_BAT0 = 80; # 80 and above it stops charging
       };
     };
-
+    upower = {
+      enable = true;
+      percentageLow = 15;
+      percentageCritical = 10;
+      percentageAction = 4; # This is the "Save Me" threshold
+      criticalPowerAction = "Hibernate";
+    };
     gnome = {
       gnome-keyring.enable = true;
       gnome-browser-connector.enable = true;

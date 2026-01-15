@@ -25,8 +25,6 @@
   chaotic.mesa-git.fallbackSpecialisation = false;
 
   programs = {
-    uwsm.package = pkgs-unstable.uwsm;
-
     fish.enable = true;
     zsh.enable = true;
     fuse.userAllowOther = true;
@@ -37,7 +35,6 @@
     nm-applet.enable = false;
     hyprland = {
       enable = true;
-      withUWSM = true;
       xwayland.enable = true;
       # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       # portalPackage = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
@@ -52,6 +49,7 @@
       enable = true;
       terminal = "kitty";
     };
+    adb.enable = true;
     nix-ld = {
       enable = true;
       libraries = with pkgs; [
@@ -135,6 +133,10 @@
         python3
         speex
         stdenv.cc.cc
+        stdenv.cc.cc.lib
+        zlib
+        glib
+        libglvnd
         tbb
         udev
         vulkan-loader
@@ -182,6 +184,7 @@
       snixembed
       nano
       tree
+      android-tools
       gfortran
       starship
       polkit_gnome
