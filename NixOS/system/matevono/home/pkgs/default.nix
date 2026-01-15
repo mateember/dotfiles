@@ -7,6 +7,7 @@
   hyprdynamicmonitors,
   hyprshutdown,
   astal,
+  nmrs,
   ...
 }: {
   programs = {
@@ -61,6 +62,7 @@
       git-credential-oauth
       ranger
       mesa-demos
+      nmrs.packages.${pkgs.system}.default
       hyprdynamicmonitors.packages.${system}.default
       wlogout
       trash-cli

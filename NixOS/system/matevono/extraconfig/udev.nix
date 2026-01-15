@@ -4,16 +4,14 @@
   pkgs,
   ...
 }: {
-
-
   services.udev.packages = [
     (pkgs.writeTextFile {
       name = "custom-mtk-rules";
       text = builtins.readFile ./udev/50-android.rules;
       destination = "/etc/udev/rules.d/50-android.rules";
     })
-    
-     (pkgs.writeTextFile {
+
+    (pkgs.writeTextFile {
       name = "custom-mtk2-rules";
       text = builtins.readFile ./udev/51-edl.rules;
       destination = "/etc/udev/rules.d/51-edl.rules";

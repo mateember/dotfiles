@@ -3,7 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+
     howdy-pr.url = "github:NixOS/nixpkgs?ref=pull/216245/head";
+    nmrs.url = "github:cachebag/nmrs";
+
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
@@ -50,6 +53,7 @@
     howdy-pr,
     ags,
     astal,
+    nmrs,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -129,6 +133,7 @@
               inherit hyprland;
               inherit hyprdynamicmonitors;
               inherit astal;
+              inherit nmrs;
             };
           }
         ];
