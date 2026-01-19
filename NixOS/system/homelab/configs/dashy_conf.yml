@@ -21,10 +21,11 @@ sections:
       hideForGuests: false
     widgets:
       - type: clock
-        format: hu-HU
-        hideDate: false
-        use12Hour: false
-        id: 0_513_clock
+        options:
+          format: hu-HU
+          hideDate: false
+          use12Hour: false
+          id: 0_513_clock
       - type: weather
         options:
           apiKey: efdbade728b37086877a5e83442004db
@@ -63,12 +64,6 @@ sections:
         url: https://hl.kmate.org/jellyseerr
         target: sametab
         id: 8_836_jellyseerr
-      - &ref_1
-        title: Filmek
-        icon: fas fa-film
-        url: https://hl.kmate.org/films
-        target: sametab
-        id: 1_836_filmek
       - &ref_2
         title: Home Files
         icon: fas fa-file
@@ -107,7 +102,6 @@ sections:
     filteredItems:
       - *ref_0
       - *ref_19
-      - *ref_1
       - *ref_2
       - *ref_3
       - *ref_4

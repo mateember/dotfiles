@@ -119,6 +119,7 @@
   users = {
     groups = {
       mate.gid = 1000;
+			www-data.gid = 33;
     };
     users = {
       mate = {
@@ -197,7 +198,7 @@
       };
       services = {
         "kshare" = {
-          enable = true;
+          enable = false;
           after = ["network.target"];
           wantedBy = ["default.target"];
           description = "Http File server";
