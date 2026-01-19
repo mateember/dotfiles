@@ -40,13 +40,8 @@ in {
     prPkgs.howdy
     prPkgs.linux-enable-ir-emitter
   ];
-  security.pam.services.sudo.howdyAuth = true;
-  security.pam.services.gdm-password = {
-    howdyAuth = true;
-    # Force the gnome-keyring to initialize even with Howdy
-    text = ''
-      auth     optional    pam_gnome_keyring.so
-      session  optional    pam_gnome_keyring.so auto_start
-    '';
+  security.pam.howdy = {
+    enable = true;
+    control = "sufficient";
   };
 }

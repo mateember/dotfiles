@@ -51,7 +51,6 @@
       terminal = "kitty";
     };
     adb.enable = true;
-   
   };
 
   stylix.enable = false;
