@@ -10,6 +10,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+	./nixld.nix
     ./configs/nginx_block.nix
   ];
 
