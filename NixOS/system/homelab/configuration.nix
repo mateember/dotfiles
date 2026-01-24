@@ -10,7 +10,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
-	./nixld.nix
+    ./nixld.nix
     ./configs/nginx_block.nix
   ];
 
@@ -120,7 +120,7 @@
   users = {
     groups = {
       mate.gid = 1000;
-			www-data.gid = 33;
+      www-data.gid = 33;
     };
     users = {
       mate = {
@@ -144,6 +144,10 @@
   programs = {
     fish.enable = true;
     nix-ld.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true; # strongly recommended for Nix users
+    };
     steam = {
       enable = false;
       dedicatedServer.openFirewall = true;

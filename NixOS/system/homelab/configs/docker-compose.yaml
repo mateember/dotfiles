@@ -123,15 +123,20 @@ services:
     restart: unless-stopped
 
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    environment:
-      - LOG_LEVEL=info
-      - TZ=Europe/Budapest
-    ports:
-      - "8191:8191"
+  byparr:
+    image: ghcr.io/thephaseless/byparr:latest
+    container_name: byparr
     restart: unless-stopped
+    ports:
+      - "8191:8191" # Match FlareSolverr's default port
+    environment:
+      - LOG_LEVEL=INFO
+      # - PROXY_SERVER=http://user:pass@host:port # Optional: If you use a proxy
+    # Byparr can be RAM-intensive; optional limits:
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
