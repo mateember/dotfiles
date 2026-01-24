@@ -10,7 +10,7 @@
 }: {
   programs.nix-ld = {
     enable = true;
-    libraries = with pkgs; [
+    libraries = with pkgs-unstable; [
       SDL
       SDL2
       SDL2_image

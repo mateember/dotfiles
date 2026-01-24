@@ -46,6 +46,25 @@ case "$1" in
         
         echo "Stopped: REMOTE monitor removed and hardware cursor restored."
         ;;
+ "vnc")
+        # A. Create the headless monitor
+        hyprctl output create headless REMOTE
+        sleep 0.2
+        
+        # B. Position the monitor (Right and Up)
+        # Format: Name, Res@FPS, XxY, Scale
+        hyprctl keyword monitor "REMOTE,${WIDTH}x${HEIGHT}@${FPS},${X_POS}x${Y_POS},1"
+        
+        # C. Fix: Force Software Cursor so Sunshine can see it
+        # hyprctl keyword cursor:no_hardware_cursors true
+        
+        # D. Optional: Focus the new monitor immediately
+        hyprctl dispatch focusmonitor REMOTE
+        
+        echo "Started: REMOTE monitor at ${X_POS}x${Y_POS} without Software Cursor enabled."
+        ;;
+
+
     *)
         echo "Usage: $0 {start|stop}"
         ;;

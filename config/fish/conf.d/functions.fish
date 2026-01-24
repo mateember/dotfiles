@@ -140,4 +140,12 @@ function screenoff
     end
 end
 
-
+function nixify --description "Sets NIX_LD variables for the current shell session"
+    # Set the path to the loader itself
+    set -gx NIX_LD (type -p nix-ld)
+    
+    # Set the library path where the system-wide libs live
+    set -gx NIX_LD_LIBRARY_PATH /run/current-system/sw/share/nix-ld/lib
+    
+    echo "✅ NIX_LD and NIX_LD_LIBRARY_PATH set for this session."
+end
