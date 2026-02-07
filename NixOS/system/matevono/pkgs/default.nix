@@ -97,8 +97,6 @@
       nautilus
       appimage-run
       evince
-      wineWowPackages.stable
-      wineWowPackages.waylandFull
       alsa-utils
       dig
       playerctl

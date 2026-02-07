@@ -84,6 +84,7 @@
     ++ (with pkgs-unstable; [
       vscode-fhs
       zed-editor-fhs
+      jetbrains-toolbox
       hpp2plantuml
       plantuml
       sunshine

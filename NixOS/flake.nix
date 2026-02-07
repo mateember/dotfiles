@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
-    howdy-pr.url = "github:NixOS/nixpkgs?ref=pull/216245/head";
     nmrs.url = "github:cachebag/nmrs";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -50,7 +49,6 @@
     omarchy-nix,
     hyprdynamicmonitors,
     stylix,
-    howdy-pr,
     ags,
     astal,
     nmrs,
@@ -144,7 +142,6 @@
           inherit zen-browser;
           inherit hyprland;
           inherit winapps;
-          inherit howdy-pr;
         };
       };
       homelab = lib.nixosSystem {
