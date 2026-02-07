@@ -55,6 +55,18 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  casa:
+    image: dockurr/casa
+    container_name: casa
+    ports:
+      - 8889:8080
+    volumes:
+      - /home/mate/randomfiles/casa:/DATA
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    stop_grace_period: 1m
+
   jellyfin:
     image: jellyfin/jellyfin
     container_name: jellyfin
