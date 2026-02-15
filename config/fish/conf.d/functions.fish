@@ -9,19 +9,14 @@ function vencord
     curl -sS 'https://raw.githubusercontent.com/Vendicated/VencordInstaller/main/install.sh' | sh
 end
 
-function cat
-    # Check if 'bat' is installed and executable
-    if type -q bat
-        # Execute 'bat' and pass all arguments ($argv) to it
-        bat $argv
-    # If 'bat' is not found, check for 'batcat' (sometimes the name on Linux)
-    else if type -q batcat
+function bat
+    if type -q batcat
         # Execute 'batcat' and pass all arguments to it
         batcat $argv
     else
         # Fallback: Execute the system's original 'cat' command
         # Using 'command cat' prevents infinite recursion with this function name
-        command cat $argv
+        command bat $argv
     end
 end
 

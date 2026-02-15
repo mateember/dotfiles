@@ -7,13 +7,6 @@
   # Access the specific package set from the PR input
 in {
   # 1. Import the module logic from the PR files
-  imports = [
-    "${inputs.nixpkgs-unstable}/nixos/modules/services/security/howdy/default.nix"
-    "${inputs.nixpkgs-unstable}/nixos/modules/services/misc/linux-enable-ir-emitter.nix"
-    "${inputs.nixpkgs-unstable}/nixos/modules/security/pam.nix"
-  ];
-  disabledModules = ["security/pam.nix"];
-
   # 2. Configure the services using the packages from the PR
   services.linux-enable-ir-emitter = {
     enable = true;

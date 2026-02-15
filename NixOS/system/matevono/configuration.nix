@@ -273,6 +273,8 @@
         "audio"
         "video"
         "libvirtd"
+"dialout"
+				"tty"
         "libvirt"
         "docker"
         "podman"

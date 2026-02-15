@@ -11,7 +11,7 @@
   disabledModules = ["programs/wayland/hyprland.nix"];
 
   imports = [
-    ./overlays/howdy.nix
+    # ./overlays/howdy.nix
     "${inputs.nixpkgs-unstable}/nixos/modules/programs/wayland/hyprland.nix"
     ./nixld.nix
   ];

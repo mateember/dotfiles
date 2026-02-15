@@ -96,6 +96,10 @@
       zlib
       glib
       libglvnd
+      libGL
+      libGLU
+      # libgles
+      egl-wayland
       tbb
       udev
       vulkan-loader
