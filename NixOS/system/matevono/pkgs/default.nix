@@ -44,11 +44,15 @@
     };
     virt-manager.enable = true;
     # steam.extraCompatPackages = [pkgs.proton-ge-bin];
-    xfconf.enable = false;
+    xfconf.enable = true;
     dconf.enable = true;
     nautilus-open-any-terminal = {
       enable = true;
       terminal = "kitty";
+    };
+    thunar = {
+      enable = true;
+      plugins = with pkgs-unstable; [thunar-archive-plugin thunar-vcs-plugin thunar-media-tags-plugin];
     };
     adb.enable = true;
   };

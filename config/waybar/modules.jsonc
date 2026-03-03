@@ -15,7 +15,7 @@
 
     "custom/filemanager": {
         "format": "",
-        "on-click": "dolphin",
+        "on-click": "thunar",
         "tooltip": false
     },
 
@@ -30,7 +30,7 @@
     
     "custom/browser": {
         "format": "",
-        "on-click": "zen",
+        "on-click": "brave",
         "tooltip": false
     },
 

@@ -85,7 +85,7 @@
       vscode-fhs
       zed-editor-fhs
       jetbrains-toolbox
-      hpp2plantuml
+      # hpp2plantuml
       plantuml
       sunshine
       uxplay

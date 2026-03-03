@@ -80,7 +80,7 @@
     kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = with config.boot.kernelPackages; [xone v4l2loopback xpadneo acpi_call];
     blacklistedKernelModules = ["xpad"];
-    initrd.kernelModules = [];
+    initrd.kernelModules = ["xe"];
     initrd.systemd.enable = true;
     kernelParams = [
       "splash"
@@ -133,7 +133,40 @@
         efiSysMountPoint = "/boot/"; # ← use the same mount point here.
       };
 
+      limine = {
+        enable = true;
+        secureBoot.enable = true;
+        enableEditor = true;
+        maxGenerations = 15;
+        extraEntries = ''
+          /Windows
+          protocol: efi_chainload
+          path: boot():///EFI/Microsoft/Boot/bootmgfw.efi
+        '';
+        style = {
+          # wallpapers = with pkgs; [nixos-artwork.wallpapers.catppuccin-mocha.gnomeFilePath nixos-artwork.wallpapers.mosaic-blue.gnomeFilePath];
+	wallpapers = [./pkgs/images/im1.png ./pkgs/images/im2.jpeg];
+          wallpaperStyle = "stretched";
+          interface.resolution = "2880x1800";
+          graphicalTerminal = {
+            font.scale = "3x3"; # This makes the font readable on 2.8K @ 14"
+            margin = 100; # Centers the menu better on high-res screens
+            marginGradient = 20;
+
+            # Colors: Nord Palette
+            background = "7f2e34CC";
+            foreground = "d8dee9";
+            palette = "2e3440;bf616a;a3be8c;ebcb8b;81a1c1;b48ead;88c0d0;d8dee9";
+
+            # Bright variants for better contrast
+            brightForeground = "eceff4";
+            brightBackground = "3b4252";
+          };
+        };
+      };
+
       grub = {
+        enable = false;
         useOSProber = true;
         efiSupport = true;
         device = "nodev";
@@ -188,7 +221,18 @@
         PrivateTmp = lib.mkForce false;
       };
       gnome-remote-desktop.wantedBy = ["graphical.target"];
+      # libvirtd.enable = false;
+      virtqemud.serviceConfig.TimeoutStopSec = "5s";
+      virtnetworkd.serviceConfig.TimeoutStopSec = "5s";
     };
+
+    # sockets = {
+    #   virtqemud.enable = true;
+    #   virtqemud-ro.enable = true;
+    #   virtqemud-admin.enable = true;
+    #   virtnetworkd.enable = true;
+    #   virtnetworkd-ro.enable = true;
+    # };
 
     user.services = {
       "app-ibus-daemon@autostart" = {
@@ -273,8 +317,8 @@
         "audio"
         "video"
         "libvirtd"
-"dialout"
-				"tty"
+        "dialout"
+        "tty"
         "libvirt"
         "docker"
         "podman"
