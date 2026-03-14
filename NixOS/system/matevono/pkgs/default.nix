@@ -179,6 +179,7 @@
       wl-clipboard-rs
       bat
       ghostty
+			xwayland-satellite
       kdePackages.konsole
       kdePackages.okular
       #lact
