@@ -145,7 +145,7 @@
         '';
         style = {
           # wallpapers = with pkgs; [nixos-artwork.wallpapers.catppuccin-mocha.gnomeFilePath nixos-artwork.wallpapers.mosaic-blue.gnomeFilePath];
-	wallpapers = [./pkgs/images/im1.png ./pkgs/images/im2.jpeg];
+          wallpapers = [./pkgs/images/im1.png ./pkgs/images/im2.jpeg];
           wallpaperStyle = "stretched";
           interface.resolution = "2880x1800";
           graphicalTerminal = {
