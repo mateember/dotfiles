@@ -87,6 +87,7 @@
       jetbrains-toolbox
       # hpp2plantuml
       plantuml
+      yt-dlp
       sunshine
       uxplay
       brave

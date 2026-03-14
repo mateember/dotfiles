@@ -29,6 +29,11 @@
     fish.enable = true;
     zsh.enable = true;
     fuse.userAllowOther = true;
+    niri = {
+      package = pkgs-unstable.niri;
+      enable = true;
+      useNautilus = true;
+    };
     steam = {
       enable = true;
       remotePlay.openFirewall = true;
