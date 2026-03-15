@@ -1,11 +1,18 @@
 // This config is in the KDL format: https://kdl.dev
 // "/-" comments out the following node.
 
-/-output "eDP-1" {
-    // mode "1920x1080@120.030"
+output "eDP-1" {
+    mode "2880x1800@120"
     scale 2
     transform "normal"
-    position x=1280 y=0
+    position x=0 y=0
+    variable-refresh-rate
+}
+
+output "Dell Inc. DELL U2412M 0FFXD4152LWL" {
+    mode "1920x1200@59.95"
+    scale 1
+    position x=320 y=-1200
 }
 
 include "/home/mate/dotfiles/config/niri/conf/keyboard.kdl"
