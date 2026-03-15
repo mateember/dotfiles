@@ -1,9 +1,8 @@
 // Settings that influence how windows are positioned and sized.
-// Find more information on the wiki:
-// https://yalter.github.io/niri/Configuration:-Layout
 layout {
     // Set gaps around windows in logical pixels.
-    gaps 16
+    gaps 7
+
 
     // When to center a column when changing focus, options are:
     // - "never", default behavior, focusing an off-screen column will keep at the left
@@ -38,25 +37,26 @@ layout {
     // You can change how the focus ring looks.
     focus-ring {
         // Uncomment this line to disable the focus ring.
-        // off
+        off
 
         // How many logical pixels the ring extends out from the windows.
-        width 4
+        width 2
 
         // Color of the ring on the active monitor.
-        active-color "#7fc8ff"
+        active-color "#00000000"
 
         // Color of the ring on inactive monitors.
-        inactive-color "#505050"
+        inactive-color "#595959"
     }
 
     // You can also add a border. It's similar to the focus ring, but always visible.
     border {
-        off
+        // off
+        on
 
-        width 4
-        active-color "#ffc87f"
-        inactive-color "#505050"
+        width 2
+        active-color "#00000000"
+        inactive-color "#595959"
 
         // Color of the border around windows that request your attention.
         urgent-color "#9b0000"
@@ -64,11 +64,11 @@ layout {
 
     // You can enable drop shadows for windows.
     shadow {
-        // on
-        softness 30
-        spread 5
+        on
+        softness 4
+        spread 3
         offset x=0 y=5
-        color "#0007"
+        color "#1a1a1a"
     }
 
     // Struts shrink the area occupied by windows, similarly to layer-shell panels.
@@ -88,5 +88,5 @@ animations {
     // off
 
     // Slow down all animations by this factor. Values below 1 speed them up instead.
-    // slowdown 3.0
+    slowdown 1.6
 }

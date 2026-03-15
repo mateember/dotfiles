@@ -1,0 +1,422 @@
+[2026-03-15 12:13:10.790] [info] Using configuration file waybar/config-niri.jsonc
+[2026-03-15 12:13:10.790] [info] Including resource file: ~/.config/waybar/modules.jsonc
+[2026-03-15 12:13:10.794] [info] Discovered appearance 'dark'
+[2026-03-15 12:13:10.835] [info] Using CSS file /home/mate/.config/waybar/style.css
+[2026-03-15 12:13:10.844] [warning] Hyprland is not running, Hyprland IPC will not be available.
+[2026-03-15 12:13:10.844] [warning] module hyprland/window: Disabling module "hyprland/window", Hyprland IPC: HYPRLAND_INSTANCE_SIGNATURE was not set! (Is Hyprland running?)
+[2026-03-15 12:13:10.844] [warning] There is no configuration for 'custom/empty', element will be hidden
+[2026-03-15 12:13:10.844] [info] Niri IPC starting
+Discharging
+[2026-03-15 12:13:11.034] [info] Bar configured (width: 1426, height: 42) for output: eDP-1
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/d8028081ee34492aa7890ada7caeba5b }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 19:47:44:4C:66:C6
+broken device title is 00:E0:4C:23:99:87
+broken device title is 53:6F:89:30:E7:FA
+
+(overskride:2): Gdk-WARNING **: 12:19:05.095: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 7E:09:19:3D:90:59
+broken device title is 59:5A:38:55:10:8B
+broken device title is 08:66:98:DE:93:78
+broken device title is 4B:97:64:AC:30:27
+broken device title is 72:E9:98:D2:AF:03
+broken device title is 59:59:5C:24:0D:31
+broken device title is 5D:D9:B4:75:9C:D8
+broken device title is 4F:DD:07:5B:4E:97
+broken device title is 50:2C:C6:E0:37:90
+broken device title is 7C:2C:67:59:9E:FE
+broken device title is DC:0D:30:0D:76:A1
+broken device title is 63:2B:EC:CD:19:F9
+unhandled device event: Name("MATEWIN11")
+unhandled device event: ManufacturerData({1704: [1, 1, 0, 50, 136, 242, 189, 59, 164, 119]})
+broken device title is 65:01:E3:30:D1:1C
+Device removed: 7E:09:19:3D:90:59 Unknown Device
+
+Device removed: 50:2C:C6:E0:37:90 Unknown Device
+
+Device removed: DC:0D:30:0D:76:A1 Unknown Device
+
+Device removed: 59:5A:38:55:10:8B Unknown Device
+
+Device removed: 72:E9:98:D2:AF:03 Unknown Device
+
+Device removed: 08:66:98:DE:93:78 Unknown Device
+
+Device removed: 19:47:44:4C:66:C6 Unknown Device
+
+Device removed: 53:6F:89:30:E7:FA Unknown Device
+
+Device removed: 5D:D9:B4:75:9C:D8 Unknown Device
+
+Device removed: 59:59:5C:24:0D:31 Unknown Device
+
+Device removed: 00:E0:4C:23:99:87 Unknown Device
+
+Device removed: 88:F2:BD:3B:A4:77 net
+
+Device removed: BC:C7:DA:B9:6F:33 Android TV
+
+Device removed: 4F:DD:07:5B:4E:97 Unknown Device
+
+Device removed: 7C:2C:67:59:9E:FE Unknown Device
+
+Device removed: 4B:97:64:AC:30:27 Unknown Device
+
+Device removed: 63:2B:EC:CD:19:F9 Unknown Device
+
+Device removed: 65:01:E3:30:D1:1C Unknown Device
+
+size is (1440, 850)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/2c6ec8ff26514ab9a97acfdee4f6a592 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 19:47:44:4C:66:C6
+
+(overskride:2): Gdk-WARNING **: 12:22:10.069: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 4F:DD:07:5B:4E:97
+broken device title is 59:5A:38:55:10:8B
+broken device title is 63:2B:EC:CD:19:F9
+broken device title is 5D:D9:B4:75:9C:D8
+size is (1440, 850)
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+[2026-03-15 12:22:58.694] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 94 not found
+[2026-03-15 12:22:58.694] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 95 not found
+[2026-03-15 12:22:58.694] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 96 not found
+[2026-03-15 12:22:58.694] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 97 not found
+[2026-03-15 12:22:58.709] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 94 not found
+[2026-03-15 12:22:58.716] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 95 not found
+[2026-03-15 12:22:58.721] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 96 not found
+[2026-03-15 12:22:58.727] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 97 not found
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/c096e1fcf84d416da3b8e4e18911c283 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+
+(overskride:2): Gdk-WARNING **: 12:26:40.860: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 59:59:5C:24:0D:31
+broken device title is 19:47:44:4C:66:C6
+broken device title is 63:2B:EC:CD:19:F9
+broken device title is 65:01:E3:30:D1:1C
+broken device title is 4F:DD:07:5B:4E:97
+broken device title is 72:E9:98:D2:AF:03
+broken device title is 7E:09:19:3D:90:59
+broken device title is 5D:D9:B4:75:9C:D8
+broken device title is 6D:A3:78:A5:65:24
+broken device title is 08:66:98:DE:93:78
+broken device title is 6F:2C:17:04:C1:BB
+broken device title is 67:61:AD:F8:82:8A
+size is (1440, 850)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/78449d8898f345f589ad9b7cb82e8789 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 6D:A3:78:A5:65:24
+broken device title is 59:59:5C:24:0D:31
+broken device title is 08:66:98:DE:93:78
+broken device title is 77:34:79:A4:06:29
+broken device title is 6F:2C:17:04:C1:BB
+
+(overskride:2): Gdk-WARNING **: 12:28:52.581: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 6E:C2:A3:D6:BC:4E
+broken device title is 19:47:44:4C:66:C6
+broken device title is 67:61:AD:F8:82:8A
+broken device title is 4A:5D:27:C9:87:FE
+broken device title is 4F:DD:07:5B:4E:97
+size is (1436, 846)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/cdb0cfc6e50c4b1d8e27764b09cc9729 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 08:66:98:DE:93:78
+broken device title is 19:47:44:4C:66:C6
+
+(overskride:2): Gdk-WARNING **: 12:31:35.924: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 59:59:5C:24:0D:31
+broken device title is 77:34:79:A4:06:29
+broken device title is 6F:2C:17:04:C1:BB
+broken device title is 69:5A:E3:C4:02:93
+broken device title is 7D:8F:0C:BD:A4:20
+broken device title is 7B:6F:C3:0B:4C:F7
+broken device title is 4A:5D:27:C9:87:FE
+size is (1436, 846)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/4732fc7238a548c49f4d387296e998b4 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 67:61:AD:F8:82:8A
+broken device title is 77:34:79:A4:06:29
+Device removed: 67:61:AD:F8:82:8A Unknown Device
+
+broken device title is 7D:8F:0C:BD:A4:20
+broken device title is 6D:A3:78:A5:65:24
+broken device title is 19:47:44:4C:66:C6
+broken device title is 59:59:5C:24:0D:31
+
+(overskride:2): Gdk-WARNING **: 12:32:09.618: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 08:66:98:DE:93:78
+broken device title is 6F:2C:17:04:C1:BB
+broken device title is 67:61:AD:F8:82:8A
+size is (480, 575)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/ba3df51ee9904d2f9ad3fed4bff6a1a2 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 7D:8F:0C:BD:A4:20
+broken device title is 4A:5D:27:C9:87:FE
+
+(overskride:2): Gdk-WARNING **: 12:39:51.132: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 77:34:79:A4:06:29
+broken device title is 7B:6F:C3:0B:4C:F7
+broken device title is 19:47:44:4C:66:C6
+broken device title is 4B:97:64:AC:30:27
+broken device title is 43:29:90:5D:F2:B7
+broken device title is 6D:A3:78:A5:65:24
+broken device title is 4F:7C:55:B9:18:3B
+broken device title is 08:66:98:DE:93:78
+broken device title is 78:65:53:69:0C:C8
+size is (860, 575)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/add1c21727db4d97b895c30939cfd6c8 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+size is (860, 575)
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+Discharging
+[2026-03-15 12:40:48.261] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 121 not found
+[2026-03-15 12:40:48.261] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 116 not found
+[2026-03-15 12:40:48.261] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 120 not found
+[2026-03-15 12:40:48.261] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 92 not found
+[2026-03-15 12:40:48.276] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 121 not found
+[2026-03-15 12:40:48.283] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 116 not found
+[2026-03-15 12:40:48.289] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 120 not found
+[2026-03-15 12:40:48.295] [warning] [wireplumber]: (onMixerChanged: Audio/Sink) - Object with id 92 not found
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/d858760b9a324248bb9d7287cbbc83de }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 08:66:98:DE:93:78
+broken device title is 19:47:44:4C:66:C6
+
+(overskride:2): Gdk-WARNING **: 12:40:58.128: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 48:85:58:DF:8F:1B
+size is (860, 575)
+store folder is: /home/mate/
+startup alias is: matevono
+
+created obex agent
+
+thread '<unnamed>' panicked at src/obex/obex.rs:196:75:
+cant create agent: D-Bus error: Agent already exists (org.bluez.obex.Error.AlreadyExists)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+registered agent standalone AgentHandle { /org/bluez/bluer/agent/6f02781397eb4c92ae34b27f5ddc5309 }
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA: warning: Support for this platform is experimental with Xe KMD, bug reports may be ignored.
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:949: FINISHME: support YUV colorspace with DRM format modifiers
+MESA-INTEL: warning: ../src/intel/vulkan/anv_formats.c:981: FINISHME: support more multi-planar formats with DRM modifiers
+unhandled adapter event: PropertyChanged(Discovering(true))
+broken device title is 54:02:C9:C6:76:5C
+broken device title is 77:73:19:44:EC:E1
+
+(overskride:2): Gdk-WARNING **: 12:56:00.480: vkAcquireNextImageKHR(): A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully. (VK_SUBOPTIMAL_KHR) (1000001003)
+broken device title is 19:47:44:4C:66:C6
+broken device title is 49:64:38:FA:30:F8
+broken device title is 08:66:98:DE:93:78
+broken device title is 65:C7:1B:03:62:E3
+size is (860, 575)
+Gdk-Message: 13:32:53.553: Error reading events from display: Broken pipe

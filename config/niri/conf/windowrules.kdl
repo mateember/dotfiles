@@ -1,41 +1,171 @@
-// Window rules let you adjust behavior for individual windows.
-// Find more information on the wiki:
-// https://yalter.github.io/niri/Configuration:-Window-Rules
+// Floating Windows
 
-// Work around WezTerm's initial configure bug
-// by setting an empty default-column-width.
+// Focus Rofi immediately (translated: open-floating, perhaps no-focus false)
 window-rule {
-    // This regular expression is intentionally made as specific as possible,
-    // since this is the default config, and we want no false positives.
-    // You can get away with just app-id="wezterm" if you want.
-    match app-id=r#"^org\.wezfurlong\.wezterm$"#
-    default-column-width {}
-}
-
-// Open the Firefox picture-in-picture player as floating by default.
-window-rule {
-    // This app-id regular expression will work for both:
-    // - host Firefox (app-id is "firefox")
-    // - Flatpak Firefox (app-id is "org.mozilla.firefox")
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id=r#"^rofi$"#
     open-floating true
 }
 
-// Example: block out two password managers from screen capture.
-// (This example rule is commented out with a "/-" in front.)
-/-window-rule {
-    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
-    match app-id=r#"^org\.gnome\.World\.Secrets$"#
-
-    block-out-from "screen-capture"
-
-    // Use this instead if you want them visible on third-party screenshot tools.
-    // block-out-from "screencast"
+// Volume Control
+window-rule {
+    match title=r#"^Pipewire Volume Control$"#
+    open-floating true
+}
+window-rule {
+    match title=r#"^Volume Control$"#
+    open-floating true
 }
 
-// Example: enable rounded corners for all windows.
-// (This example rule is commented out with a "/-" in front.)
-/-window-rule {
-    geometry-corner-radius 12
+// Stardew Valley & Grub
+window-rule {
+    match app-id=r#"^StardewModdingAPI$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^grub-customizer$"#
+    open-floating true
+}
+
+// File Picker
+window-rule {
+    match app-id=r#"^org\.freedesktop\.impl\.portal\.desktop\.kde$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^com.system76.CosmicFilesDialog$"#
+    open-floating true
+}
+window-rule {
+    match title=r#"^Rename$"#
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"^xdg-desktop-portal-gtk$"#
+    open-floating true
+}
+
+// Blueman Manager
+window-rule {
+    match app-id=r#"^blueman-manager$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^io\.github\.kaii_lb\.Overskride$"#
+    open-floating true
+
+}
+window-rule {
+    match title=r#"^Bluetooth Devices$"#
+    open-floating true
+}
+window-rule {
+    match title=r#"^Calendar$"#
+    open-floating true
+}
+
+// Network & Connections
+window-rule {
+    match app-id=r#"^nm-connection-editor$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^org.netrs.ui$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^cmst$"#
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^org.nmrs.ui$"#
+    open-floating true
+}
+
+// LACT
+window-rule {
+    match app-id=r#"^lact$"#
+    open-floating true
+}
+
+// Cider
+window-rule {
+    match title=r#"^Cider$"#
+    open-floating true
+}
+
+// Calculator
+window-rule {
+    match title=r#"^KCalc$"#
+    open-floating true
+}
+
+// Picture-in-Picture
+window-rule {
+    match title=r#"^Picture[- ]in[- ][Pp]icture$"#
+    open-floating true
+    opacity 1.0
+}
+
+// XWayland Video Bridge
+window-rule {
+    match app-id=r#"^xwaylandvideobridge$"#
+    opacity 0.0
+}
+
+// Matlab Figures
+window-rule {
+    match title=r#"^Figures$"#
+    open-floating true
+}
+
+
+
+
+// General Rules
+
+// Gaming & Idle
+// window-rule {
+//     match is-fullscreen
+//     inhibit-idle true
+// }
+
+window-rule {
+    match title=r#"^Fallout4$"#
+    open-fullscreen true
+}
+window-rule {
+    match app-id=r#"^steam_app_$"#
+    open-fullscreen true
+}
+window-rule {
+    match app-id=r#"^com.moonlight_stream.Moonlight$"#
+    open-fullscreen true
+}
+window-rule {
+    match title=r#"^Ultimate Chicken Horse$"#
+    open-fullscreen true
+}
+window-rule {
+    match is-floating=false
+    open-maximized-to-edges false
+    geometry-corner-radius 6
     clip-to-geometry true
 }
+
+
+window-rule {
+    match is-floating=true
+
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.5; }
+}
+
+
+// Other Options
+
+window-rule {
+    match app-id=r#"^brave-browser$"#
+    open-maximized true
+}
+    

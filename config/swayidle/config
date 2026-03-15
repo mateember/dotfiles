@@ -1,0 +1,12 @@
+# Line 1 & 2: Lock and pause
+timeout 245 'sh -c "playerctl pause-all; hyprlock"'
+
+# Line 3 & 4: Monitors off with resume (Fixed the previous error too)
+timeout 250 'niri msg action power-off-monitors' resume 'niri msg action power-on-monitors'
+# Line 5: Suspend
+timeout 600 'systemctl suspend'
+
+# Line 6 & 7: Hooks
+before-sleep 'loginctl lock-session'
+after-resume 'niri msg action power-on-monitors'
+lock 'hyprlock'

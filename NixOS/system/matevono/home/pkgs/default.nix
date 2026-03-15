@@ -115,8 +115,12 @@
       hypridle
       hyprshot
       swww
-      hyprpaper
       waybar
+
+# niri
+			swayidle
+			swaylock-effects
+			sunsetr
 
       #gnome
       gnomeExtensions.ddterm

@@ -1,10 +1,38 @@
-// Add lines like this to spawn processes at startup.
-// Note that running niri as a session supports xdg-desktop-autostart,
-// which may be more convenient to use.
-// See the binds section below for more spawn examples.
+// Autostart configuration migrated from Hyprland autostart.conf
 
-// This line starts waybar, a commonly used bar for Wayland compositors.
-spawn-at-startup "waybar"
+// Core Services
+spawn-sh-at-startup "waybar -c ~/.config/waybar/config-niri.jsonc"
+spawn-at-startup "dunst"
+spawn-sh-at-startup "swayidle -C ~/.config/swayidle/config"
 
-// To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
-// spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
+// Screen / Color Management
+spawn-at-startup "sunsetr"
+// spawn-at-startup "hyprpaper"
+// spawn-sh-at-startup "waypaper --random"
+
+// Authentication & System Helpers
+// spawn-sh-at-startup "/run/current-system/sw/libexec/polkit-gnome-authentication-agent-1"
+// spawn-sh-at-startup "/usr/lib/polkit-kde-authentication-agent-1"
+// spawn-sh-at-startup "/run/current-system/sw/bin/kwalletd6"
+// spawn-sh-at-startup "/usr/bin/kdeconnectd"
+
+// Clipboard & Applets
+spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
+spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
+spawn-at-startup "xembedsniproxy"
+// spawn-at-startup "nm-applet"
+// spawn-at-startup "blueman-applet"
+
+// Environment & Portal Sync (Critical when not using UWSM)
+spawn-sh-at-startup "dbus-update-activation-environment --systemd --all"
+spawn-sh-at-startup "systemctl --user import-environment QT_QPA_PLATFORMTHEME"
+// spawn-sh-at-startup "dbus-update-activation-environment --systemd --all"
+// spawn-sh-at-startup "systemctl --user restart xdg-desktop-portal.service"
+
+// Scripts & Backgrounds
+spawn-sh-at-startup "~/.config/hypr/scripts/swww.sh"
+// spawn-sh-at-startup "~/.config/hyprland/start-in-tray.sh"
+// spawn-sh-at-startup "~/.scripts/mountrpi.sh"
+
+// Cleanup / Legacy Lines
+// spawn-sh-at-startup "sleep 5; nm-applet"
