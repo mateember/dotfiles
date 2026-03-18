@@ -16,6 +16,8 @@ input {
     mouse {
         accel-speed -0.4
     }
+    // focus-follows-mouse
+    warp-mouse-to-focus
 }
 
 // Keybinds
@@ -27,7 +29,7 @@ binds {
     Mod+C { spawn "kitty"; }
     Mod+E { spawn "thunar"; }
     Mod+B { spawn "brave"; }
-    Super+Alt+L { spawn "swaylock"; }
+    // Super+Alt+L { spawn "swaylock"; 
     Mod+Shift+L { spawn-sh "wlogout -l ~/.config/wlogout/layout-niri"; }
     Mod+Space { spawn "rofi" "-show" "drun" "-theme" "~/.config/rofi/launcher.rasi"; }
 
@@ -164,10 +166,10 @@ binds {
     Mod+Ctrl+F { expand-column-to-available-width; }
     Mod+Shift+C { center-column; }
     Mod+Ctrl+C { center-visible-columns; }
-    Mod+Minus { set-column-width "-10%"; }
-    Mod+Equal { set-column-width "+10%"; }
-    Mod+Shift+Minus { set-window-height "-10%"; }
-    Mod+Shift+Equal { set-window-height "+10%"; }
+    Mod+Alt+H { set-column-width "-10%"; }
+    Mod+Alt+L { set-column-width "+10%"; }
+    Mod+Alt+K { set-window-height "-10%"; }
+    Mod+Alt+J { set-window-height "+10%"; }
     Mod+V { toggle-window-floating; }
     Mod+Shift+V { switch-focus-between-floating-and-tiling; }
     Mod+W { toggle-column-tabbed-display; }
@@ -182,4 +184,11 @@ binds {
     Mod+Shift+E { quit; }
     Ctrl+Alt+Delete { quit; }
     Mod+Shift+P { power-off-monitors; }
+
+
+   // Mouse
+   // Mod+Ctrl+MouseLeft {  allow-visible-area-drag-middle;}
 }
+
+
+

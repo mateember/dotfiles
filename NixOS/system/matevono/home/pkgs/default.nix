@@ -62,7 +62,7 @@
       git-credential-oauth
       ranger
       mesa-demos
-      nmrs.packages.${pkgs.system}.default
+      # nmrs.packages.${pkgs.system}.default
       hyprdynamicmonitors.packages.${system}.default
       wlogout
       trash-cli
@@ -84,7 +84,7 @@
     ++ (with pkgs-unstable; [
       vscode-fhs
       zed-editor-fhs
-      jetbrains-toolbox
+      just
       # hpp2plantuml
       plantuml
       yt-dlp
@@ -103,29 +103,31 @@
       arduino-ide
       python3
       zellij
-      foot
-      alacritty
       # nwg-panel
 
       #Hyprland Stuff
-      hyprcursor
+      # hyprcursor
       rofi
-      hyprsunset
+      # hyprsunset
       hyprlock
-      hypridle
-      hyprshot
+      # hypridle
+      # hyprshot
       swww
       waybar
 
-# niri
-			swayidle
-			swaylock-effects
-			sunsetr
+      # niri
+      swayidle
+      swaylock-effects
+      sunsetr
 
       #gnome
       gnomeExtensions.ddterm
       gnomeExtensions.gsconnect
       gnomeExtensions.desktop-icons-ng-ding
+      #dev
+      yarn
+      tree-sitter
+      nodejs
     ]);
 
   services.kdeconnect.enable = true;

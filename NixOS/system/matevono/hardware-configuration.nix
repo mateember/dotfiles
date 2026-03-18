@@ -46,6 +46,7 @@
       size = 34816; # 34GB in MB
     }
   ];
+  zramSwap.enable = true; # Creates a zram block device and uses it as a swap device
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

@@ -34,13 +34,18 @@
       enable = true;
       useNautilus = true;
     };
+    gtklock = {
+      enable = true;
+      modules = with pkgs-unstable; [gtklock-playerctl-module gtklock-powerbar-module];
+      package = pkgs-unstable.gtklock;
+    };
     steam = {
       enable = true;
       remotePlay.openFirewall = true;
     };
     nm-applet.enable = false;
     hyprland = {
-      enable = true;
+      enable = false;
       xwayland.enable = true;
       # package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       # portalPackage = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
@@ -167,6 +172,8 @@
       nix-prefetch-git
       curl
       libxml2
+      man-pages
+      man-pages-posix
 
       #Default
       sox
@@ -179,7 +186,7 @@
       wl-clipboard-rs
       bat
       ghostty
-			xwayland-satellite
+      xwayland-satellite
       kdePackages.konsole
       kdePackages.okular
       #lact
@@ -207,4 +214,5 @@
     geary # email reader. Up to 24.05. Starting from 24.11 the package name is just geary.
     evince # document viewer
   ];
+  documentation.dev.enable = true;
 }

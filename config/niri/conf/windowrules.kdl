@@ -1,3 +1,21 @@
+//General
+
+window-rule {
+    match is-floating=false
+    open-maximized-to-edges false
+    open-maximized true
+    geometry-corner-radius 6
+    clip-to-geometry true
+}
+
+
+window-rule {
+    match is-floating=true
+
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.5; }
+
+}
 // Floating Windows
 
 // Focus Rofi immediately (translated: open-floating, perhaps no-focus false)
@@ -119,10 +137,7 @@ window-rule {
     open-floating true
 }
 
-
-
-
-// General Rules
+//Not floating
 
 // Gaming & Idle
 // window-rule {
@@ -143,29 +158,13 @@ window-rule {
     open-fullscreen true
 }
 window-rule {
+    match app-id=r#"^kitty$"#
+    open-maximized false
+
+}
+window-rule {
     match title=r#"^Ultimate Chicken Horse$"#
     open-fullscreen true
 }
-window-rule {
-    match is-floating=false
-    open-maximized-to-edges false
-    geometry-corner-radius 6
-    clip-to-geometry true
-}
 
 
-window-rule {
-    match is-floating=true
-
-    default-column-width { proportion 0.6; }
-    default-window-height { proportion 0.5; }
-}
-
-
-// Other Options
-
-window-rule {
-    match app-id=r#"^brave-browser$"#
-    open-maximized true
-}
-    

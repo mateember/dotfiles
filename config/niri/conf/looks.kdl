@@ -37,10 +37,10 @@ layout {
     // You can change how the focus ring looks.
     focus-ring {
         // Uncomment this line to disable the focus ring.
-        off
+        on
 
         // How many logical pixels the ring extends out from the windows.
-        width 2
+        width 4
 
         // Color of the ring on the active monitor.
         active-color "#00000000"
