@@ -381,6 +381,7 @@
     strongswan = {
       enable = true;
     };
+    usbmuxd.enable = true;
 
     #strongswan-swanctl.enable = true;
 

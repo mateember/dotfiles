@@ -112,7 +112,7 @@
       hyprlock
       # hypridle
       # hyprshot
-      swww
+      awww
       waybar
 
       # niri

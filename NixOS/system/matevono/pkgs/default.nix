@@ -185,6 +185,9 @@
     ++ (with pkgs-unstable; [
       wl-clipboard-rs
       bat
+      libimobiledevice
+      idevicerestore
+      ifuse
       ghostty
       xwayland-satellite
       kdePackages.konsole
