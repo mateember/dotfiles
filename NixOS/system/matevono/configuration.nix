@@ -326,7 +326,7 @@
         "adbusers"
         "i2c"
       ];
-      shell = pkgs.fish;
+      shell = pkgs.bash;
     };
   };
 

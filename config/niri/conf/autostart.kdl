@@ -30,9 +30,11 @@ spawn-sh-at-startup "systemctl --user import-environment QT_QPA_PLATFORMTHEME"
 // spawn-sh-at-startup "systemctl --user restart xdg-desktop-portal.service"
 
 // Scripts & Backgrounds
-spawn-sh-at-startup "~/.config/hypr/scripts/swww.sh"
+spawn-sh-at-startup "~/.config/niri/scripts/awww.sh"
 // spawn-sh-at-startup "~/.config/hyprland/start-in-tray.sh"
 // spawn-sh-at-startup "~/.scripts/mountrpi.sh"
 
 // Cleanup / Legacy Lines
 // spawn-sh-at-startup "sleep 5; nm-applet"
+//
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"

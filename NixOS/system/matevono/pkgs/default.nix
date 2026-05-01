@@ -27,6 +27,7 @@
 
   programs = {
     fish.enable = true;
+    fish.package = pkgs-unstable.fish;
     zsh.enable = true;
     fuse.userAllowOther = true;
     niri = {

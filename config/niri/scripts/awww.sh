@@ -7,9 +7,10 @@ INTERVAL=7
 FPS=120
 
 # --- DAEMON CHECK ---
+# Using pgrep to check for your specific daemon
 if ! pgrep -x "awww-daemon" >/dev/null; then
   awww-daemon &
-  sleep 1.5 # Increased slightly to ensure socket is ready
+  sleep 1.5
 fi
 
 # Get image files
@@ -20,12 +21,20 @@ if [ ${#IMAGES[@]} -eq 0 ]; then
   exit 1
 fi
 
+# --- NIRI SPECIFIC FUNCTIONS ---
+
+# Fetches monitor names from Niri's JSON output
 get_monitors() {
-  hyprctl monitors -j | jq -r '.[] | .name'
+  niri msg -j outputs | jq -r 'keys[]'
+}
+
+# Checks if the currently focused window is fullscreen
+is_fullscreen() {
+  # Niri returns a list of windows; we find the focused one and check its fullscreen status
+  niri msg -j windows | jq -r '.[] | select(.is_focused == true) | .is_fullscreen'
 }
 
 # --- INITIALIZATION ---
-# Small sleep between monitors prevents the "wayland buffer" warning
 for MONITOR in $(get_monitors); do
   RANDOM_IMG="${IMAGES[$((RANDOM % ${#IMAGES[@]}))]}"
   awww img -o "$MONITOR" "$RANDOM_IMG" --transition-type none >/dev/null 2>&1
@@ -36,13 +45,15 @@ done
 while true; do
   sleep $((INTERVAL * 60))
 
-  IS_FULLSCREEN=$(hyprctl activewindow -j | jq '.fullscreen' 2>/dev/null)
+  # Get fullscreen status for the focused window
+  FS_STATUS=$(is_fullscreen)
 
   for MONITOR in $(get_monitors); do
     NEXT_IMG="${IMAGES[$((RANDOM % ${#IMAGES[@]}))]}"
 
-    if [ "$IS_FULLSCREEN" != "0" ] && [ "$IS_FULLSCREEN" != "false" ] && [ "$IS_FULLSCREEN" != "null" ]; then
-      # GAME MODE
+    # Niri returns 'true' or 'false' as a boolean in JSON
+    if [ "$FS_STATUS" = "true" ]; then
+      # GAME MODE (No transition to save resources/prevent flicker)
       awww img -o "$MONITOR" "$NEXT_IMG" --transition-type none >/dev/null 2>&1
     else
       # DESKTOP MODE
@@ -51,7 +62,7 @@ while true; do
         --transition-fps "$FPS" \
         --transition-type random >/dev/null 2>&1
     fi
-    # Tiny delay to allow the Wayland buffer to catch up
+
     sleep 0.2
   done
 done

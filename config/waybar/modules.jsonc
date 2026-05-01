@@ -30,7 +30,7 @@
     
     "custom/browser": {
         "format": "",
-        "on-click": "brave",
+        "on-click": "brave-origin-beta",
         "tooltip": false
     },
 
@@ -117,7 +117,7 @@
         "tooltip-format-ethernet": " {ifname}\nIP: {ipaddr}\n up: {bandwidthUpBits} down: {bandwidthDownBits}",
         "tooltip-format-disconnected": "Disconnected",
         "max-length": 50,
-        "on-click": "nmrs-gui",
+        "on-click": "nmrs",
 	"on-click-right": "cosmic-settings"
     },
 
