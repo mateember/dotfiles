@@ -8,11 +8,11 @@
   inputs,
   ...
 }: {
-  disabledModules = ["programs/wayland/hyprland.nix"];
+  #disabledModules = ["programs/wayland/hyprland.nix"];
 
   imports = [
     # ./overlays/howdy.nix
-    "${inputs.nixpkgs-unstable}/nixos/modules/programs/wayland/hyprland.nix"
+    #"${inputs.nixpkgs-unstable}/nixos/modules/programs/wayland/hyprland.nix"
     ./nixld.nix
   ];
 
@@ -65,7 +65,6 @@
       enable = true;
       plugins = with pkgs-unstable; [thunar-archive-plugin thunar-vcs-plugin thunar-media-tags-plugin];
     };
-    adb.enable = true;
   };
 
   stylix.enable = false;
@@ -146,7 +145,7 @@
       ripgrep
       libsixel
       fd
-      (callPackage ./sddm-bluish {}).sddm-bluish
+      #(callPackage ./sddm-bluish {}).sddm-bluish
       #(callPackage ./sddm-sugarcandy {}).sddm-sugarcandy
       sddm-sugar-dark
       kdePackages.sddm
@@ -204,6 +203,7 @@
       tldr
       freerdp
       bc
+      android-tools
       geekbench
       # jetbrains.clion
       # jetbrains.pycharm-professional

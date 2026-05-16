@@ -4,7 +4,7 @@
   ...
 }: {
   imports = [
-    ./hyprland
+    #./hyprland
     ./pkgs
     ./shell
     #./waybar

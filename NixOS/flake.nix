@@ -4,16 +4,16 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
-    nmrs.url = "github:cachebag/nmrs";
+    nmrs.url = "github:networkmanager-rs/nmrs-gui";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     nur.url = "github:nix-community/NUR";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
-      # url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+      #url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     omarchy-nix = {
       url = "github:henrysipp/omarchy-nix";
@@ -97,7 +97,7 @@
         };
       };
 
-      matevono = lib.nixosSystem {
+      matevono = lib-unstable.nixosSystem {
         inherit system;
         modules = [
           ./system/matevono/configuration.nix

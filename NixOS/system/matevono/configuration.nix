@@ -134,7 +134,7 @@
       };
 
       limine = {
-        enable = true;
+        enable = false;
         secureBoot.enable = true;
         enableEditor = true;
         maxGenerations = 15;
@@ -166,7 +166,7 @@
       };
 
       grub = {
-        enable = false;
+        enable = true;
         useOSProber = true;
         efiSupport = true;
         device = "nodev";
