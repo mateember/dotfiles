@@ -62,7 +62,7 @@
       git-credential-oauth
       ranger
       mesa-demos
-      # nmrs.packages.${pkgs.system}.default
+      nmrs.packages.${pkgs.system}.default
       hyprdynamicmonitors.packages.${system}.default
       wlogout
       trash-cli
@@ -76,8 +76,8 @@
       arp-scan
       nitch
       jq
-      xorg.xkill
-      xorg.xeyes
+      xkill
+      xeyes
       kdePackages.gwenview
       #ghostty.packages."${system}".default
     ])

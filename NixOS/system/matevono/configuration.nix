@@ -134,9 +134,9 @@
       };
 
       limine = {
-        enable = false;
+        enable = true;
         secureBoot.enable = true;
-        enableEditor = true;
+        enableEditor = false;
         maxGenerations = 15;
         extraEntries = ''
           /Windows
@@ -166,7 +166,7 @@
       };
 
       grub = {
-        enable = true;
+        enable = false;
         useOSProber = true;
         efiSupport = true;
         device = "nodev";

@@ -28,7 +28,7 @@ binds {
     // Applications
     Mod+C { spawn "kitty"; }
     Mod+E { spawn "nautilus"; }
-    Mod+B { spawn "brave-origin-beta"; }
+    Mod+B { spawn "brave"; }
     // Super+Alt+L { spawn "swaylock"; 
     Mod+Shift+L { spawn-sh "wlogout -l ~/.config/wlogout/layout-niri"; }
     Mod+Space { spawn "rofi" "-show" "drun" "-theme" "~/.config/rofi/launcher.rasi"; }
