@@ -24,17 +24,9 @@
       extraBackends = [pkgs.sane-airscan];
       openFirewall = true;
     };
-    firmware = [
-      pkgs.sof-firmware
-      (
-        pkgs.runCommand "customedid.bin" {compressFirmware = false;} ''
-           mkdir -p $out/lib/firmware/edid
-          cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
-        ''
-      )
-    ];
-    #  xone.enable = true;
-    #  xpadneo.enable = true;
+
+    xone.enable = true;
+    xpadneo.enable = true;
 
     graphics = {
       enable = true;
@@ -95,6 +87,9 @@
       # 2. Disable PSR for both (Safe to keep both for transitions)
       "i915.enable_psr=0"
       "xe.enable_psr=0"
+      "iommu.strict=1"
+      "iommu.passthrough=1"
+      "i915.dmc_firmware_path=\"\""
     ];
 
     kernelModules = ["tcp_bbr" "i2c-dev"];
@@ -374,6 +369,9 @@
       openFirewall = true;
       defaultWindowManager = "${pkgs.gnome-session}/bin/gnome-session";
     };
+    fwupd.enable = true;
+    hardware.bolt.enable = true;
+    thermald.enable = true;
 
     flatpak.enable = true;
     #lactd.enable = true;
@@ -383,6 +381,13 @@
     };
     usbmuxd.enable = true;
 
+    syncthing = {
+      enable = true;
+      openDefaultPorts = true;
+      user = "mate";
+      dataDir = "/home/mate/";
+      configDir = "/home/mate/.config/syncthing";
+    };
     #strongswan-swanctl.enable = true;
 
     pipewire = {
@@ -488,6 +493,7 @@
     variables = {
       QT_QPA_PLATFORMTHEME = "qt6ct";
       EDITOR = "nvim";
+      INTEL_DEBUG = "no32";
     };
   };
 

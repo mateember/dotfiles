@@ -5,6 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
     nmrs.url = "github:networkmanager-rs/nmrs-gui";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
@@ -51,6 +52,7 @@
     stylix,
     ags,
     astal,
+    nixos-hardware,
     nmrs,
     ...
   } @ inputs: let
