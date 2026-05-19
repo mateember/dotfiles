@@ -1,6 +1,8 @@
 {
   config,
   lib,
+  pkgs,
+  ...
 }: {
   hardware = {
     firmware = [
@@ -8,7 +10,7 @@
       (
         pkgs.runCommand "customedid.bin" {compressFirmware = false;} ''
            mkdir -p $out/lib/firmware/edid
-          cp "${./firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
+          cp "${../firmware/customedid.bin}" $out/lib/firmware/edid/customedid.bin
         ''
       )
     ];
@@ -24,7 +26,7 @@
     #                   If not, just do the reset.
     services.workaround-reset-xhci-driver-after-resume-if-needed = {
       script = ''
-        result=$(${pkgs.usbutils}/bin/lsusb | ${pkgs.gnugrep}/bin/grep Chicony)
+        result=$(${pkgs.usbutils}/bin/lsusb | ${pkgs.gnugrep}/bin/grep Luxvisions || true)
         if [[ -z $result ]]; then
           ${pkgs.kmod}/bin/rmmod xhci_pci xhci_hcd
           ${pkgs.kmod}/bin/modprobe xhci_pci xhci_hcd
@@ -45,8 +47,10 @@
 
     # Workaround: Lenovo seems write bad acpi power management firmware. Without this config,
     #             suspend (to ram / disk) will simply reboot instead of power off. :(
-    sleep.extraConfig = ''
-      HibernateMode=shutdown
-    '';
+    sleep.settings = {
+      Sleep = {
+        HibernateMode = "shutdown";
+      };
+    };
   };
 }
