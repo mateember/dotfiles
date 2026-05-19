@@ -85,6 +85,7 @@
       vscode-fhs
       zed-editor-fhs
       just
+      bluejay
       # hpp2plantuml
       plantuml
       yt-dlp

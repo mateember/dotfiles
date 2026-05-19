@@ -441,8 +441,6 @@
 
     getty.autologinUser = null;
 
-    blueman.enable = true;
-
     gvfs.enable = true;
     tumbler.enable = true;
 

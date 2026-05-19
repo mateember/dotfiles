@@ -6,7 +6,8 @@ end
 function vencord
     # Curl fetches the script content silently (-sS)
     # The output is piped (|) directly to the system shell (sh) for execution.
-    curl -sS 'https://raw.githubusercontent.com/Vendicated/VencordInstaller/main/install.sh' | sh
+    sh -c "$(curl -sS https://vencord.dev/install.sh)"
+
 end
 
 function bat
@@ -20,17 +21,16 @@ function bat
     end
 end
 
-
 function vpn
-   set -l argc (count $argv)
-   if test $argc -eq 0
-    sudo tailscale set --exit-node=
-   else if test $argv[1] = "none"
-    sudo tailscale set --exit-node=
-   else
-    sudo tailscale up
-    sudo tailscale set --exit-node=$argv[1]
-   end
+    set -l argc (count $argv)
+    if test $argc -eq 0
+        sudo tailscale set --exit-node=
+    else if test $argv[1] = none
+        sudo tailscale set --exit-node=
+    else
+        sudo tailscale up
+        sudo tailscale set --exit-node=$argv[1]
+    end
 end
 
 function hb
@@ -55,7 +55,6 @@ function hb
     end
 end
 
-
 function tkg_update
     if test -d $HOME/.cache/linux-tkg
         sudo rm -r $HOME/.cache/linux-tkg
@@ -76,7 +75,7 @@ function tkg_update
     set current_date (date +%s)
     set last_prompt_file $HOME/.config/.last_prompt_date
     sleep 1
-    echo $current_date > $last_prompt_file
+    echo $current_date >$last_prompt_file
 end
 
 function prompt_shell
@@ -91,13 +90,13 @@ function prompt_shell
 
     # Calculate the difference between the current date and the last prompt date
     set -l diff (math $current_date - $last_prompt_date)
-    set -l two_weeks (math 7 * 24 * 3600)  # 7 days in seconds
+    set -l two_weeks (math 7 * 24 * 3600) # 7 days in seconds
 
     # If it's been more than 7 days since the last prompt, prompt the shell
     if test $diff -ge $two_weeks
-        echo $current_date > $last_prompt_file
+        echo $current_date >$last_prompt_file
         read -P "You wanna update the TKG kernel? It's been more than a week (y/n): " response
-        if test (string upper $response) = "Y"
+        if test (string upper $response) = Y
             tkg_update
         else
             echo "No update performed."
@@ -106,13 +105,13 @@ function prompt_shell
 end
 
 function pm
-    if test "$argv[1]" = 'b' -o "$argv[1]" = 'balanced'
-        echo 'balanced' | sudo tee /sys/firmware/acpi/platform_profile
-    else if test "$argv[1]" = 'l' -o "$argv[1]" = 'lowpower'
-        echo 'low-power' | sudo tee /sys/firmware/acpi/platform_profile
-    else if test "$argv[1]" = 'p' -o "$argv[1]" = 'performance'
-        echo 'performance' | sudo tee /sys/firmware/acpi/platform_profile
-    else if test "$argv[1]" = 'c' -o "$argv[1]" = 'check'
+    if test "$argv[1]" = b -o "$argv[1]" = balanced
+        echo balanced | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = l -o "$argv[1]" = lowpower
+        echo low-power | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = p -o "$argv[1]" = performance
+        echo performance | sudo tee /sys/firmware/acpi/platform_profile
+    else if test "$argv[1]" = c -o "$argv[1]" = check
         cat /sys/firmware/acpi/platform_profile
     else
         echo "Usage: pm [b|balanced] [l|lowpower] [p|performance] [c|check]"
@@ -122,7 +121,6 @@ end
 function cm
     echo "$argv[1]" | sudo tee /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode
 end
-
 
 function screenoff
     set current_state (cat /sys/class/graphics/fb0/blank)
@@ -138,9 +136,9 @@ end
 function nixify --description "Sets NIX_LD variables for the current shell session"
     # Set the path to the loader itself
     set -gx NIX_LD (type -p nix-ld)
-    
+
     # Set the library path where the system-wide libs live
     set -gx NIX_LD_LIBRARY_PATH /run/current-system/sw/share/nix-ld/lib
-    
+
     echo "✅ NIX_LD and NIX_LD_LIBRARY_PATH set for this session."
 end
