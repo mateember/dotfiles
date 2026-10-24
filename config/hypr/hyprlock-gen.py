@@ -46,21 +46,21 @@ animations {
     animation = inputFieldDots, 1, 2, cosmic
 }
 
-# Blurred, dimmed screenshot of each monitor
+# Blurred screenshot of each monitor
 background {
     monitor =
     path = screenshot
     color = rgb(1b1b1b)
     blur_passes = 3
     blur_size = 10
-    brightness = 0.5
+    brightness = 0.75
     contrast = 0.95
     vibrancy = 0.2
     noise = 0.01
 }
 """
 
-TEMPLATE = """
+TEMPLATE = r"""
 # ======================= {mon} (scale {scale}) =======================
 
 # Clock: bold hours, amber colon, light minutes
@@ -92,22 +92,6 @@ label {{
     shadow_size = {shadow}
 }}
 
-# Frosted card behind the login part
-shape {{
-    monitor = {mon}
-    size = {card_w}, {card_h}
-    color = $card
-    rounding = {card_r}
-    border_size = {border}
-    border_color = $cardLine
-    position = 0, {card_y}
-    halign = center
-    valign = center
-    shadow_passes = 2
-    shadow_size = {shadow}
-    shadow_color = rgba(0, 0, 0, 0.3)
-}}
-
 # Avatar: amber circle with the first letter of the user name
 shape {{
     monitor = {mon}
@@ -117,10 +101,13 @@ shape {{
     position = 0, {avatar_y}
     halign = center
     valign = center
+    shadow_passes = 2
+    shadow_size = {shadow}
+    shadow_color = rgba(0, 0, 0, 0.35)
 }}
 label {{
     monitor = {mon}
-    text = cmd[update:0] n=$(getent passwd "$USER" | cut -d: -f5 | cut -d, -f1); n=${{n:-$USER}}; printf '%s' "$n" | cut -c1 | tr '[:lower:]' '[:upper:]'
+    text = cmd[update:0] n=$(getent passwd "$USER" | cut -d: -f5 | cut -d, -f1); [ -z "$n" ] && n="$USER"; printf '%s' "$n" | cut -c1 | tr '[:lower:]' '[:upper:]'
     color = rgb(000000)
     font_size = {avatar_font}
     font_family = $font SemiBold
@@ -132,13 +119,16 @@ label {{
 # Greeting
 label {{
     monitor = {mon}
-    text = cmd[update:60000] h=$(date +%-H); n=$(getent passwd "$USER" | cut -d: -f5 | cut -d, -f1 | cut -d' ' -f1); n=${{n:-$USER}}; n="$(printf '%s' "$n" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "$n" | cut -c2-)"; if [ $h -lt 5 ] || [ $h -ge 18 ]; then g="Good evening"; elif [ $h -lt 12 ]; then g="Good morning"; else g="Good afternoon"; fi; echo "$g, $n"
+    text = cmd[update:60000] h=$(date +%-H); n=$(getent passwd "$USER" | cut -d: -f5 | cut -d, -f1 | cut -d' ' -f1); [ -z "$n" ] && n="$USER"; n="$(printf '%s' "$n" | cut -c1 | tr '[:lower:]' '[:upper:]')$(printf '%s' "$n" | cut -c2-)"; if [ "$h" -lt 5 ] || [ "$h" -ge 18 ]; then g="Good evening"; elif [ "$h" -lt 12 ]; then g="Good morning"; else g="Good afternoon"; fi; echo "$g, $n"
     color = $text
     font_size = {greet}
     font_family = $font Medium
     position = 0, {greet_y}
     halign = center
     valign = center
+    shadow_passes = 2
+    shadow_size = {shadow}
+    shadow_color = rgba(0, 0, 0, 0.45)
 }}
 
 # Password field
@@ -163,18 +153,24 @@ input-field {{
     position = 0, {input_y}
     halign = center
     valign = center
+    shadow_passes = 2
+    shadow_size = {shadow}
+    shadow_color = rgba(0, 0, 0, 0.35)
 }}
 
 # Bottom bar: now playing (left), battery (right)
 label {{
     monitor = {mon}
-    text = cmd[update:2000] t=$(playerctl metadata --format '{{{{artist}}}} – {{{{title}}}}' 2>/dev/null | cut -c1-60); [ -n "$t" ] && echo "<span font_family='Material Symbols Rounded'>music_note</span>  $t"
-    color = $textDim
+    text = cmd[update:2000] p=""; for c in $(playerctl -l 2>/dev/null); do case "$c" in playerctld*) continue;; esac; st=$(playerctl -p "$c" status 2>/dev/null); ti=$(playerctl -p "$c" metadata xesam:title 2>/dev/null); if [ "$st" = Playing ] && [ -n "$ti" ]; then p="$c"; break; elif [ -z "$p" ] && [ "$st" = Paused ] && [ -n "$ti" ]; then p="$c"; fi; done; if [ -n "$p" ]; then a=$(playerctl -p "$p" metadata xesam:artist 2>/dev/null); t=$(playerctl -p "$p" metadata xesam:title 2>/dev/null); s="$t"; [ -n "$a" ] && s="$a – $t"; s=$(printf '%s' "$s" | cut -c1-60 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'); echo "<span font_family='Material Symbols Rounded'>music_note</span>  $s"; fi
+    color = $text
     font_size = {small}
     font_family = $font
     position = {margin}, {margin}
     halign = left
     valign = bottom
+    shadow_passes = 2
+    shadow_size = {shadow}
+    shadow_color = rgba(0, 0, 0, 0.45)
 }}
 label {{
     monitor = {mon}
@@ -190,7 +186,7 @@ label {{
 
 # Sizes at scale 1 (logical pixels)
 BASE = dict(clock=104, clock_y=210, date=19, date_y=120, shadow=6,
-            card_w=380, card_h=230, card_r=24, card_y=-110, border=1, border2=2,
+            border2=2,
             avatar=64, avatar_y=-35, avatar_font=26,
             greet=17, greet_y=-90,
             input_w=300, input_h=46, input_y=-155,

@@ -72,7 +72,7 @@ BarButton {
                 spacing: 2
                 StyledText {
                     Layout.fillWidth: true
-                    text: pop.player?.trackTitle || "Unknown title"
+                    text: pop.player?.trackTitle || pop.player?.identity || "Nothing is playing"
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }

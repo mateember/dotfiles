@@ -8,8 +8,11 @@ import Quickshell.Services.Mpris
 Singleton {
     id: root
 
-    // playerctld mirrors other players; hide it to avoid duplicates.
-    readonly property var players: Mpris.players.values.filter(p => !p.dbusName.includes("playerctld"))
+    // playerctld mirrors other players; also ignore idle dummy players (e.g. kdeconnect)
+    // that are neither playing nor have a track title loaded.
+    readonly property var players: Mpris.players.values.filter(
+        p => !p.dbusName.includes("playerctld") && (p.isPlaying || Boolean(p.trackTitle))
+    )
     property MprisPlayer selected: null
     readonly property MprisPlayer active: (selected && players.includes(selected)) ? selected
                                         : (players.find(p => p.isPlaying) ?? players[0] ?? null)
