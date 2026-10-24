@@ -92,6 +92,48 @@ BarButton {
             }
         }
 
+        // Refresh rate toggle (60 Hz / 120 Hz for eDP-1)
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spaceXs
+            Icon {
+                icon: "speed"
+                color: Brightness.refreshRate >= 120 ? Theme.accent : Theme.text
+            }
+            StyledText {
+                text: "Refresh rate"
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+            Repeater {
+                model: [60, 120]
+                delegate: Rectangle {
+                    id: hzPill
+                    required property int modelData
+                    readonly property bool current: Brightness.refreshRate === modelData
+                    implicitWidth: hzText.implicitWidth + 2 * Theme.spaceXs
+                    implicitHeight: 26
+                    radius: height / 2
+                    color: current ? Theme.accent : hzMouse.containsMouse ? Theme.componentHover : Theme.button
+                    StyledText {
+                        id: hzText
+                        anchors.centerIn: parent
+                        text: hzPill.modelData + " Hz"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: hzPill.current ? Theme.fgOnAccent : Theme.text
+                        font.features: { "tnum": 1 }
+                    }
+                    MouseArea {
+                        id: hzMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Brightness.setRefreshRate(hzPill.modelData)
+                    }
+                }
+            }
+        }
+
         Repeater {
             model: Brightness.externals
             delegate: ColumnLayout {
@@ -122,7 +164,7 @@ BarButton {
                 required property HyprlandMonitor modelData
                 icon: modelData.name.startsWith("eDP") ? "laptop" : "monitor"
                 text: modelData.description || modelData.name
-                subtext: `${modelData.name} · ${modelData.width}×${modelData.height} · scale ${modelData.scale}`
+                subtext: `${modelData.name} · ${modelData.width}×${modelData.height} · ${Math.round(modelData.refreshRate)} Hz · scale ${modelData.scale}`
                 highlighted: modelData.focused
             }
         }

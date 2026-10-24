@@ -18,6 +18,9 @@ Singleton {
     // External monitors: [{ bus, name, value (0..1) }]. Empty without i2c access (see NIXOS_NOTES.md).
     property var externals: []
 
+    // Internal panel (eDP-1) refresh rate: 60 or 120 Hz.
+    property int refreshRate: 120
+
     signal changed()   // emitted on any backlight change (for the OSD)
 
     // ---- keyboard backlight (/sys/class/leds/*kbd_backlight*, levels 0..kbdMax) ----
@@ -73,6 +76,32 @@ Singleton {
 
     function refreshExternals() {
         if (!ddc.running) ddc.running = true;
+        if (!hzProc.running) hzProc.running = true;
+    }
+
+    function setRefreshRate(hz: int) {
+        const target = hz === 60 ? 60 : 120;
+        root.refreshRate = target;
+        Quickshell.execDetached([
+            "hyprctl", "eval",
+            `hl.monitor({ output = "eDP-1", mode = "2880x1800@${target}", position = "0x0", scale = 2, vrr = 1 })`
+        ]);
+    }
+
+    function toggleRefreshRate() {
+        setRefreshRate(root.refreshRate >= 90 ? 60 : 120);
+    }
+
+    Process {
+        id: hzProc
+        command: ["sh", "-c", "hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.name == \"eDP-1\") | .refreshRate'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const r = parseFloat(text.trim());
+                if (!isNaN(r) && r > 0)
+                    root.refreshRate = Math.round(r) >= 90 ? 120 : 60;
+            }
+        }
     }
 
     Process {

@@ -742,6 +742,11 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Enabled `misc.focus_on_activate = true` in `config/hypr/conf/looks.lua` so XDG activation requests from apps (Discord, Brave, Telegram, Slack, etc.) when clicking a notification immediately focus the window and switch to its workspace.
   - Enhanced `Notifs.activate(n)` and `Notifs.invokeAction(n, action)` (used by both toasts and the Notification Center) to close the Notification Center popup, invoke the notification's `default` D-Bus action (so the app navigates to the exact chat/tab/item), focus the matching Hyprland window by `desktopEntry` / `appName` / `appIcon` if not already activated, or open any local file path referenced in the notification via `xdg-open`.
 
+### 2026-10-25 00:55–00:58 – 60 Hz / 120 Hz refresh rate toggle in Display & Brightness menu
+- Updated `config/quickshell/services/Brightness.qml` and `config/quickshell/modules/Display.qml`:
+  - Added `Brightness.refreshRate` (`60` / `120`, read from `hyprctl monitors -j` for `eDP-1`) and `Brightness.setRefreshRate(hz)` using `hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "2880x1800@<hz>", position = "0x0", scale = 2, vrr = 1 })'`.
+  - Added a **Refresh rate (`60 Hz` / `120 Hz`)** pill selector row in the Display / Brightness menu (`Display.qml`) and included live Hz in the Monitors list subtitle. Verified via screenshot.
+
 ---
 
 ## Decisions (defaults, user may override)

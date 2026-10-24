@@ -158,7 +158,7 @@ Left to right. Click an icon for its menu; Escape or a click outside closes it.
 | Privacy pill (amber) | appears when an app uses your microphone, webcam, or screen; click to see which apps and mute mic / stop recording | auto-hides when idle |
 | USB / Removable Drives | appears when a USB or SD drive is plugged in; click to open in Files, mount, or safely eject (`udisksctl unmount` + `power-off`), or toggle automount | auto-hides when no removable drive is connected |
 | Tray | app tray icons (KDE Connect, …) | right click = app menu |
-| Monitor | brightness, **keyboard backlight**, monitors, screenshots, screen recording, color picker | scroll = brightness |
+| Monitor | brightness, **keyboard backlight**, **refresh rate (`60 Hz` / `120 Hz`)**, monitors, screenshots, screen recording, color picker | scroll = brightness |
 | Layout | toggles scrolling (niri) ↔ dwindle | right click = all layouts, cycle column width, center column, toggle split |
 | Play | player: cover, seek, controls, player switcher | right or middle click = pause/resume |
 | Speaker | output/input volume, devices, per-app volume | scroll = volume, middle click = mute |
