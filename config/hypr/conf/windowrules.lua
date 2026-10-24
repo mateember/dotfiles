@@ -26,12 +26,13 @@ rule({ match = { class = "^(grub-customizer)$" }, float = true })
 -- Dialogs & System Tools
 -- -----------------------------------------------------
 
---  File Picker (50% width, 60% height)
-rule({ match = { class = [[^(org\.freedesktop\.impl\.portal\.desktop\.kde)$]] }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6", stay_focused = true })
-rule({ match = { class = "^(com.system76.CosmicFilesDialog)$" }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6", stay_focused = true })
+--  Desktop Portals, Share Pickers & File Pickers
+rule({ match = { class = [[^(xdg-desktop-portal-.*|org\.freedesktop\.impl\.portal\.desktop\..*)$]] }, float = true, center = true, stay_focused = true })
+rule({ match = { class = [[^(\.?hyprland-share-picker.*|org\.hyprland\.xdg-desktop-portal-hyprland)$]] }, float = true, center = true, stay_focused = true })
+rule({ match = { title = "^(Select what to share|MainPicker)$" }, float = true, center = true, stay_focused = true })
+rule({ match = { class = [[^(org\.freedesktop\.impl\.portal\.desktop\.(kde|cosmic))$]] }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6", stay_focused = true })
+rule({ match = { class = [[^(com\.system76\.(CosmicFilesDialog|CosmicPortal))$]] }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6", stay_focused = true })
 rule({ match = { title = "^(Rename)$" }, float = true, center = true })
-
-rule({ match = { class = "^(xdg-desktop-portal-gtk)$" }, float = true, center = true, stay_focused = true })
 -- Blueman Manager (50% width, 60% height)
 rule({ match = { class = "^(blueman-manager)$" }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6" })
 rule({ match = { title = "^(overskride)$" }, float = true, center = true, size = "monitor_w*0.5 monitor_h*0.6" })
