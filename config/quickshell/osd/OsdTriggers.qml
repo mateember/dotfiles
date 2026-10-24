@@ -64,18 +64,41 @@ Scope {
     }
 
     // ---- power ----
+    property bool warnedLow: false
+    property bool warnedCritical: false
+
+    function checkBattery() {
+        if (!Battery.available) return;
+        const p = Math.round(Battery.percent * 100);
+        if (!Battery.onBattery || Battery.charging) {
+            if (p >= 20) root.warnedLow = false;
+            if (p >= 10) root.warnedCritical = false;
+            return;
+        }
+        if (p >= 20) root.warnedLow = false;
+        if (p >= 10) root.warnedCritical = false;
+        if (!Osd.ready) return;
+
+        if (p < 10 && !root.warnedCritical) {
+            root.warnedCritical = true;
+            root.warnedLow = true;
+            Quickshell.execDetached(["notify-send", "-u", "critical", "-i", "battery-empty",
+                                     "-a", "Battery", "Battery critical", p + "% remaining. Plug in the charger immediately."]);
+        } else if (p < 20 && !root.warnedLow) {
+            root.warnedLow = true;
+            Quickshell.execDetached(["notify-send", "-u", "normal", "-i", "battery-caution",
+                                     "-a", "Battery", "Battery low", p + "% remaining. Plug in the charger."]);
+        }
+    }
+
     Connections {
         target: Battery
         function onOnBatteryChanged() {
             if (!Battery.available) return;
             Osd.show(Battery.onBattery ? Battery.icon : "power", Battery.onBattery ? "On battery" : "Plugged in", Battery.percent, 1);
+            root.checkBattery();
         }
-        function onPercentChanged() {
-            if (!Battery.onBattery || !Osd.ready) return;
-            const p = Math.round(Battery.percent * 100);
-            if (p === 20 || p === 10 || p === 5)
-                Quickshell.execDetached(["notify-send", "-u", p <= 10 ? "critical" : "normal", "-i", "battery-caution",
-                                         "-a", "Battery", "Battery low", p + "% remaining. Plug in the charger."]);
-        }
+        function onChargingChanged() { root.checkBattery(); }
+        function onPercentChanged() { root.checkBattery(); }
     }
 }
