@@ -16,9 +16,25 @@ Singleton {
     property string layout: "dwindle"
     readonly property var layouts: ["dwindle", "master", "scrolling", "monocle"]
     property bool overviewOpen: false
+    property bool overviewSwiping: false
+    property real overviewProgress: 0.0
+    property real _swipeStartProgress: 0.0
+
+    function openOverview() {
+        root.overviewSwiping = false;
+        root.overviewOpen = true;
+        root.overviewProgress = 1.0;
+    }
+
+    function closeOverview() {
+        root.overviewSwiping = false;
+        root.overviewOpen = false;
+        root.overviewProgress = 0.0;
+    }
 
     function toggleOverview() {
-        root.overviewOpen = !root.overviewOpen;
+        if (root.overviewOpen) root.closeOverview();
+        else root.openOverview();
     }
 
     // Lua string literal for any value (numbers stay numbers).
@@ -107,6 +123,32 @@ Singleton {
         target: Hyprland
         function onRawEvent(event) {
             if (event.name === "configreloaded") root.refreshLayout();
+            if (event.name === "custom" && event.data.startsWith("hcs_overview:")) {
+                const parts = event.data.split(":");
+                const phase = parts[1];
+                const arg = parts[2] ?? "0";
+                const swipeDist = 180.0;
+                if (phase === "start") {
+                    root._swipeStartProgress = root.overviewOpen ? 1.0 : 0.0;
+                    root.overviewSwiping = true;
+                    const dy = parseFloat(arg) || 0;
+                    root.overviewProgress = Math.max(0.0, Math.min(1.0, root._swipeStartProgress + dy / swipeDist));
+                } else if (phase === "update") {
+                    const dy = parseFloat(arg) || 0;
+                    root.overviewProgress = Math.max(0.0, Math.min(1.0, root._swipeStartProgress + dy / swipeDist));
+                } else if (phase === "finish") {
+                    root.overviewSwiping = false;
+                    if (arg === "cancel") {
+                        root.overviewProgress = root.overviewOpen ? 1.0 : 0.0;
+                    } else {
+                        const dy = parseFloat(arg) || 0;
+                        if (dy > 35) root.openOverview();
+                        else if (dy < -35) root.closeOverview();
+                        else if (root.overviewProgress >= 0.5) root.openOverview();
+                        else root.closeOverview();
+                    }
+                }
+            }
         }
     }
 
@@ -122,7 +164,7 @@ Singleton {
     IpcHandler {
         target: "overview"
         function toggle(): void { root.toggleOverview(); }
-        function open(): void { root.overviewOpen = true; }
-        function close(): void { root.overviewOpen = false; }
+        function open(): void { root.openOverview(); }
+        function close(): void { root.closeOverview(); }
     }
 }

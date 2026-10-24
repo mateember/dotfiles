@@ -54,7 +54,7 @@ Scope {
             const scr = root.pendingScreen;
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
-            else if (id === "qs:overview") Hypr.overviewOpen = true;
+            else if (id === "qs:overview") Hypr.openOverview();
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();

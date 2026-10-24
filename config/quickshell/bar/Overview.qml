@@ -8,37 +8,44 @@ import qs
 import qs.components
 import qs.services
 
-// KDE Plasma-style Overview (SUPER+Tab / SUPER+W / `qs ipc call overview toggle`):
+// KDE Plasma-style Overview (SUPER+Tab / SUPER+W / 4-finger swipe up/down / `qs ipc call overview toggle`):
 //   - Top row: horizontal strip of virtual desktops (workspaces) with live miniature window previews
 //     and a "+ New Desktop" card. Click a desktop to inspect its windows, click again (or double-click)
 //     to switch to it.
 //   - Middle: search bar to filter open windows across all workspaces by title or app class.
 //   - Main area: exposed grid of live window thumbnails (ScreencopyView) with app icon, title,
 //     move-to-workspace buttons (← / →), and close button (×).
-LazyLoader {
+Scope {
     id: root
 
-    active: Hypr.overviewOpen
+    property real animProgress: Hypr.overviewProgress
+    Behavior on animProgress {
+        enabled: !Hypr.overviewSwiping
+        NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+    }
 
-    PanelWindow {
-        id: win
+    LazyLoader {
+        active: Hypr.overviewOpen || Hypr.overviewSwiping || root.animProgress > 0.005
 
-        screen: {
-            const mon = Hyprland.focusedMonitor;
-            if (mon) {
-                for (const s of Quickshell.screens)
-                    if (s.name === mon.name) return s;
+        PanelWindow {
+            id: win
+
+            screen: {
+                const mon = Hyprland.focusedMonitor;
+                if (mon) {
+                    for (const s of Quickshell.screens)
+                        if (s.name === mon.name) return s;
+                }
+                return Quickshell.screens[0];
             }
-            return Quickshell.screens[0];
-        }
 
-        anchors { top: true; bottom: true; left: true; right: true }
-        color: "transparent"
+            anchors { top: true; bottom: true; left: true; right: true }
+            color: "transparent"
 
-        WlrLayershell.namespace: "hcs-overview"
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        WlrLayershell.exclusiveZone: -1
+            WlrLayershell.namespace: "hcs-overview"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: (Hypr.overviewOpen || Hypr.overviewSwiping) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.exclusiveZone: -1
 
         readonly property HyprlandMonitor monitor: Hyprland.monitorFor(win.screen)
         property int selectedWsId: Hyprland.focusedWorkspace?.id ?? monitor?.activeWorkspace?.id ?? 1
@@ -117,7 +124,7 @@ LazyLoader {
         }
 
         function close() {
-            Hypr.overviewOpen = false;
+            Hypr.closeOverview();
         }
 
         function activateToplevel(t) {
@@ -134,6 +141,26 @@ LazyLoader {
             win.close();
         }
 
+        Shortcut {
+            sequences: ["Escape"]
+            onActivated: win.close()
+        }
+
+        Connections {
+            target: Hypr
+            function onOverviewOpenChanged() {
+                if (Hypr.overviewOpen) {
+                    focusTimer.restart();
+                }
+            }
+        }
+
+        Timer {
+            id: focusTimer
+            interval: 30
+            onTriggered: searchInput.forceActiveFocus()
+        }
+
         Component.onCompleted: {
             Popups.close();
             QuickSettingsState.close();
@@ -142,12 +169,13 @@ LazyLoader {
             Hyprland.refreshToplevels();
             win.selectedWsId = Hyprland.focusedWorkspace?.id ?? win.monitor?.activeWorkspace?.id ?? 1;
             searchInput.forceActiveFocus();
+            focusTimer.restart();
         }
 
         // Dimmed backdrop; clicking empty space closes the Overview.
         Rectangle {
             anchors.fill: parent
-            color: Qt.rgba(0.06, 0.06, 0.07, 0.78)
+            color: Qt.rgba(0.06, 0.06, 0.07, 0.78 * root.animProgress)
 
             MouseArea {
                 anchors.fill: parent
@@ -155,13 +183,29 @@ LazyLoader {
             }
         }
 
-        ColumnLayout {
+        Item {
+            id: slideContainer
             anchors.fill: parent
-            anchors.topMargin: Theme.barHeight + Theme.spaceM
-            anchors.bottomMargin: Theme.spaceL
-            anchors.leftMargin: Theme.spaceXl
-            anchors.rightMargin: Theme.spaceXl
-            spacing: Theme.spaceM
+            opacity: root.animProgress
+            transform: [
+                Scale {
+                    origin.x: slideContainer.width / 2
+                    origin.y: slideContainer.height / 2
+                    xScale: 0.94 + 0.06 * root.animProgress
+                    yScale: 0.94 + 0.06 * root.animProgress
+                },
+                Translate {
+                    y: (1.0 - root.animProgress) * 180
+                }
+            ]
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.topMargin: Theme.barHeight + Theme.spaceM
+                anchors.bottomMargin: Theme.spaceL
+                anchors.leftMargin: Theme.spaceXl
+                anchors.rightMargin: Theme.spaceXl
+                spacing: Theme.spaceM
 
             // =================================================================
             // 1. TOP STRIP: Virtual Desktops (Workspaces) like KDE Plasma
@@ -291,6 +335,7 @@ LazyLoader {
                                     win.showAllWorkspaces = false;
                                     win.selectedWsId = wsCard.wsId;
                                     win.selectedIndex = 0;
+                                    searchInput.forceActiveFocus();
                                 }
                             }
                             onDoubleClicked: win.switchToWorkspace(wsCard.wsId)
@@ -374,11 +419,7 @@ LazyLoader {
                             Keys.onPressed: event => {
                                 const count = win.filteredToplevels.length;
                                 if (event.key === Qt.Key_Escape) {
-                                    if (searchInput.text !== "") {
-                                        searchInput.text = "";
-                                    } else {
-                                        win.close();
-                                    }
+                                    win.close();
                                     event.accepted = true;
                                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     if (count > 0 && win.selectedIndex >= 0 && win.selectedIndex < count) {
@@ -481,6 +522,7 @@ LazyLoader {
                         onClicked: {
                             win.showAllWorkspaces = !win.showAllWorkspaces;
                             win.selectedIndex = 0;
+                            searchInput.forceActiveFocus();
                         }
                     }
                 }
@@ -699,6 +741,7 @@ LazyLoader {
                                         onClicked: {
                                             if (card.modelData?.wayland) card.modelData.wayland.close();
                                             else if (card.modelData?.address) Hypr.closeWindow(card.modelData.address);
+                                            searchInput.forceActiveFocus();
                                         }
                                     }
                                 }
@@ -708,5 +751,7 @@ LazyLoader {
                 }
             }
         }
+        }
+    }
     }
 }

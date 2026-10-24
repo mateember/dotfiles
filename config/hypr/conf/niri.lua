@@ -65,6 +65,27 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "scroll_move" })
 -- 4 fingers left/right: previous/next workspace on this monitor
 hl.gesture({ fingers = 4, direction = "horizontal", action = "workspace" })
 
+-- 4 fingers up/down: bring Overview up / down (follows fingers 1:1 via socket2 event)
+local overview_dy = 0
+hl.gesture({
+    fingers = 4,
+    direction = "vertical",
+    disable_inhibit = true,
+    action = {
+        start = function(e)
+            overview_dy = -e.delta.y
+            hl.dispatch(hl.dsp.event("hcs_overview:start:" .. string.format("%.1f", overview_dy)))
+        end,
+        update = function(e)
+            overview_dy = overview_dy - e.delta.y
+            hl.dispatch(hl.dsp.event("hcs_overview:update:" .. string.format("%.1f", overview_dy)))
+        end,
+        finish = function(e)
+            hl.dispatch(hl.dsp.event("hcs_overview:finish:" .. (e.cancelled and "cancel" or string.format("%.1f", overview_dy))))
+        end,
+    },
+})
+
 ------------------------------------------------------------------------
 -- Keyboard / mouse (niri default bindings, on keys that were free)
 ------------------------------------------------------------------------
