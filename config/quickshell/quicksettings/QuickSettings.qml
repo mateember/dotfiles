@@ -164,16 +164,13 @@ Scope {
                             onDetailClicked: root.openPopup("layout", win.screenName)
                         }
                         QuickTile {
-                            icon: "airplanemode_active"
-                            title: "Airplane mode"
-                            readonly property bool airplane: !Net.wifiEnabled && !Bt.enabled
-                            subtitle: airplane ? "On" : "Off"
-                            checked: airplane
-                            onClicked: {
-                                const on = !airplane;
-                                Net.setWifiEnabled(!on);
-                                if (Bt.available && Bt.enabled === on) Bt.toggle();
-                            }
+                            icon: PowerProfile.icon
+                            title: "Power mode"
+                            subtitle: PowerProfile.label
+                            checked: PowerProfile.mode === "performance"
+                            detail: true
+                            onClicked: PowerProfile.cycle()
+                            onDetailClicked: root.openPopup("battery", win.screenName)
                         }
                     }
 

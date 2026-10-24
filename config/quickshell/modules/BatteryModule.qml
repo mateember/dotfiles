@@ -51,5 +51,28 @@ BarButton {
             font.pixelSize: Theme.fontSizeSmall
             color: Theme.textDim
         }
+
+        Separator {}
+
+        StyledText {
+            text: "Power mode"
+            font.weight: Font.DemiBold
+        }
+
+        Repeater {
+            model: [
+                { mode: "low-power", label: "Power Saver", sub: "Battery mode · low power", icon: "energy_savings_leaf" },
+                { mode: "balanced", label: "Balanced", sub: "Standard performance and battery", icon: "speed" },
+                { mode: "performance", label: "Performance", sub: "AC mode · maximum speed", icon: "bolt" }
+            ]
+            delegate: ListItem {
+                required property var modelData
+                icon: modelData.icon
+                text: modelData.label
+                subtext: modelData.sub
+                highlighted: PowerProfile.mode === modelData.mode
+                onClicked: PowerProfile.setMode(modelData.mode)
+            }
+        }
     }
 }
