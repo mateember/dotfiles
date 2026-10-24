@@ -2,17 +2,17 @@
 
 The user is low on tokens: keep replies short, ask only what blocks you.
 
-## Read these first (all in `~/dotfiles/`)
+## Read these first (all in `~/dotfiles/docs/`)
 - `PROGRESS.md`: full dated log of every step, decision and gotcha. Newest entries are just above
   `## Decisions`; `## Next steps` is at the end. **Append an entry after every step.**
 - `USER_GUIDE.md`: what the user has: keybinds (before/after), bar items, launcher, config changes. Keep it in sync.
 - `NIXOS_NOTES.md`: system-level notes (UWSM vs plain session, packages to remove, PAM, nm-applet, KWallet, calendar events, TLP NOPASSWD).
-- `HANDOFF.md`: this file. Update all four `.md` files in `~/dotfiles/` as you go.
+- `HANDOFF.md`: this file. Update all four `.md` files in `~/dotfiles/docs/` as you go.
 - Note: the old `~/hypr-cosmic-shell/` project directory has been removed now that everything lives on git branches.
 
 ## Where the real work is
-- `~/dotfiles` branch `hypr-cosmic-shell`: `config/hypr` (Lua config) and `config/quickshell` (the shell), plus
-  `PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `HANDOFF.md`.
+- `~/dotfiles` branch `hypr-cosmic-shell`: `config/hypr` (Lua config), `config/quickshell` (the shell), and `docs/`
+  (`PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, `HANDOFF.md`).
   Symlinked into `~/.config/hypr` and `~/.config/quickshell`. Commit per feature with `git commit -m ... -- <your paths>`.
   The user's own uncommitted files (e.g. `config/hypr/conf/keyboard.lua`) are theirs: never commit them unless asked.
 - `~/Nix` branch `hypr-cosmic-shell`: `system/matevono/hyprland-desktop.nix`, `system/matevono/calendar-events.nix`,

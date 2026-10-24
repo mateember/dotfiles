@@ -712,11 +712,11 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
     opens the Caffeine dropdown menu (`Indefinitely`, `15 minutes`, `30 minutes`, `1 hour`, `2 hours`, `4 hours`) with a
     live countdown timer that automatically turns Caffeine off when the interval expires. Verified via screenshot.
 
-### 2026-10-25 00:08–00:12 – Cleanup of `~/hypr-cosmic-shell` & moving docs to `~/dotfiles`
-- Moved `PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `HANDOFF.md` from `~/hypr-cosmic-shell/` into `~/dotfiles/`.
+### 2026-10-25 00:08–00:15 – Cleanup of `~/hypr-cosmic-shell` & moving docs to `~/dotfiles/docs/`
+- Moved `PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `HANDOFF.md` from `~/hypr-cosmic-shell/` into `~/dotfiles/docs/`.
 - Moved reference/scratch images (`minimon.png`, `kiro.txt`, and any scratch screenshots) to `/tmp/`.
 - Removed the obsolete `~/hypr-cosmic-shell` directory now that all work is tracked on branch `hypr-cosmic-shell` in `~/dotfiles` and `~/Nix`.
-- Updated `HANDOFF.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `PROGRESS.md` in `~/dotfiles/` to reflect their new location and the rule that any temporary verification images must be stored in `/tmp` or `$XDG_RUNTIME_DIR`.
+- Updated `HANDOFF.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `PROGRESS.md` in `~/dotfiles/docs/` to reflect their new location and the rule that any temporary verification images must be stored in `/tmp` or `$XDG_RUNTIME_DIR`.
 
 ---
 
@@ -811,7 +811,7 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   config/hypr/hypridle.conf, config/hypr/hyprsunset.conf, config/hypr/hyprlock.conf, config/hypr/hyprlock-gen.py
   config/quickshell/shell.qml, config/quickshell/Theme.qml, config/quickshell/Config.qml
   config/quickshell/bar/  modules/  services/  components/  launcher/  notifications/  osd/  quicksettings/  polkit/  lock/
-  PROGRESS.md  USER_GUIDE.md  NIXOS_NOTES.md  HANDOFF.md
+  docs/PROGRESS.md  docs/USER_GUIDE.md  docs/NIXOS_NOTES.md  docs/HANDOFF.md
 ```
 
 ## Next steps
@@ -819,4 +819,4 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
    ask whether to hide duplicates (both "Neptun" webcal and "neptun.bme.hu" exist) via `Config.calendarHidden`.
 1. User: `sudo nixos-rebuild switch --flake ~/Nix#matevono` for autostart overrides, KWallet unlock, `hcs-calendar-events`, and TLP NOPASSWD rules.
 2. Remaining optional ideas: Alt+Tab switcher, screen recording button.
-3. Work in `~/dotfiles` + `~/Nix` (branch `hypr-cosmic-shell`), commit per feature, keep temporary screenshots in `/tmp`, and update the `.md` files in `~/dotfiles/` every step.
+3. Work in `~/dotfiles` + `~/Nix` (branch `hypr-cosmic-shell`), commit per feature, keep temporary screenshots in `/tmp`, and update the `.md` files in `~/dotfiles/docs/` every step.
