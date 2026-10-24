@@ -12,6 +12,10 @@ hl.on("hyprland.start", function()
     -- HCS: hl.exec_cmd("waybar")
     -- HCS: hl.exec_cmd("dunst")
     hl.exec_cmd("hypridle")
+    -- Session setup for a plain (non-UWSM) Hyprland session: import the display variables and start
+    -- graphical-session.target, without which xdg-desktop-portal (xdg-open, screen sharing, file
+    -- pickers) and everything wantedBy it never start. See scripts/session-target.sh.
+    hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/session-target.sh start")
 
     -- exec-once = hyprpaper
     -- exec-once = waypaper --random
@@ -43,6 +47,10 @@ hl.on("hyprland.start", function()
 
     -- Cleanup / Legacy Lines
     -- exec = sleep 5; nm-applet
+end)
+
+hl.on("hyprland.shutdown", function()
+    hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/session-target.sh stop")
 end)
 
 -- Screen / Color Management (original: `exec = hyprsunset`, i.e. at start and on every reload).

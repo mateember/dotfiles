@@ -23,6 +23,11 @@ hl.env("XMODIFIERS", "")
 
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 
+-- NixOS runs Hyprland through a cap_sys_nice wrapper (programs.hyprland). glibc treats that like a
+-- setuid program and removes TZDIR from its environment, so apps it starts couldn't find the time
+-- zone files (GNOME Calendar aborted with "tz != NULL"). Put it back for everything Hyprland starts.
+hl.env("TZDIR", "/etc/zoneinfo")
+
 -- Desktop shell: icon theme for Quickshell (COSMIC's icon theme). HCS_EMOJI_FILE (emoji picker list)
 -- is set by the NixOS config.
 hl.env("QS_ICON_THEME", "Pop")
