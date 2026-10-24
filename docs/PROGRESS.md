@@ -747,6 +747,11 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Added `Brightness.refreshRate` (`60` / `120`, read from `hyprctl monitors -j` for `eDP-1`) and `Brightness.setRefreshRate(hz)` using `hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "2880x1800@<hz>", position = "0x0", scale = 2, vrr = 1 })'`.
   - Added a **Refresh rate (`60 Hz` / `120 Hz`)** pill selector row in the Display / Brightness menu (`Display.qml`) and included live Hz in the Monitors list subtitle. Verified via screenshot.
 
+### 2026-10-25 01:02–01:05 – Quick Settings sub-widgets always open in Quick Settings position
+- Updated `config/quickshell/services/Popups.qml`, `config/quickshell/components/Popup.qml`, `config/quickshell/quicksettings/QuickSettings.qml`, `config/quickshell/services/Recorder.qml`, `config/quickshell/bar/CaptureOverlay.qml`, and `config/quickshell/modules/Display.qml`:
+  - Added `Popups.fromQuickSettings` + `Popups.openFromQuickSettings(id)` and `Recorder.openOverlayFromQuickSettings(tab)`.
+  - Every widget opened from Quick Settings (`Wi-Fi`, `Bluetooth`, `Night light`, `Notifications`, `Caffeine`, `Layout`, `Power mode / Battery`, `Volume`, `Display`, `Power`, and `Screenshot / Screen Record`) now opens as a dropdown in the exact top-right position of the Quick Settings menu, even if that widget is disabled/hidden on the bar in `BarConfig`.
+
 ---
 
 ## Decisions (defaults, user may override)

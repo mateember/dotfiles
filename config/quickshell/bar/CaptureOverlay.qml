@@ -45,12 +45,15 @@ Scope {
 
             Rectangle {
                 id: card
-                width: Math.min(540, win.width - 2 * Theme.spaceL)
+                width: Math.min(Recorder.fromQuickSettings ? 420 : 540, win.width - 2 * Theme.spaceL)
                 height: col.implicitHeight + 2 * Theme.spaceM
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: Math.round(win.height * 0.12)
-                radius: Theme.radiusL
+                x: Recorder.fromQuickSettings
+                    ? Math.max(Theme.panelMargin, win.width - width - Theme.panelMargin)
+                    : Math.round((win.width - width) / 2)
+                y: Recorder.fromQuickSettings
+                    ? Theme.panelMargin + Theme.barHeight + Theme.popupGap
+                    : Math.round(win.height - height - win.height * 0.12)
+                radius: Recorder.fromQuickSettings ? Theme.radiusM : Theme.radiusL
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
                 border.width: 1

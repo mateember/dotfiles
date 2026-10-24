@@ -18,10 +18,10 @@ Scope {
     function setOpen(v: bool) { QuickSettingsState.open = v; }
     function toggle() { QuickSettingsState.toggle(); }
 
-    // Close the panel and open a bar popup (e.g. "network") on the same monitor.
+    // Close the panel and open a bar popup (e.g. "network") in the Quick Settings position.
     function openPopup(name: string, screenName: string) {
         root.setOpen(false);
-        Popups.open(name + "@" + screenName);
+        Popups.openFromQuickSettings(name + "@" + screenName);
     }
 
     IpcHandler {
@@ -334,7 +334,7 @@ Scope {
                             icon: "photo_camera"
                             onClicked: {
                                 root.setOpen(false);
-                                Recorder.openOverlay("shot");
+                                Recorder.openOverlayFromQuickSettings("shot");
                             }
                         }
                         IconButton {
@@ -342,7 +342,7 @@ Scope {
                             onClicked: {
                                 root.setOpen(false);
                                 if (Recorder.recording) Recorder.stopRecording();
-                                else Recorder.openOverlay("record");
+                                else Recorder.openOverlayFromQuickSettings("record");
                             }
                         }
                         IconButton {

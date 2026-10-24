@@ -210,8 +210,10 @@ BarButton {
                                 pop.close();
                                 ColorPicker.pick();
                             } else if (tile.modelData.mode === "record") {
+                                const fromQs = Popups.fromQuickSettings;
                                 pop.close();
                                 if (Recorder.recording) Recorder.stopRecording();
+                                else if (fromQs) Recorder.openOverlayFromQuickSettings("record");
                                 else Recorder.openOverlay("record");
                             } else {
                                 pop.shot(tile.modelData.mode);

@@ -9,6 +9,7 @@ Singleton {
     id: root
 
     property bool overlayOpen: false
+    property bool fromQuickSettings: false
     property string tab: "shot"               // "shot" | "record"
 
     // Screenshot options
@@ -34,6 +35,16 @@ Singleton {
     function openOverlay(initialTab: string) {
         if (initialTab === "shot" || initialTab === "record")
             root.tab = initialTab;
+        root.fromQuickSettings = false;
+        Popups.close();
+        QuickSettingsState.close();
+        root.overlayOpen = true;
+    }
+
+    function openOverlayFromQuickSettings(initialTab: string) {
+        if (initialTab === "shot" || initialTab === "record")
+            root.tab = initialTab;
+        root.fromQuickSettings = true;
         Popups.close();
         QuickSettingsState.close();
         root.overlayOpen = true;
@@ -41,6 +52,7 @@ Singleton {
 
     function closeOverlay() {
         root.overlayOpen = false;
+        root.fromQuickSettings = false;
     }
 
     function toggleOverlay(initialTab: string) {

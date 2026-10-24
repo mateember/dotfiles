@@ -176,7 +176,7 @@ the tune icon in Sound → pavucontrol; Media → "Open <player>".
 ### Bar Settings (`!bar` in the launcher, or `qs ipc call barsettings toggle`)
 
 Opens the **Bar Settings** window where you can:
-- **Toggle** any of the 18 bar items on or off. (When an item is hidden on the bar, opening it from the `!` launcher menu, Quick Settings `>` chevron, or its keybind opens it as a centered floating window.)
+- **Toggle** any of the 21 bar items on or off. (When an item is hidden on the bar, opening it from the `!` launcher menu or its keybind opens it as a centered floating window; opening it from the Quick Settings `>` chevron opens it in the top-right Quick Settings dropdown position.)
 - **Reorder** items within each section using the **↑ / ↓** buttons.
 - **Move** an item between **Left**, **Center**, and **Right** by clicking its section pill.
 - **Reset** the bar back to the default layout.

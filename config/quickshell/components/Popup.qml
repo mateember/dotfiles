@@ -53,7 +53,9 @@ PanelWindow {
     anchors.top: true
     anchors.left: true
     margins.top: Theme.panelMargin + Theme.barHeight + Theme.popupGap
-    margins.left: Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - popupWidth - Theme.panelMargin, anchorCenter - popupWidth / 2))
+    margins.left: Popups.fromQuickSettings
+        ? Math.max(Theme.panelMargin, (screen?.width ?? 0) - popupWidth - Theme.panelMargin)
+        : Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - popupWidth - Theme.panelMargin, anchorCenter - popupWidth / 2))
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 

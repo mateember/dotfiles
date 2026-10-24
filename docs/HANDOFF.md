@@ -45,7 +45,8 @@ The user is low on tokens: keep replies short, ask only what blocks you.
   - **Caffeine right-click interval dropdown & left-click toggle** (`e123361`): `services/Idle.qml` + `modules/Caffeine.qml` (left click toggles on indefinitely or turns off if active; right click opens `Indefinitely` / `15m` / `30m` / `1h` / `2h` / `4h` dropdown with countdown).
   - **Capture & Screen Recording Studio + Hardware/Privacy Peripherals** (`9821877` in dotfiles, `7dd8f2f` in Nix): `services/Recorder.qml`, `bar/CaptureOverlay.qml` (`SUPER+Print`), `modules/RecorderIndicator.qml`, `services/Privacy.qml`, `modules/PrivacyIndicator.qml`, `services/Storage.qml`, `modules/StorageModule.qml`, and Bluetooth battery levels in `services/Bt.qml` + `modules/BluetoothModule.qml`.
   - **Notification toast fade & click-to-focus app activation** (`9c750e8`): `services/Notifs.qml`, `notifications/Toasts.qml`, `components/NotificationCard.qml`, and `misc.focus_on_activate = true` in `config/hypr/conf/looks.lua`.
-  - **60 Hz / 120 Hz refresh rate toggle in Display menu**: `services/Brightness.qml` + `modules/Display.qml` via `hyprctl eval 'hl.monitor(...)'`.
+  - **60 Hz / 120 Hz refresh rate toggle in Display menu** (`487537f`): `services/Brightness.qml` + `modules/Display.qml` via `hyprctl eval 'hl.monitor(...)'`.
+  - **Quick Settings sub-widgets position**: `services/Popups.qml` (`openFromQuickSettings`) + `components/Popup.qml` + `services/Recorder.qml` so any widget opened from Quick Settings opens as a dropdown in the top-right Quick Settings spot even if hidden on the bar.
 - `TZDIR=/etc/zoneinfo` is set in `config/hypr/conf/environment.lua` (NixOS' Hyprland capability wrapper makes glibc
   drop it; GNOME Calendar crashed with `tz != NULL`).
 - nm-applet hidden via `~/.config/autostart/nm-applet.desktop` (`Hidden=true`). polkit-gnome likewise (Home Manager).
