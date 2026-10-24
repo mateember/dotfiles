@@ -54,10 +54,10 @@ Scope {
             const scr = root.pendingScreen;
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
-            else if (id === "qs:quicksettings") QuickSettingsState.open = true;
+            else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
-            else if (id.startsWith("qs:popup:")) Popups.open(id.slice(9) + "@" + scr);
+            else if (id.startsWith("qs:popup:")) Popups.openWindow(id.slice(9) + "@" + scr);
         }
     }
 

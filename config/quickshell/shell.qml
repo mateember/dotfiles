@@ -51,6 +51,10 @@ ShellRoot {
             const screen = Hyprland.focusedMonitor?.name ?? Quickshell.screens[0]?.name ?? "";
             Popups.toggle(name + "@" + screen);
         }
+        function openWindow(name: string): void {
+            const screen = Hyprland.focusedMonitor?.name ?? Quickshell.screens[0]?.name ?? "";
+            Popups.openWindow(name + "@" + screen);
+        }
         function close(): void { Popups.close(); }
     }
 

@@ -6,15 +6,11 @@ import Quickshell.Wayland
 import qs
 import qs.services
 
-// Themed dropdown below a bar button.
-// Implemented as its own layer-shell surface (not an xdg popup): Hyprland routes clicks
-// and keyboard focus to layer surfaces reliably, so clicks inside never fall through to
-// the window underneath. HyprlandFocusGrab closes it on a click outside.
-//
-// Usage inside a bar module:
-//   BarButton { id: btn; active: pop.open; onClicked: pop.toggle()
-//       Popup { id: pop; name: "volume"; anchorItem: btn; ...content... } }
-// Content children are stacked in a ColumnLayout.
+// Themed popup for a bar module.
+// - Clicked on the bar (`Popups.open` / `Popups.toggle`): opens as a layer-shell dropdown
+//   below the bar button with HyprlandFocusGrab.
+// - Launched from the Launcher (`Popups.openWindow`): opens as a real Wayland window
+//   (`FloatingWindow`, title "HCS — <Name>"), floated and centered by Hyprland window rules.
 PanelWindow {
     id: root
 
@@ -27,11 +23,13 @@ PanelWindow {
     readonly property var barWindow: anchorItem.QsWindow.window
     readonly property string popupId: name + "@" + (barWindow?.screen?.name ?? "")
     readonly property bool open: Popups.current === popupId
+    readonly property bool openDropdown: open && !Popups.asWindow
+    readonly property bool openAsWindow: open && Popups.asWindow
 
     function toggle() { Popups.toggle(popupId); }
     function close() { if (root.open) Popups.close(); }
 
-    // Horizontal position: centered under the button (or screen-centered if the bar item is hidden), kept on screen.
+    // Horizontal position: centered under the button (or screen-centered if hidden), kept on screen.
     property real anchorCenter: 0
     function reposition() {
         if (!barWindow) return;
@@ -42,10 +40,13 @@ PanelWindow {
         const r = barWindow.itemRect(anchorItem);
         anchorCenter = Theme.panelMargin + r.x + r.width / 2;
     }
-    onOpenChanged: if (open) reposition()
+    onOpenChanged: {
+        if (openDropdown) reposition();
+        if (open) bg.forceActiveFocus();
+    }
 
     screen: barWindow?.screen ?? null
-    visible: open
+    visible: openDropdown
     color: "transparent"
 
     anchors.top: true
@@ -62,21 +63,37 @@ PanelWindow {
 
     WlrLayershell.namespace: "hcs-popup"
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: openDropdown ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     HyprlandFocusGrab {
-        active: root.visible
+        active: root.openDropdown
         windows: root.barWindow ? [root, root.barWindow] : [root]
-        onCleared: root.close()
+        onCleared: if (root.openDropdown) root.close()
+    }
+
+    // Real Wayland XDG window when launched from the Launcher (`!`).
+    FloatingWindow {
+        id: floatWin
+        title: "HCS — " + root.name.charAt(0).toUpperCase() + root.name.slice(1)
+        visible: root.openAsWindow
+        readonly property int targetW: root.contentWidth + 2 * root.padding
+        readonly property int targetH: Math.max(120, Math.min(Math.ceil(body.implicitHeight) + 2 * root.padding, 740))
+        implicitWidth: targetW
+        implicitHeight: targetH
+        minimumSize: Qt.size(targetW, targetH)
+        maximumSize: Qt.size(targetW, targetH)
+        color: "transparent"
+        onClosed: root.close()
     }
 
     Rectangle {
         id: bg
+        parent: root.openAsWindow ? floatWin.contentItem : root.contentItem
         anchors.fill: parent
-        radius: Theme.radiusM
+        radius: root.openAsWindow ? 0 : Theme.radiusM
         color: Theme.popupBg
         border.color: Theme.popupBorder
-        border.width: 1
+        border.width: root.openAsWindow ? 0 : 1
         clip: true
         focus: true
         Keys.onEscapePressed: root.close()

@@ -44,6 +44,7 @@ Scope {
             id: win
 
             screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+            visible: !QuickSettingsState.asWindow
             color: "transparent"
             anchors.top: true
             anchors.right: true
@@ -56,24 +57,38 @@ Scope {
 
             WlrLayershell.namespace: "hcs-quicksettings"
             WlrLayershell.layer: WlrLayer.Top
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: !QuickSettingsState.asWindow ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
             readonly property string screenName: screen?.name ?? ""
 
             HyprlandFocusGrab {
-                active: true
+                active: !QuickSettingsState.asWindow
                 windows: [win]
-                onCleared: root.setOpen(false)
+                onCleared: if (!QuickSettingsState.asWindow) root.setOpen(false)
+            }
+
+            FloatingWindow {
+                id: floatWin
+                title: "HCS — Quick Settings"
+                visible: QuickSettingsState.asWindow
+                readonly property int targetH: Math.max(200, Math.min(Math.ceil(card.implicitHeight), 740))
+                implicitWidth: 400
+                implicitHeight: targetH
+                minimumSize: Qt.size(400, targetH)
+                maximumSize: Qt.size(400, targetH)
+                color: "transparent"
+                onClosed: root.setOpen(false)
             }
 
             Rectangle {
                 id: card
+                parent: QuickSettingsState.asWindow ? floatWin.contentItem : win.contentItem
                 anchors.fill: parent
                 implicitHeight: col.implicitHeight + 2 * Theme.spaceS
-                radius: Theme.radiusM
+                radius: QuickSettingsState.asWindow ? 0 : Theme.radiusM
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
-                border.width: 1
+                border.width: QuickSettingsState.asWindow ? 0 : 1
                 clip: true
                 focus: true
                 Keys.onEscapePressed: root.setOpen(false)

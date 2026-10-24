@@ -2,31 +2,30 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Wayland
 import qs
 import qs.components
 import qs.services
 
-// Bar customization window (launched from the Launcher's Quickshell apps list or via
-// `qs ipc call barsettings toggle`). Toggle bar modules on/off, reorder them with ↑/↓,
-// move them between Left / Center / Right sections, or reset to default.
+// Bar customization app (launched from the Launcher's `!` Quickshell apps list or via
+// `qs ipc call barsettings toggle`). Real Wayland window (FloatingWindow), floated and
+// centered by Hyprland window rules.
 Scope {
     id: root
 
     LazyLoader {
         active: BarConfig.settingsOpen
 
-        PanelWindow {
+        FloatingWindow {
             id: win
 
-            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
-            anchors { top: true; bottom: true; left: true; right: true }
-            exclusionMode: ExclusionMode.Ignore
+            title: "HCS — Bar Settings"
+            implicitWidth: 560
+            implicitHeight: 620
+            minimumSize: Qt.size(560, 620)
+            maximumSize: Qt.size(560, 620)
             color: "transparent"
 
-            WlrLayershell.namespace: "hcs-launcher"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            onClosed: BarConfig.settingsOpen = false
 
             property string filterSection: "all"   // "all" | "left" | "center" | "right"
 
@@ -52,26 +51,13 @@ Scope {
                 return idx >= 0 && idx < ids.length - 1;
             }
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: BarConfig.settingsOpen = false
-            }
-
             Rectangle {
                 id: card
-                width: Math.min(560, win.width - 2 * Theme.spaceL)
-                height: col.implicitHeight + 2 * Theme.spaceS
-                anchors.centerIn: parent
-                radius: Theme.radiusM
+                anchors.fill: parent
                 color: Theme.popupBg
-                border.color: Theme.popupBorder
-                border.width: 1
                 focus: true
                 Component.onCompleted: card.forceActiveFocus()
                 Keys.onEscapePressed: BarConfig.settingsOpen = false
-
-                // Swallow clicks inside the card.
-                MouseArea { anchors.fill: parent }
 
                 ColumnLayout {
                     id: col
@@ -177,7 +163,7 @@ Scope {
                     ListView {
                         id: list
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.min(contentHeight, Math.min(540, win.height - 220))
+                        Layout.fillHeight: true
                         clip: true
                         spacing: 4
                         boundsBehavior: Flickable.StopAtBounds
