@@ -26,6 +26,8 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 -- NixOS runs Hyprland through a cap_sys_nice wrapper (programs.hyprland). glibc treats that like a
 -- setuid program and removes TZDIR from its environment, so apps it starts couldn't find the time
 -- zone files (GNOME Calendar aborted with "tz != NULL"). Put it back for everything Hyprland starts.
+-- (UWSM's own environment files can't help here: the variable is dropped from Hyprland's process
+-- after they are applied, so it has to be set from inside the Hyprland config.)
 hl.env("TZDIR", "/etc/zoneinfo")
 
 -- Desktop shell: icon theme for Quickshell (COSMIC's icon theme). HCS_EMOJI_FILE (emoji picker list)
@@ -33,7 +35,8 @@ hl.env("TZDIR", "/etc/zoneinfo")
 hl.env("QS_ICON_THEME", "Pop")
 
 
-hl.on("hyprland.start", function()
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-    hl.exec_cmd("systemctl --user import-environment QT_QPA_PLATFORMTHEME")
-end)
+-- Not needed under UWSM (it exports the session environment to systemd/D-Bus):
+-- hl.on("hyprland.start", function()
+--     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+--     hl.exec_cmd("systemctl --user import-environment QT_QPA_PLATFORMTHEME")
+-- end)
