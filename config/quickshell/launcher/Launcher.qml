@@ -16,6 +16,7 @@ import qs.services
 //   >cmd     run a shell command. Shift+Enter runs it in a terminal (kitty).
 //   :name    emoji picker. Enter types the emoji into the focused window (and copies it),
 //            Shift+Enter only copies. Also: ipc call launcher emoji (SUPER period).
+//   !name    Quickshell built-in apps & panels (also /name or @name). Also: ipc call launcher shell.
 // Keys: ↑/↓ (also Tab, Ctrl+J/K) select, Enter launch, Esc close.
 Scope {
     id: root
@@ -39,6 +40,7 @@ Scope {
         target: "launcher"
         function toggle(): void { root.initialQuery = ""; root.toggle(); }
         function emoji(): void { root.initialQuery = root.open ? "" : ":"; root.toggle(); }
+        function shell(): void { root.initialQuery = root.open ? "" : "!"; root.toggle(); }
         function open(): void { root.open = true; }
         function close(): void { root.open = false; }
     }
@@ -74,11 +76,38 @@ Scope {
 
             property string query: search.text
             readonly property string mode: query.startsWith(":") ? "emoji"
+                                         : (query.startsWith("!") || query.startsWith("/") || query.startsWith("@")) ? "shell"
                                          : query.startsWith("=") ? "calc"
                                          : query.startsWith(">") ? "run"
                                          : /^[\d\s.,()+\-*/^%]+$/.test(query) && /\d\s*[+\-*/^%]\s*[\d(]/.test(query) ? "calc"
                                          : "apps"
             property string calcResult: ""
+
+            function openBarPopup(name: string) {
+                const screenName = win.screen?.name ?? Quickshell.screens[0]?.name ?? "";
+                Popups.open(name + "@" + screenName);
+            }
+
+            readonly property var shellApps: [
+                { id: "qs:bar-settings",  name: "Bar Settings",          comment: "Toggle bar items on/off, reorder and move between sections", icon: "view_agenda",         keywords: ["bar", "panel", "customize", "modules", "order", "toggle"], action: () => { BarConfig.settingsOpen = true; } },
+                { id: "qs:quicksettings", name: "Quick Settings",        comment: "Toggles, volume/brightness sliders, media and power mode",   icon: "tune",                keywords: ["control", "toggles", "sliders", "tlp"],                    action: () => { QuickSettingsState.open = true; } },
+                { id: "qs:calendar",      name: "Calendar & Events",     comment: "Month calendar, agenda and Nextcloud / Google / Neptun",     icon: "calendar_month",      keywords: ["date", "time", "clock", "agenda", "nextcloud", "events"],  action: () => { win.openBarPopup("calendar"); } },
+                { id: "qs:weather",       name: "Weather",               comment: "Today's rain, humidity, wind, UV, pressure and forecast",    icon: "partly_cloudy_day",   keywords: ["forecast", "temperature", "rain", "wind"],                 action: () => { win.openBarPopup("weather"); } },
+                { id: "qs:clipboard",     name: "Clipboard History",     comment: "Search, copy and delete recent clipboard entries",           icon: "content_paste",       keywords: ["paste", "copy", "cliphist"],                               action: () => { win.openBarPopup("clipboard"); } },
+                { id: "qs:notifications", name: "Notifications",         comment: "Notification center, history and Do Not Disturb",            icon: "notifications",       keywords: ["dnd", "do not disturb", "alerts", "bell"],                 action: () => { win.openBarPopup("notifications"); } },
+                { id: "qs:volume",        name: "Audio & Volume",        comment: "Output, input devices and per-application volume mixer",     icon: "volume_up",           keywords: ["sound", "speaker", "microphone", "mute", "pipewire"],      action: () => { win.openBarPopup("volume"); } },
+                { id: "qs:network",       name: "Network & Wi-Fi",       comment: "Wi-Fi networks, passwords and Ethernet status",              icon: "wifi",                keywords: ["internet", "wlan", "ethernet", "nm"],                      action: () => { win.openBarPopup("network"); } },
+                { id: "qs:bluetooth",     name: "Bluetooth",             comment: "Bluetooth toggle, paired and nearby devices",                icon: "bluetooth",           keywords: ["pair", "connect", "headphones"],                           action: () => { win.openBarPopup("bluetooth"); } },
+                { id: "qs:display",       name: "Display & Brightness",  comment: "Screen brightness, keyboard light, monitors, screenshots",   icon: "desktop_windows",     keywords: ["monitor", "backlight", "keyboard", "screenshot"],          action: () => { win.openBarPopup("display"); } },
+                { id: "qs:media",         name: "Media Player",          comment: "Now playing cover, seek bar, controls and player switcher",  icon: "play_arrow",          keywords: ["music", "mpris", "player", "spotify"],                     action: () => { win.openBarPopup("media"); } },
+                { id: "qs:nightlight",    name: "Night Light",           comment: "Screen warmth temperature and schedule (hyprsunset)",        icon: "nightlight",          keywords: ["warm", "blue light", "hyprsunset", "temperature"],         action: () => { win.openBarPopup("nightlight"); } },
+                { id: "qs:battery",       name: "Battery & Power Mode",  comment: "Battery charge, health and TLP power profile selector",      icon: "battery_full",        keywords: ["tlp", "power saver", "balanced", "performance", "charge"], action: () => { win.openBarPopup("battery"); } },
+                { id: "qs:layout",        name: "Tiling Layout",         comment: "Switch between scrolling (niri) and dwindle layouts",        icon: "view_column",         keywords: ["niri", "scrolling", "dwindle", "columns"],                 action: () => { win.openBarPopup("layout"); } },
+                { id: "qs:colorpicker",   name: "Color Picker",          comment: "Pick a pixel color on screen (#RRGGBB to clipboard)",        icon: "colorize",            keywords: ["hyprpicker", "hex", "eyedropper"],                         action: () => { ColorPicker.pick(); } },
+                { id: "qs:emoji",         name: "Emoji Picker",          comment: "Search and insert emojis",                                   icon: "sentiment_satisfied", keywords: ["emoticon", "unicode"], keepOpen: true,                     action: () => { search.text = ":"; search.focusInput(); } },
+                { id: "qs:wallpaper",     name: "Next Wallpaper",        comment: "Switch to a new random wallpaper now",                       icon: "wallpaper",           keywords: ["background", "bing"],                                      action: () => { Wallpapers.next(); } },
+                { id: "qs:power",         name: "Power Menu",            comment: "Lock, suspend, log out, restart or shut down",               icon: "power_settings_new",  keywords: ["lock", "suspend", "logout", "reboot", "shutdown"],         action: () => { win.openBarPopup("power"); } }
+            ]
 
             function score(q: string, e): real {
                 const name = (e.name || "").toLowerCase();
@@ -112,6 +141,16 @@ Scope {
             }
 
             readonly property var results: {
+                if (mode === "shell") {
+                    const q = query.slice(1).trim().toLowerCase();
+                    const list = q === ""
+                        ? shellApps
+                        : shellApps.map(e => ({ e, s: score(q, e) }))
+                                   .filter(x => x.s >= 0)
+                                   .sort((a, b) => b.s - a.s)
+                                   .map(x => x.e);
+                    return list.map(e => ({ kind: "shell", id: e.id, title: e.name, subtitle: e.comment, icon: e.icon, keepOpen: Boolean(e.keepOpen), action: e.action }));
+                }
                 if (mode === "calc") {
                     const expr = query.replace(/^=/, "").trim();
                     return expr === "" ? [] : [{ kind: "calc", title: calcResult !== "" ? calcResult : "…", subtitle: expr + " · Enter to copy", icon: "calculate" }];
@@ -132,6 +171,15 @@ Scope {
                     root.bump(r.entry.id);
                     if (r.entry.runInTerminal) Quickshell.execDetached(["kitty", "-e"].concat(r.entry.command));
                     else r.entry.execute();
+                } else if (r.kind === "shell") {
+                    root.bump(r.id);
+                    if (r.keepOpen) {
+                        r.action();
+                        return;
+                    }
+                    root.open = false;
+                    Qt.callLater(r.action);
+                    return;
                 } else if (r.kind === "run") {
                     const cmd = query.slice(1).trim();
                     Quickshell.execDetached(inTerminal ? ["kitty", "-e", "sh", "-c", cmd + '; exec "${SHELL:-sh}"'] : ["sh", "-c", cmd]);
@@ -198,7 +246,7 @@ Scope {
                         id: search
                         Layout.fillWidth: true
                         implicitHeight: 44
-                        placeholder: "Search apps · = calculate · > run command · : emoji"
+                        placeholder: "Search apps · ! shell apps · = calculate · > command · : emoji"
                         input.font.pixelSize: Theme.fontSizeLarge
                         Component.onCompleted: { text = root.initialQuery; focusInput(); }
 

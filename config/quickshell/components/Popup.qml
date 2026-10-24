@@ -31,10 +31,14 @@ PanelWindow {
     function toggle() { Popups.toggle(popupId); }
     function close() { if (root.open) Popups.close(); }
 
-    // Horizontal position: centered under the button, kept on screen.
+    // Horizontal position: centered under the button (or screen-centered if the bar item is hidden), kept on screen.
     property real anchorCenter: 0
     function reposition() {
         if (!barWindow) return;
+        if (!anchorItem.visible) {
+            anchorCenter = (screen?.width ?? 1000) / 2;
+            return;
+        }
         const r = barWindow.itemRect(anchorItem);
         anchorCenter = Theme.panelMargin + r.x + r.width / 2;
     }
