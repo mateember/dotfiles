@@ -2,6 +2,8 @@
 # Helper for Quickshell screenshot & screen recording (services/Recorder.qml).
 set -u
 
+PIDFILE="/tmp/hcs_recorder.pid"
+
 find_bin() {
     local name="$1"
     if command -v "$name" >/dev/null 2>&1; then
@@ -22,12 +24,10 @@ get_focused_monitor() {
 }
 
 get_window_geometry() {
-    local ws_ids
-    ws_ids=$(hyprctl monitors -j 2>/dev/null | jq -r '.[].activeWorkspace.id')
     local boxes
     boxes=$(hyprctl clients -j 2>/dev/null | jq -r --argjson ws "$(hyprctl monitors -j | jq '[.[].activeWorkspace.id]')" '
         .[] | select(.mapped == true and .hidden == false and (.workspace.id as $w | $ws | index($w))) |
-        "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1]) \(.title)"
+        "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"
     ')
     if [ -n "$boxes" ]; then
         echo "$boxes" | slurp -r
@@ -36,10 +36,27 @@ get_window_geometry() {
     fi
 }
 
+stop_active_recorder() {
+    if [ -f "$PIDFILE" ]; then
+        local pid
+        pid=$(cat "$PIDFILE" 2>/dev/null || true)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill -INT "$pid" 2>/dev/null || true
+        fi
+        rm -f "$PIDFILE"
+    fi
+    pkill -INT -x wf-recorder 2>/dev/null || true
+    pkill -INT -x wl-screenrec 2>/dev/null || true
+}
+
 cmd="${1:-}"
 shift || true
 
 case "$cmd" in
+    stop)
+        stop_active_recorder
+        ;;
+
     shot)
         mode="${1:-region}"       # region | window | output
         action="${2:-copy}"       # copy | save | annotate
@@ -102,6 +119,8 @@ case "$cmd" in
     record)
         mode="${1:-screen}"       # screen | region | window
         audio="${2:-none}"        # none | system | mic
+
+        stop_active_recorder
         sleep 0.25                # let overlay close
 
         geom=""
@@ -132,8 +151,6 @@ case "$cmd" in
             audio_dev=$(pactl get-default-source 2>/dev/null || true)
         fi
 
-        echo "STARTED:$out_file"
-
         if [ -n "$wf_bin" ]; then
             args=(-f "$out_file" -y)
             [ -n "$geom" ] && args+=(-g "$geom")
@@ -145,7 +162,8 @@ case "$cmd" in
                     args+=(--audio)
                 fi
             fi
-            "$wf_bin" "${args[@]}" >/dev/null 2>&1
+            "$wf_bin" "${args[@]}" >/dev/null 2>&1 &
+            rec_pid=$!
         elif [ -n "$wl_bin" ]; then
             args=(-f "$out_file")
             [ -n "$geom" ] && args+=(-g "$geom")
@@ -154,15 +172,23 @@ case "$cmd" in
                 args+=(--audio)
                 [ -n "$audio_dev" ] && args+=(--audio-device "$audio_dev")
             fi
-            "$wl_bin" "${args[@]}" >/dev/null 2>&1
+            "$wl_bin" "${args[@]}" >/dev/null 2>&1 &
+            rec_pid=$!
         else
             notify-send -a "Screen Recorder" -u critical "Screen recorder missing" "Install wf-recorder or wl-screenrec"
             exit 1
         fi
 
+        echo "$rec_pid" > "$PIDFILE"
+        trap 'kill -INT "$rec_pid" 2>/dev/null || true; rm -f "$PIDFILE"' INT TERM
+
+        echo "STARTED:$out_file"
+        wait "$rec_pid" 2>/dev/null || true
+        rm -f "$PIDFILE"
+
         if [ -f "$out_file" ]; then
             printf "file://%s\r\n" "$out_file" | wl-copy --type text/uri-list 2>/dev/null || true
-            notify-send -a "Screen Recorder" -i media-record "Recording saved" "$out_file (copied file to clipboard)" 2>/dev/null || true
+            notify-send -a "Screen Recorder" -i camera-video "Recording saved" "$out_file (copied file to clipboard)" 2>/dev/null || true
         fi
         ;;
 esac

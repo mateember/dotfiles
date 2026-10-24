@@ -33,12 +33,6 @@ Scope {
                 onActivated: Recorder.closeOverlay()
             }
 
-            HyprlandFocusGrab {
-                active: true
-                windows: [win]
-                onCleared: Recorder.closeOverlay()
-            }
-
             // Subtle backdrop; clicking outside closes the overlay
             Rectangle {
                 anchors.fill: parent

@@ -49,39 +49,51 @@ Singleton {
     }
 
     function takeScreenshot(mode: string) {
+        const m = mode || "region";
+        const act = root.shotAction;
+        const dly = String(root.shotDelay);
         root.overlayOpen = false;
-        Quickshell.execDetached([
-            "bash", root.scriptPath, "shot",
-            mode || "region",
-            root.shotAction,
-            String(root.shotDelay)
-        ]);
+        Quickshell.execDetached(["bash", root.scriptPath, "shot", m, act, dly]);
     }
 
     function startRecording(mode: string, audio: string) {
         if (root.recording || root.starting) return;
+        const m = mode || root.recordMode || "screen";
+        const a = audio || root.recordAudio || "none";
+        root.recordMode = m;
+        root.recordAudio = a;
         root.overlayOpen = false;
-        if (mode) root.recordMode = mode;
-        if (audio) root.recordAudio = audio;
         root.starting = true;
         root.elapsedSeconds = 0;
-        recProc.command = ["bash", root.scriptPath, "record", root.recordMode, root.recordAudio];
+        recProc.running = false;
+        recProc.command = ["bash", root.scriptPath, "record", m, a];
         recProc.running = true;
     }
 
     function stopRecording() {
-        if (!recProc.running) {
+        // Send SIGINT directly to wf-recorder / wl-screenrec via capture.sh stop
+        Quickshell.execDetached(["bash", root.scriptPath, "stop"]);
+        if (recProc.running) {
+            recProc.signal(2);
+        } else {
             root.recording = false;
             root.starting = false;
-            return;
         }
-        // SIGINT (2) lets wf-recorder / wl-screenrec finalize the MP4 container cleanly.
-        recProc.signal(2);
+        stopFallbackTimer.restart();
     }
 
     function toggleRecording(mode: string) {
         if (root.recording || root.starting) root.stopRecording();
         else root.startRecording(mode || "screen", root.recordAudio);
+    }
+
+    Timer {
+        id: stopFallbackTimer
+        interval: 1500
+        onTriggered: {
+            root.recording = false;
+            root.starting = false;
+        }
     }
 
     Timer {
@@ -105,6 +117,7 @@ Singleton {
             }
         }
         onExited: {
+            stopFallbackTimer.stop();
             root.recording = false;
             root.starting = false;
         }
