@@ -33,25 +33,18 @@ function vpn
     end
 end
 
-function hb
-    if test (count $argv) -eq 0
-        echo "No file path specified."
-        return
-    end
-
-    if test ! -f $argv[1]
-        echo "File path does not exist."
-        return
-    end
-
-    set uri "http://bin.christitus.com/documents"
-    set response (curl -s -X POST -d (cat $argv[1]) $uri)
-
-    if test $status -eq 0
-        set hasteKey (echo $response | jq -r '.key')
-        echo "http://bin.christitus.com/$hasteKey"
+function tb --description 'Upload text, file, or piped input to termbin.com'
+    if test (count $argv) -gt 0
+        if test -f "$argv[1]"
+            # If the argument is an existing file
+            cat "$argv[1]" | nc termbin.com 9999
+        else
+            # If the argument is a string of text
+            echo "$argv[1]" | nc termbin.com 9999
+        end
     else
-        echo "Failed to upload the document."
+        # If no arguments provided, handle piped input (e.g. `cmd | tb`)
+        cat | nc termbin.com 9999
     end
 end
 
