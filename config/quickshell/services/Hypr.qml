@@ -15,16 +15,49 @@ Singleton {
     readonly property bool lua: Hyprland.usingLua
     property string layout: "dwindle"
     readonly property var layouts: ["dwindle", "master", "scrolling", "monocle"]
+    property bool overviewOpen: false
+
+    function toggleOverview() {
+        root.overviewOpen = !root.overviewOpen;
+    }
 
     // Lua string literal for any value (numbers stay numbers).
     function luaValue(v): string {
         return typeof v === "number" ? String(v) : JSON.stringify(String(v));
     }
 
+    function normalizeAddress(addr: string): string {
+        const s = String(addr ?? "");
+        return s.startsWith("0x") ? s : ("0x" + s);
+    }
+
     // Focus a workspace by selector: 3, "e+1", "m-1", "special:magic", ...
     function focusWorkspace(selector) {
         if (root.lua) Hyprland.dispatch("hl.dsp.focus({ workspace = " + luaValue(selector) + " })");
         else Hyprland.dispatch("workspace " + selector);
+    }
+
+    function focusWindow(addr: string) {
+        const w = "address:" + normalizeAddress(addr);
+        if (root.lua) Hyprland.dispatch("hl.dsp.focus({ window = " + luaValue(w) + " })");
+        else Hyprland.dispatch("focuswindow " + w);
+    }
+
+    function closeWindow(addr: string) {
+        const w = "address:" + normalizeAddress(addr);
+        if (root.lua) Hyprland.dispatch("hl.dsp.window.close({ window = " + luaValue(w) + " })");
+        else Hyprland.dispatch("closewindow " + w);
+    }
+
+    function moveWindowToWorkspace(addr: string, ws, follow: bool) {
+        const w = "address:" + normalizeAddress(addr);
+        if (root.lua) {
+            Hyprland.dispatch("hl.dsp.window.move({ window = " + luaValue(w)
+                + ", workspace = " + luaValue(ws)
+                + ", follow = " + (follow ? "true" : "false") + " })");
+        } else {
+            Hyprland.dispatch((follow ? "movetoworkspace " : "movetoworkspacesilent ") + ws + "," + w);
+        }
     }
 
     function toggleSpecial(name: string) {
@@ -83,5 +116,13 @@ Singleton {
     IpcHandler {
         target: "workspaces"
         function focus(selector: string): void { root.focusWorkspace(/^\d+$/.test(selector) ? Number(selector) : selector); }
+    }
+
+    // KDE Plasma-style Overview: qs ipc call overview toggle
+    IpcHandler {
+        target: "overview"
+        function toggle(): void { root.toggleOverview(); }
+        function open(): void { root.overviewOpen = true; }
+        function close(): void { root.overviewOpen = false; }
     }
 }

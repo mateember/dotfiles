@@ -17,6 +17,9 @@ end)
 
 -- Notification center
 hl.bind("SUPER + N", hl.dsp.exec_cmd(qs .. " ipc call notifications toggle"))
+-- KDE Plasma-style Overview (workspaces & live window previews)
+hl.bind("SUPER + Tab", hl.dsp.exec_cmd(qs .. " ipc call overview toggle"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd(qs .. " ipc call overview toggle"))
 -- Lock screen: goes through logind so hypridle's lock_cmd decides what locks (hyprlock for now).
 hl.bind("SUPER + CTRL + L", hl.dsp.exec_cmd("loginctl lock-session"))
 -- Quick settings panel
@@ -29,7 +32,7 @@ hl.bind("SUPER + SHIFT + P", hl.dsp.exec_cmd(qs .. " ipc call picker color"))
 -- Blur behind the shell's surfaces, like COSMIC's frosted panel.
 hl.layer_rule({
     name = "hcs-blur",
-    match = { namespace = "^(hcs-(bar|popup|launcher|osd|toast|notifications|quicksettings|power))$" },
+    match = { namespace = "^(hcs-(bar|popup|launcher|overview|osd|toast|notifications|quicksettings|power))$" },
     blur = true,
     blur_popups = true,
     ignore_alpha = 0.3,

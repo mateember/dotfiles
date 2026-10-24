@@ -80,8 +80,12 @@ Row {
                 id: mouse
                 anchors.fill: parent
                 hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Hypr.focusWorkspace(ws.modelData)
+                onClicked: m => {
+                    if (m.button === Qt.LeftButton) Hypr.focusWorkspace(ws.modelData);
+                    else Hypr.toggleOverview();
+                }
             }
         }
     }

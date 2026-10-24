@@ -54,6 +54,7 @@ Scope {
             const scr = root.pendingScreen;
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
+            else if (id === "qs:overview") Hypr.overviewOpen = true;
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
@@ -109,6 +110,7 @@ Scope {
             property string calcResult: ""
 
             readonly property var shellApps: [
+                { id: "qs:overview",            name: "Overview",              comment: "KDE Plasma-style workspaces & live window previews (SUPER+Tab)", icon: "grid_view",        keywords: ["workspaces", "desktops", "expose", "windows", "plasma"] },
                 { id: "qs:bar-settings",        name: "Bar Settings",          comment: "Toggle bar items on/off, reorder and move between sections", icon: "view_agenda",         keywords: ["bar", "panel", "customize", "modules", "order", "toggle"] },
                 { id: "qs:quicksettings",       name: "Quick Settings",        comment: "Toggles, volume/brightness sliders, media and power mode",   icon: "tune",                keywords: ["control", "toggles", "sliders", "tlp"] },
                 { id: "qs:popup:calendar",      name: "Calendar & Events",     comment: "Month calendar, agenda and Nextcloud / Google / Neptun",     icon: "calendar_month",      keywords: ["date", "time", "clock", "agenda", "nextcloud", "events"] },
