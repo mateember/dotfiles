@@ -32,7 +32,8 @@ local filemanager = "thunar"
 
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(term))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + M", hl.dsp.exit())
+-- Exit: under UWSM (the NixOS session) stop it cleanly, otherwise exit Hyprland directly.
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("uwsm check is-active && uwsm stop || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(filemanager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 -- HCS (user request): SUPER F toggles maximize (keeps bar and gaps). Was `fullscreen, 0`;

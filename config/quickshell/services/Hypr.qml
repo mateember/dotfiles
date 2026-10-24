@@ -38,8 +38,10 @@ Singleton {
         else Hyprland.dispatch("layoutmsg " + msg);
     }
 
+    // Under UWSM (the NixOS "Hyprland (uwsm-managed)" session) stop it cleanly; otherwise exit directly.
     function exit() {
-        Hyprland.dispatch(root.lua ? "hl.dsp.exit()" : "exit");
+        const direct = root.lua ? "hyprctl dispatch 'hl.dsp.exit()'" : "hyprctl dispatch exit";
+        Quickshell.execDetached(["sh", "-c", "uwsm check is-active && uwsm stop || " + direct]);
     }
 
     // general.layout is global. Changing it at runtime lasts until the config is reloaded.
