@@ -26,7 +26,7 @@ Scope {
 
             WlrLayershell.namespace: "hcs-launcher"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
             property string filterSection: "all"   // "all" | "left" | "center" | "right"
 
@@ -52,12 +52,6 @@ Scope {
                 return idx >= 0 && idx < ids.length - 1;
             }
 
-            HyprlandFocusGrab {
-                active: true
-                windows: [win]
-                onCleared: BarConfig.settingsOpen = false
-            }
-
             MouseArea {
                 anchors.fill: parent
                 onClicked: BarConfig.settingsOpen = false
@@ -73,6 +67,7 @@ Scope {
                 border.color: Theme.popupBorder
                 border.width: 1
                 focus: true
+                Component.onCompleted: card.forceActiveFocus()
                 Keys.onEscapePressed: BarConfig.settingsOpen = false
 
                 // Swallow clicks inside the card.
