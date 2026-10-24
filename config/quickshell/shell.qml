@@ -11,6 +11,7 @@ import qs.wallpaper
 import qs.notifications
 import qs.osd
 import qs.polkit
+import qs.quicksettings
 import qs.services
 
 ShellRoot {
@@ -37,6 +38,7 @@ ShellRoot {
     OsdWindow {}
     OsdTriggers {}
     PolkitPrompt {}
+    QuickSettings {}
 
     // Open bar popups from keybinds/scripts, on the focused monitor:
     //   qs -p <root>/shell ipc call bar toggle volume

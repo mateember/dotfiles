@@ -53,6 +53,8 @@ BarButton {
             text: "The notification server is off (started with --no-notify)."
         }
 
+        MediaCard {}
+
         Separator {}
 
         StyledText {
