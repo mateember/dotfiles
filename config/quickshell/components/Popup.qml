@@ -30,20 +30,21 @@ PanelWindow {
     function close() { if (root.open) Popups.close(); }
 
     // Horizontal position: centered under the button (or screen-centered if hidden), kept on screen.
-    property real anchorCenter: 0
-    function reposition() {
-        if (!barWindow) return;
-        if (!anchorItem.visible) {
-            anchorCenter = (screen?.width ?? 1000) / 2;
-            return;
-        }
-        const r = barWindow.itemRect(anchorItem);
-        anchorCenter = Theme.panelMargin + r.x + r.width / 2;
+    // Computed reactively from the RowLayout + Loader + BarButton x/width in Bar.qml so it is
+    // always up-to-date before the popup maps on Wayland.
+    readonly property int popupWidth: contentWidth + 2 * padding
+    readonly property real anchorCenter: {
+        const loader = anchorItem?.parent;
+        const row = loader?.parent;
+        if (!anchorItem || !loader || !loader.visible)
+            return (screen?.width ?? 1000) / 2;
+        return Theme.panelMargin
+             + (row?.x ?? 0)
+             + loader.x
+             + anchorItem.x
+             + anchorItem.width / 2;
     }
-    onOpenChanged: {
-        if (openDropdown) reposition();
-        if (open) bg.forceActiveFocus();
-    }
+    onOpenChanged: if (open) bg.forceActiveFocus()
 
     screen: barWindow?.screen ?? null
     visible: openDropdown
@@ -52,11 +53,11 @@ PanelWindow {
     anchors.top: true
     anchors.left: true
     margins.top: Theme.panelMargin + Theme.barHeight + Theme.popupGap
-    margins.left: Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - width - Theme.panelMargin, anchorCenter - width / 2))
+    margins.left: Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - popupWidth - Theme.panelMargin, anchorCenter - popupWidth / 2))
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
-    implicitWidth: contentWidth + 2 * padding
+    implicitWidth: popupWidth
     // Never taller than the screen below the bar.
     implicitHeight: Math.min(body.implicitHeight + 2 * padding,
                              (screen?.height ?? 1000) - margins.top - Theme.spaceL)

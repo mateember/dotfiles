@@ -70,7 +70,7 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 const get = k => (text.match(new RegExp("^" + k + ":\\s*(.+)$", "m")) || [])[1]?.trim();
-                if (!get("Time")) { root.available = false; return; }
+                if (!get("Time")) { root.available = false; retryTimer.restart(); return; }
                 root.available = true;
                 const time = get("Time");
                 const warm = get("Identity") !== "true" && Number(get("Temperature")) < 6000;
@@ -103,6 +103,11 @@ Singleton {
     Timer {
         id: refreshTimer
         interval: 400
+        onTriggered: poll.running = true
+    }
+    Timer {
+        id: retryTimer
+        interval: 1500
         onTriggered: poll.running = true
     }
     Timer {
