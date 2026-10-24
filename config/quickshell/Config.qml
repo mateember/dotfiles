@@ -17,6 +17,13 @@ Singleton {
     readonly property string locale: "en_US"
     readonly property int firstDayOfWeek: Qt.Sunday
 
+    // ---- calendar events in the clock popup (services/CalendarEvents.qml) ----
+    // Accounts come from GNOME Calendar / Online Accounts (Evolution Data Server). Calendars
+    // unchecked in GNOME Calendar are skipped; hide more here by name, e.g. ["Contact birthdays"].
+    readonly property var calendarHidden: []
+    readonly property bool calendarShowTasks: true     // tasks with a due date
+    readonly property int calendarRefreshMinutes: 15
+
     // ---- weather (from com.vintagetechie.CosmicExtAppletTempest) ----
     readonly property real weatherLat: 47.42733
     readonly property real weatherLon: 19.40133
