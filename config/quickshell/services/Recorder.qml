@@ -57,7 +57,7 @@ Singleton {
     }
 
     function startRecording(mode: string, audio: string) {
-        if (root.recording || root.starting) return;
+        if (root.recording) return;
         const m = mode || root.recordMode || "screen";
         const a = audio || root.recordAudio || "none";
         root.recordMode = m;
@@ -65,7 +65,7 @@ Singleton {
         root.overlayOpen = false;
         root.starting = true;
         root.elapsedSeconds = 0;
-        recProc.running = false;
+        if (recProc.running) recProc.running = false;
         recProc.command = ["bash", root.scriptPath, "record", m, a];
         recProc.running = true;
     }

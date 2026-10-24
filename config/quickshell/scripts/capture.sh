@@ -30,13 +30,14 @@ get_window_geometry() {
         "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"
     ')
     if [ -n "$boxes" ]; then
-        echo "$boxes" | slurp -r
+        printf "%s\n" "$boxes" | slurp -r 2>/dev/null
     else
-        slurp
+        slurp < /dev/null 2>/dev/null
     fi
 }
 
 stop_active_recorder() {
+    pkill -x slurp 2>/dev/null || true
     if [ -f "$PIDFILE" ]; then
         local pid
         pid=$(cat "$PIDFILE" 2>/dev/null || true)
@@ -61,15 +62,16 @@ case "$cmd" in
         mode="${1:-region}"       # region | window | output
         action="${2:-copy}"       # copy | save | annotate
         delay="${3:-0}"           # seconds
+        pkill -x slurp 2>/dev/null || true
         sleep 0.25                # let overlay close
 
         geom=""
         mon=""
         if [ "$mode" = "region" ]; then
-            geom=$(slurp 2>/dev/null) || exit 0
+            geom=$(slurp < /dev/null 2>/dev/null) || exit 0
             [ -z "$geom" ] && exit 0
         elif [ "$mode" = "window" ]; then
-            geom=$(get_window_geometry 2>/dev/null) || exit 0
+            geom=$(get_window_geometry) || exit 0
             [ -z "$geom" ] && exit 0
         else
             mon=$(get_focused_monitor)
@@ -102,7 +104,7 @@ case "$cmd" in
         elif [ "$action" = "annotate" ]; then
             swappy_bin=$(find_bin swappy || true)
             if [ -n "$swappy_bin" ]; then
-                "$swappy_bin" -f "$tmp_file" -o "$shot_dir/Screenshot_${ts}.png"
+                "$swappy_bin" -f "$tmp_file" -o "$shot_dir/Screenshot_${ts}.png" < /dev/null
                 rm -f "$tmp_file"
             else
                 dest="$shot_dir/Screenshot_${ts}.png"
@@ -126,10 +128,10 @@ case "$cmd" in
         geom=""
         mon=""
         if [ "$mode" = "region" ]; then
-            geom=$(slurp 2>/dev/null) || exit 0
+            geom=$(slurp < /dev/null 2>/dev/null) || exit 0
             [ -z "$geom" ] && exit 0
         elif [ "$mode" = "window" ]; then
-            geom=$(get_window_geometry 2>/dev/null) || exit 0
+            geom=$(get_window_geometry) || exit 0
             [ -z "$geom" ] && exit 0
         else
             mon=$(get_focused_monitor)
@@ -162,7 +164,7 @@ case "$cmd" in
                     args+=(--audio)
                 fi
             fi
-            "$wf_bin" "${args[@]}" >/dev/null 2>&1 &
+            "$wf_bin" "${args[@]}" < /dev/null >/dev/null 2>&1 &
             rec_pid=$!
         elif [ -n "$wl_bin" ]; then
             args=(-f "$out_file")
@@ -172,7 +174,7 @@ case "$cmd" in
                 args+=(--audio)
                 [ -n "$audio_dev" ] && args+=(--audio-device "$audio_dev")
             fi
-            "$wl_bin" "${args[@]}" >/dev/null 2>&1 &
+            "$wl_bin" "${args[@]}" < /dev/null >/dev/null 2>&1 &
             rec_pid=$!
         else
             notify-send -a "Screen Recorder" -u critical "Screen recorder missing" "Install wf-recorder or wl-screenrec"
