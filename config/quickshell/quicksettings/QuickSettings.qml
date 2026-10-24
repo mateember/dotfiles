@@ -13,26 +13,28 @@ import qs.services
 Scope {
     id: root
 
-    property bool open: false
-    function toggle() { root.open = !root.open; }
+    // Open state is shared with the bar button (services/QuickSettingsState.qml).
+    readonly property bool open: QuickSettingsState.open
+    function setOpen(v: bool) { QuickSettingsState.open = v; }
+    function toggle() { QuickSettingsState.toggle(); }
 
     // Close the panel and open a bar popup (e.g. "network") on the same monitor.
     function openPopup(name: string, screenName: string) {
-        root.open = false;
+        root.setOpen(false);
         Popups.open(name + "@" + screenName);
     }
 
     IpcHandler {
         target: "quicksettings"
         function toggle(): void { root.toggle(); }
-        function open(): void { root.open = true; }
-        function close(): void { root.open = false; }
+        function open(): void { root.setOpen(true); }
+        function close(): void { root.setOpen(false); }
     }
 
     // A bar popup opening closes the panel (only one dropdown at a time).
     Connections {
         target: Popups
-        function onCurrentChanged() { if (Popups.current !== "") root.open = false; }
+        function onCurrentChanged() { if (Popups.current !== "") root.setOpen(false); }
     }
 
     LazyLoader {
@@ -61,7 +63,7 @@ Scope {
             HyprlandFocusGrab {
                 active: true
                 windows: [win]
-                onCleared: root.open = false
+                onCleared: root.setOpen(false)
             }
 
             Rectangle {
@@ -74,7 +76,7 @@ Scope {
                 border.width: 1
                 clip: true
                 focus: true
-                Keys.onEscapePressed: root.open = false
+                Keys.onEscapePressed: root.setOpen(false)
 
                 ColumnLayout {
                     id: col
@@ -258,17 +260,17 @@ Scope {
                         IconButton {
                             icon: "screenshot_region"
                             onClicked: {
-                                root.open = false;
+                                root.setOpen(false);
                                 Quickshell.execDetached(["sh", "-c", "sleep 0.4; hyprshot -m region --clipboard-only"]);
                             }
                         }
                         IconButton {
                             icon: "settings"
-                            onClicked: { root.open = false; Quickshell.execDetached(["cosmic-settings"]); }
+                            onClicked: { root.setOpen(false); Quickshell.execDetached(["cosmic-settings"]); }
                         }
                         IconButton {
                             icon: "lock"
-                            onClicked: { root.open = false; Quickshell.execDetached(["loginctl", "lock-session"]); }
+                            onClicked: { root.setOpen(false); Quickshell.execDetached(["loginctl", "lock-session"]); }
                         }
                         IconButton {
                             icon: "power_settings_new"

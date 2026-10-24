@@ -8,7 +8,13 @@ Text {
 
     property string icon: ""
     property bool filled: false
-    property real size: Theme.iconSize
+    // Inside the bar (an ancestor sets `barIcons: true`) icons use Theme.barIconSize.
+    // Popups are separate windows, so their icons keep Theme.iconSize.
+    property real size: {
+        for (let p = root.parent; p; p = p.parent)
+            if (p.barIcons === true) return Theme.barIconSize;
+        return Theme.iconSize;
+    }
 
     text: icon
     color: Theme.text

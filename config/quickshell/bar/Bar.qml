@@ -46,6 +46,7 @@ PanelWindow {
     // ---- left ----
     RowLayout {
         id: left
+        readonly property bool barIcons: true   // icons inside use Theme.barIconSize
         anchors {
             left: parent.left
             leftMargin: Theme.barPadding
@@ -63,6 +64,7 @@ PanelWindow {
     // ---- center ----
     RowLayout {
         id: center
+        readonly property bool barIcons: true   // icons inside use Theme.barIconSize
         anchors.centerIn: parent
         spacing: Theme.spaceXxxs
 
@@ -73,6 +75,7 @@ PanelWindow {
     // ---- right ----
     RowLayout {
         id: right
+        readonly property bool barIcons: true   // icons inside use Theme.barIconSize
         anchors {
             right: parent.right
             rightMargin: Theme.barPadding
@@ -89,6 +92,7 @@ PanelWindow {
         NetworkModule {}
         BatteryModule {}
         NotificationsButton {}
+        QuickSettingsButton {}
         PowerButton {}
     }
 }

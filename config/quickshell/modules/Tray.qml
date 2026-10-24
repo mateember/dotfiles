@@ -32,7 +32,7 @@ Row {
             onScrolled: delta => modelData.scroll(delta, false)
 
             IconImage {
-                implicitSize: Theme.iconSize
+                implicitSize: Theme.barIconSize
                 source: btn.modelData.icon
                 asynchronous: true
             }

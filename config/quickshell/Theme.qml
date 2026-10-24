@@ -115,6 +115,7 @@ Singleton {
     readonly property int barFontSize: 16
     readonly property int fontSizeTitle: 20
     readonly property int iconSize: 18
+    readonly property int barIconSize: 19   // icons in the bar itself (popups keep iconSize)
 
     // ---- motion ----
     readonly property int animFast: 120
