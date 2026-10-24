@@ -142,8 +142,7 @@ Rectangle {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                parent.modelData.invoke();
-                                Notifs.dismiss(root.notification);
+                                Notifs.invokeAction(root.notification, parent.modelData);
                             }
                         }
                     }

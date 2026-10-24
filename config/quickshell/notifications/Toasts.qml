@@ -9,7 +9,7 @@ import qs.components
 import qs.services
 
 // Notification pop-ups, top right under the bar on the focused monitor.
-// Each toast hides after its timeout (paused while hovered); critical ones stay until closed.
+// Each toast lingers for ~4.5 seconds (paused while hovered) and smoothly fades out.
 PanelWindow {
     id: root
 
@@ -44,10 +44,51 @@ PanelWindow {
                 toast: true
                 Layout.fillWidth: true
 
+                property bool fadingOut: false
+
+                // Smooth fade-in on arrival
+                opacity: 0
+                Component.onCompleted: fadeInAnim.start()
+
+                NumberAnimation {
+                    id: fadeInAnim
+                    target: card
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+
+                // If hovered while fading out, cancel fade-out and restore full opacity
+                onHoveredChanged: {
+                    if (card.hovered && card.fadingOut) {
+                        fadeOutAnim.stop();
+                        card.fadingOut = false;
+                        card.opacity = 1;
+                    }
+                }
+
                 Timer {
                     interval: Notifs.timeoutFor(card.notification) * 1000
-                    running: interval > 0 && !card.hovered
-                    onTriggered: Notifs.toastTimedOut(card.notification)
+                    running: interval > 0 && !card.hovered && !card.fadingOut
+                    onTriggered: {
+                        card.fadingOut = true;
+                        fadeOutAnim.start();
+                    }
+                }
+
+                NumberAnimation {
+                    id: fadeOutAnim
+                    target: card
+                    property: "opacity"
+                    to: 0
+                    duration: 360
+                    easing.type: Easing.InCubic
+                    onFinished: {
+                        if (card.fadingOut)
+                            Notifs.toastTimedOut(card.notification);
+                    }
                 }
             }
         }

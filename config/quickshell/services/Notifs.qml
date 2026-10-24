@@ -36,17 +36,113 @@ Singleton {
         for (const n of root.history) n.dismiss();
         root.toasts = [];
     }
-    // Clicking a notification runs its default action (if any) and dismisses it.
+
+    // Focus matching Hyprland window (or open referenced file path) when a notification is clicked.
+    function focusAppOrPath(n) {
+        const entry = (n.desktopEntry || "").trim();
+        const appName = (n.appName || "").trim();
+        const icon = (n.appIcon || "").trim();
+        const body = (n.body || "").trim();
+        const summary = (n.summary || "").trim();
+
+        Quickshell.execDetached([
+            "python3", "-c",
+            `
+import json, os, re, subprocess, sys
+entry, app_name, icon, summary, body = sys.argv[1:6]
+
+# 1. Try to find and focus a matching Hyprland window
+try:
+    out = subprocess.check_output(["hyprctl", "clients", "-j"], text=True, timeout=2)
+    clients = json.loads(out)
+except Exception:
+    clients = []
+
+candidates = []
+for s in (entry, app_name, icon):
+    s_clean = s.lower().strip()
+    if s_clean:
+        candidates.append(s_clean)
+        # Also last segment of reverse-DNS desktop entry (e.g. org.gnome.Calendar -> calendar)
+        if "." in s_clean:
+            candidates.append(s_clean.split(".")[-1])
+
+aliases = {
+    "brave": ["brave-browser", "brave"],
+    "discord": ["discord", "vesktop", "webcord"],
+    "telegram": ["org.telegram.desktop", "telegramdesktop"],
+    "spotify": ["spotify"],
+    "files": ["org.gnome.nautilus", "nautilus", "thunar"],
+    "calendar": ["org.gnome.calendar"],
+}
+for c in list(candidates):
+    for k, vals in aliases.items():
+        if k in c:
+            candidates.extend(vals)
+
+best_addr = None
+for cl in clients:
+    if not cl.get("mapped") or cl.get("hidden"):
+        continue
+    w_class = (cl.get("class") or "").lower()
+    w_init = (cl.get("initialClass") or "").lower()
+    w_title = (cl.get("title") or "").lower()
+    for cand in candidates:
+        if not cand or cand in ("notify-send", "notification", "quickshell"):
+            continue
+        if cand == w_class or cand == w_init or cand in w_class or (w_class and w_class in cand):
+            best_addr = cl.get("address")
+            break
+    if best_addr:
+        break
+
+if best_addr:
+    subprocess.run(["hyprctl", "dispatch", f'hl.dsp.focus({{ window = "address:{best_addr}" }})'], timeout=2)
+    sys.exit(0)
+
+# 2. If notification body/summary has an existing local path (e.g. Screenshot / Recording / USB), open it
+for text in (body, summary):
+    m = re.search(r"(/home/[^\\s()\"'<>]+|/run/media/[^\\s()\"'<>]+)", text)
+    if m:
+        p = m.group(1)
+        if os.path.exists(p):
+            subprocess.Popen(["xdg-open", p])
+            sys.exit(0)
+`,
+            entry, appName, icon, summary, body
+        ]);
+    }
+
+    // Clicking a notification runs its default action (if any), focuses the source app/window,
+    // closes the notification center popup if open, and dismisses the notification.
     function activate(n) {
-        const def = n.actions.find(a => a.identifier === "default");
+        if (!n) return;
+        Popups.close();
+        const def = n.actions.find(a => a.identifier === "default")
+                 || (n.actions.length === 1 ? n.actions[0] : null);
         if (def) def.invoke();
+        focusAppOrPath(n);
         dismiss(n);
     }
 
-    // Seconds the toast stays up. Critical stays until closed (0).
+    // Invoke a specific action button on a notification and focus its app window.
+    function invokeAction(n, action) {
+        if (!n || !action) return;
+        Popups.close();
+        action.invoke();
+        focusAppOrPath(n);
+        dismiss(n);
+    }
+
+    // Seconds the toast stays up before fading out (4.5s default; 10s for critical).
     function timeoutFor(n): real {
-        if (n.urgency === NotificationUrgency.Critical) return 0;
-        return n.expireTimeout > 0 ? n.expireTimeout : 6;
+        if (!n) return 4.5;
+        if (n.urgency === NotificationUrgency.Critical) return 10;
+        let t = n.expireTimeout;
+        if (t <= 0) return 4.5;
+        // FreeDesktop expire_timeout is sometimes passed in milliseconds (e.g. 5000)
+        if (t > 100) t = t / 1000.0;
+        return Math.max(3.0, Math.min(t, 6.0));
     }
 
     function timeText(n): string {

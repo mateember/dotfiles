@@ -230,7 +230,7 @@ Escape or a click outside closes it.
 
 | Feature | Details | Replaces |
 |---|---|---|
-| Notifications | pop-ups top right, history in the bell menu, do-not-disturb (critical still shown), action buttons, hover pauses the timer | dunst (was never installed) |
+| Notifications | pop-ups top right (linger ~4.5 s then smoothly fade away; hover pauses), history in the bell menu, do-not-disturb (critical still shown), action buttons; **clicking a toast or notification in the menu invokes the app's target action and focuses its window/workspace** (or opens saved files) | dunst (was never installed) |
 | On-screen indicators | bottom center: volume, mute, microphone mute, output device change, brightness, keyboard backlight, caffeine, do-not-disturb, Wi-Fi, Bluetooth, layout, charger plugged/unplugged | none |
 | Low battery | notification below 20 % (normal) and below 10 % (critical, sticky even in DND) | none |
 | Password prompts (polkit) | COSMIC-styled dialog for pkexec, mounting, system settings | polkit-gnome (stopped for this session when the shell starts) |

@@ -733,6 +733,13 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
 - **Bluetooth Battery Levels** (`services/Bt.qml`, `modules/BluetoothModule.qml`, `quicksettings/QuickSettings.qml`):
   - Combines `BluetoothDevice.battery` with `upower -d` fallback (`bt-battery`); displays battery percentage + icon on connected device rows in the Bluetooth popup, on the bar button, and in the Quick Settings Bluetooth tile subtitle.
 
+### 2026-10-25 00:36–00:39 – Notification toast fade-out & click-to-focus app activation
+- Updated `config/quickshell/services/Notifs.qml`, `config/quickshell/notifications/Toasts.qml`, `config/quickshell/components/NotificationCard.qml`, and `config/hypr/conf/looks.lua`:
+  - Normalized toast duration in `Notifs.timeoutFor(n)` to **4.5 s** by default (converting millisecond `expireTimeout` values > 100 and clamping to 3–6 s, 10 s for critical) so toasts never get stuck on screen when apps pass millisecond timeouts.
+  - Added smooth `180 ms` fade-in and `360 ms` fade-out animations in `Toasts.qml` (canceling fade-out if hovered).
+  - Enabled `misc.focus_on_activate = true` in `config/hypr/conf/looks.lua` so XDG activation requests from apps (Discord, Brave, Telegram, Slack, etc.) when clicking a notification immediately focus the window and switch to its workspace.
+  - Enhanced `Notifs.activate(n)` and `Notifs.invokeAction(n, action)` (used by both toasts and the Notification Center) to close the Notification Center popup, invoke the notification's `default` D-Bus action (so the app navigates to the exact chat/tab/item), focus the matching Hyprland window by `desktopEntry` / `appName` / `appIcon` if not already activated, or open any local file path referenced in the notification via `xdg-open`.
+
 ---
 
 ## Decisions (defaults, user may override)
