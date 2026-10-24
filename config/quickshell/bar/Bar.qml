@@ -55,6 +55,7 @@ PanelWindow {
 
         Workspaces { screen: root.screen }
         ClipboardModule {}
+        NightLightModule {}
         Caffeine {}
         Stats {}
     }
