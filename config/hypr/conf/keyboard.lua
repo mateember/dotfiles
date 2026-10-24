@@ -28,7 +28,7 @@ hl.config({
 local mainMod = "SUPER"
 local browser = "brave-origin" -- HCS: was "brave", which isn't installed
 local term = "kitty"
-local filemanager = "thunar"
+local filemanager = "nautilus"
 
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(term))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
