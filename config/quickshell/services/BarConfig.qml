@@ -26,6 +26,9 @@ Singleton {
         { id: "weather",       name: "Weather",              subtitle: "Current conditions and 5-day forecast",    icon: "partly_cloudy_day",   section: "center", enabled: true },
         { id: "clock",         name: "Clock & Calendar",     subtitle: "Date, time and calendar events",           icon: "calendar_month",      section: "center", enabled: true },
         // Right
+        { id: "recorder",      name: "Screen Recorder",      subtitle: "Active recording timer & stop pill",       icon: "videocam",            section: "right",  enabled: true },
+        { id: "privacy",       name: "Privacy Indicator",    subtitle: "Active mic, camera & screen share alert",  icon: "shield",              section: "right",  enabled: true },
+        { id: "storage",       name: "Removable Drives",     subtitle: "USB / SD automounter and safe eject",      icon: "usb",                 section: "right",  enabled: true },
         { id: "tray",          name: "System Tray",          subtitle: "Background app tray icons",                icon: "dock_to_bottom",      section: "right",  enabled: true },
         { id: "display",       name: "Display & Brightness", subtitle: "Brightness, keyboard light, screenshots",  icon: "desktop_windows",     section: "right",  enabled: true },
         { id: "layout",        name: "Tiling Layout",        subtitle: "Scrolling / dwindle layout switch",        icon: "view_column",         section: "right",  enabled: true },
@@ -132,7 +135,13 @@ Singleton {
                     }));
                 }
                 for (const d of root.defaultItems) {
-                    if (!seen[d.id]) merged.push(Object.assign({}, d));
+                    if (!seen[d.id]) {
+                        const trayIdx = merged.findIndex(m => m.id === "tray");
+                        if (d.section === "right" && trayIdx >= 0)
+                            merged.splice(trayIdx, 0, Object.assign({}, d));
+                        else
+                            merged.push(Object.assign({}, d));
+                    }
                 }
                 root.items = merged;
             } catch (e) {}

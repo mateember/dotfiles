@@ -26,4 +26,8 @@ Singleton {
         root.asWindow = true;
         root.open = true;
     }
+
+    function close() {
+        root.open = false;
+    }
 }

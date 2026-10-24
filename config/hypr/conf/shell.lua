@@ -28,6 +28,8 @@ hl.bind("SUPER + comma", hl.dsp.exec_cmd(qs .. " ipc call quicksettings toggle")
 hl.bind("SUPER + period", hl.dsp.exec_cmd(qs .. " ipc call launcher emoji"))
 -- Color picker: click a pixel, #RRGGBB is copied
 hl.bind("SUPER + SHIFT + P", hl.dsp.exec_cmd(qs .. " ipc call picker color"))
+-- Interactive Screenshot & Screen Recorder overlay
+hl.bind("SUPER + PRINT", hl.dsp.exec_cmd(qs .. " ipc call capture toggle"))
 
 -- Blur behind the shell's surfaces, like COSMIC's frosted panel.
 hl.layer_rule({

@@ -122,7 +122,7 @@ Scope {
                             icon: Bt.icon
                             title: "Bluetooth"
                             subtitle: !Bt.enabled ? "Off"
-                                    : Bt.connected.length === 1 ? Bt.connected[0].name
+                                    : Bt.connected.length === 1 ? (Bt.connected[0].name + (Bt.primaryBattery >= 0 ? ` · ${Bt.primaryBattery}%` : ""))
                                     : Bt.connected.length > 1 ? Bt.connected.length + " devices"
                                     : "On"
                             checked: Bt.enabled
@@ -157,8 +157,9 @@ Scope {
                             title: "Caffeine"
                             subtitle: Idle.caffeine ? Idle.statusText : "Off"
                             checked: Idle.caffeine
+                            detail: true
                             onClicked: Idle.toggle()
-                            onMore: { QuickSettingsState.close(); Popups.open("caffeine@" + (win.screen?.name ?? "")); }
+                            onDetailClicked: root.openPopup("caffeine", win.screenName)
                         }
                         QuickTile {
                             icon: "keyboard"
@@ -245,10 +246,69 @@ Scope {
                         }
                     }
 
+                    // ---- removable drives (when plugged in) ----
+                    Rectangle {
+                        visible: Storage.count > 0
+                        Layout.fillWidth: true
+                        implicitHeight: qsDrivesCol.implicitHeight + 2 * Theme.spaceXs
+                        radius: Theme.radiusM
+                        color: Theme.component
+
+                        ColumnLayout {
+                            id: qsDrivesCol
+                            anchors.fill: parent
+                            anchors.margins: Theme.spaceXs
+                            spacing: 4
+
+                            Repeater {
+                                model: Storage.drives
+                                delegate: RowLayout {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    spacing: Theme.spaceXs
+
+                                    Icon {
+                                        icon: modelData.tran === "mmc" ? "sd_card" : "usb"
+                                        color: modelData.mounted ? Theme.accent : Theme.textDim
+                                    }
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: modelData.label
+                                            font.weight: Font.DemiBold
+                                            elide: Text.ElideRight
+                                        }
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: modelData.size + (modelData.mounted ? " · Mounted" : " · Unmounted")
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            color: Theme.textDim
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                    IconButton {
+                                        visible: modelData.mounted
+                                        icon: "folder_open"
+                                        onClicked: {
+                                            root.setOpen(false);
+                                            Storage.openInFiles(modelData.mountpoint);
+                                        }
+                                    }
+                                    IconButton {
+                                        icon: "eject"
+                                        onClicked: Storage.eject(modelData.path, modelData.diskPath)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // ---- media ----
                     MediaCard {}
 
-                    // ---- footer: battery, screenshot, settings, lock, power ----
+                    // ---- footer: battery, capture, record, settings, lock, power ----
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.topMargin: Theme.spaceXxxs
@@ -271,10 +331,18 @@ Scope {
                         Item { visible: !Battery.available; Layout.fillWidth: true }
 
                         IconButton {
-                            icon: "screenshot_region"
+                            icon: "photo_camera"
                             onClicked: {
                                 root.setOpen(false);
-                                Quickshell.execDetached(["sh", "-c", "sleep 0.4; hyprshot -m region --clipboard-only"]);
+                                Recorder.openOverlay("shot");
+                            }
+                        }
+                        IconButton {
+                            icon: Recorder.recording ? "stop_circle" : "videocam"
+                            onClicked: {
+                                root.setOpen(false);
+                                if (Recorder.recording) Recorder.stopRecording();
+                                else Recorder.openOverlay("record");
                             }
                         }
                         IconButton {

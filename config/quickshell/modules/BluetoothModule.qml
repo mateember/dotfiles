@@ -5,7 +5,7 @@ import qs
 import qs.components
 import qs.services
 
-// Bluetooth: on/off and device list. Scans for new devices while the popup is open.
+// Bluetooth: on/off, device list, and connected device battery levels.
 BarButton {
     id: root
 
@@ -14,6 +14,13 @@ BarButton {
     onClicked: button => button === Qt.MiddleButton ? Bt.toggle() : pop.toggle()
 
     Icon { icon: Bt.icon; color: Bt.connected.length > 0 ? Theme.accent : Theme.text }
+
+    StyledText {
+        visible: Bt.enabled && Bt.primaryBattery >= 0
+        text: Bt.primaryBattery + "%"
+        font.pixelSize: Theme.fontSizeSmall
+        font.features: { "tnum": 1 }
+    }
 
     Popup {
         id: pop
@@ -48,7 +55,9 @@ BarButton {
             // Unnamed devices advertise their MAC as the name; hide those unless already paired.
             model: Bt.enabled ? Bt.devices.filter(d => d.paired || d.connected || !/^([0-9A-F]{2}[:-]){5}[0-9A-F]{2}$/i.test(d.name)) : []
             delegate: ListItem {
+                id: devRow
                 required property BluetoothDevice modelData
+                readonly property int batPct: Bt.deviceBattery(modelData)
                 width: ListView.view.width
                 icon: Bt.deviceIcon(modelData)
                 text: modelData.name
@@ -56,9 +65,25 @@ BarButton {
                 subtext: modelData.state === BluetoothDeviceState.Connecting ? "Connecting…"
                        : modelData.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…"
                        : modelData.pairing ? "Pairing…"
-                       : modelData.connected ? ("Connected" + (modelData.batteryAvailable ? ` · ${Math.round(modelData.battery * 100)}%` : ""))
+                       : modelData.connected ? ("Connected" + (batPct >= 0 ? ` · ${batPct}%` : ""))
                        : modelData.paired ? "Paired" : "Click to pair"
                 onClicked: Bt.activate(modelData)
+
+                RowLayout {
+                    visible: devRow.batPct >= 0
+                    spacing: 2
+                    Icon {
+                        icon: Bt.batteryIcon(devRow.batPct)
+                        size: 16
+                        color: devRow.batPct <= 20 ? Theme.danger : Theme.textDim
+                    }
+                    StyledText {
+                        text: devRow.batPct + "%"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: devRow.batPct <= 20 ? Theme.danger : Theme.textDim
+                        font.features: { "tnum": 1 }
+                    }
+                }
             }
         }
 

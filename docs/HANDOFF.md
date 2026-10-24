@@ -43,6 +43,7 @@ The user is low on tokens: keep replies short, ask only what blocks you.
   - **Pop icon theme unification, horizontal workspaces + 4-finger horizontal workspace swipe, and KDE Plasma-style Overview** (`9bae90f`, `7ccb9c9`): `bar/Overview.qml` (`SUPER+Tab` / `SUPER+W`, `Escape` closes, 4-finger vertical swipe up/down follows fingers 1:1 via `hl.dsp.event("hcs_overview:...")` on `socket2`).
   - **COSMIC Minimon-style modular system monitor** (`938601a`, `bbf0aa6`): `services/SystemStats.qml` + `modules/Stats.qml` (CPU, Temp, Memory, Network, Disk, GPU sparklines/rings/labels/icons + multi-page dropdown).
   - **Caffeine right-click interval dropdown & left-click toggle** (`e123361`): `services/Idle.qml` + `modules/Caffeine.qml` (left click toggles on indefinitely or turns off if active; right click opens `Indefinitely` / `15m` / `30m` / `1h` / `2h` / `4h` dropdown with countdown).
+  - **Capture & Screen Recording Studio + Hardware/Privacy Peripherals**: `services/Recorder.qml`, `bar/CaptureOverlay.qml` (`SUPER+Print`), `modules/RecorderIndicator.qml`, `services/Privacy.qml`, `modules/PrivacyIndicator.qml`, `services/Storage.qml`, `modules/StorageModule.qml`, and Bluetooth battery levels in `services/Bt.qml` + `modules/BluetoothModule.qml`.
 - `TZDIR=/etc/zoneinfo` is set in `config/hypr/conf/environment.lua` (NixOS' Hyprland capability wrapper makes glibc
   drop it; GNOME Calendar crashed with `tz != NULL`).
 - nm-applet hidden via `~/.config/autostart/nm-applet.desktop` (`Hidden=true`). polkit-gnome likewise (Home Manager).

@@ -714,9 +714,24 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
 
 ### 2026-10-25 00:08–00:15 – Cleanup of `~/hypr-cosmic-shell` & moving docs to `~/dotfiles/docs/`
 - Moved `PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `HANDOFF.md` from `~/hypr-cosmic-shell/` into `~/dotfiles/docs/`.
-- Moved reference/scratch images (`minimon.png`, `kiro.txt`, and any scratch screenshots) to `/tmp/`.
+- Moved reference/scratch images (`minimon.png`, `kiro.txt`, and any scratch screenshots) to `/tmp/`, then restored `docs/kiro.txt` locally and added `kiro.txt` to `.gitignore`.
 - Removed the obsolete `~/hypr-cosmic-shell` directory now that all work is tracked on branch `hypr-cosmic-shell` in `~/dotfiles` and `~/Nix`.
 - Updated `HANDOFF.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, and `PROGRESS.md` in `~/dotfiles/docs/` to reflect their new location and the rule that any temporary verification images must be stored in `/tmp` or `$XDG_RUNTIME_DIR`.
+
+### 2026-10-25 00:21–00:31 – Built-in Capture & Screen Recorder + Hardware & Privacy Peripherals
+- **Interactive Capture & Screen Recording Studio** (`services/Recorder.qml`, `bar/CaptureOverlay.qml`, `modules/RecorderIndicator.qml`, `scripts/capture.sh`):
+  - Bound to **`SUPER + Print`** (`qs ipc call capture toggle`), Quick Settings footer (`photo_camera` / `videocam`), Display menu (`Record` tile), and Launcher (`!capture`, `!record`).
+  - **Screenshot tab**: Region, Window, Full Screen, and Color Picker tiles; selectable action (`Copy`, `Save & Copy` to `~/Pictures/Screenshots/`, or `Annotate` in `swappy`) and delay timer (`Now`, `3s`, `5s`).
+  - **Screen Record tab**: Record Full Screen, Region, or Window via `wf-recorder` / `wl-screenrec` (saved to `~/Videos/Recordings/`), with selectable audio source (`No Audio`, `System Audio`, `Microphone`).
+  - **Bar Recording Indicator** (`RecorderIndicator.qml`): pulsing red dot + `REC MM:SS` pill appears on the bar while recording; left-click stops & saves (and copies file URI to clipboard), right-click opens the Capture Overlay.
+- **Privacy Indicator** (`services/Privacy.qml`, `modules/PrivacyIndicator.qml`, `scripts/hardware-status.py`):
+  - Monitors PipeWire (`pw-dump` + `Pipewire.nodes`) and `/dev/video*` for active **Microphone**, **Camera**, and **Screen Share / Recording** streams.
+  - Shows an amber privacy pill on the bar with `mic`, `videocam`, and/or `screen_share` icons whenever any app is capturing; clicking opens the Privacy popup listing each active app with quick `Mute Mic` and `Stop Recording` actions.
+- **Removable USB / SD Automounter & Safe Eject** (`services/Storage.qml`, `modules/StorageModule.qml`):
+  - Event-driven block device monitor (`udevadm monitor --subsystem-match=block`) + `lsblk -J`; automatically mounts newly connected removable USB/SD drives via `udisksctl mount` (toggleable in popup) and sends a desktop notification.
+  - Shows a USB icon on the bar (and a Removable Drives card in Quick Settings) whenever a drive is connected, with one-click open in Files (`xdg-open`) and safe eject (`udisksctl unmount` + `udisksctl power-off`).
+- **Bluetooth Battery Levels** (`services/Bt.qml`, `modules/BluetoothModule.qml`, `quicksettings/QuickSettings.qml`):
+  - Combines `BluetoothDevice.battery` with `upower -d` fallback (`bt-battery`); displays battery percentage + icon on connected device rows in the Bluetooth popup, on the bar button, and in the Quick Settings Bluetooth tile subtitle.
 
 ---
 

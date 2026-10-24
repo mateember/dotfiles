@@ -55,8 +55,11 @@ Singleton {
 
     // ---- semantic (v2/destructive, v2/success, v2/warning) ----
     readonly property color destructive: ron("#FFA09AFF")
+    readonly property color danger: destructive
     readonly property color success: ron("#5EDB8CFF")
     readonly property color warning: ron("#FFA37DFF")
+    readonly property color surface1: primaryComponent
+    readonly property color surface2: secondaryComponent
 
     // ---- text ----
     readonly property color text: fgOnBg

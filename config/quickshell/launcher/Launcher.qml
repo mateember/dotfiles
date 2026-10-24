@@ -55,6 +55,8 @@ Scope {
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
             else if (id === "qs:overview") Hypr.openOverview();
+            else if (id === "qs:capture") Recorder.openOverlay("shot");
+            else if (id === "qs:record") Recorder.openOverlay("record");
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
@@ -111,6 +113,10 @@ Scope {
 
             readonly property var shellApps: [
                 { id: "qs:overview",            name: "Overview",              comment: "KDE Plasma-style workspaces & live window previews (SUPER+Tab)", icon: "grid_view",        keywords: ["workspaces", "desktops", "expose", "windows", "plasma"] },
+                { id: "qs:capture",             name: "Screenshot & Capture",  comment: "Interactive region/window/screen capture, timer & annotation (SUPER+Print)", icon: "photo_camera", keywords: ["screenshot", "snip", "swappy", "annotate", "capture"] },
+                { id: "qs:record",              name: "Screen Recorder",       comment: "Record screen, region or window with system/mic audio",       icon: "videocam",            keywords: ["record", "video", "screenrec", "wf-recorder", "capture"] },
+                { id: "qs:popup:storage",       name: "Removable Drives",      comment: "Mount, open and safely eject USB & SD drives",               icon: "usb",                 keywords: ["usb", "drives", "storage", "eject", "mount", "sd"] },
+                { id: "qs:popup:privacy",       name: "Privacy Status",        comment: "Apps currently using your microphone, camera or screen",      icon: "shield",              keywords: ["privacy", "microphone", "camera", "webcam", "screenshare"] },
                 { id: "qs:bar-settings",        name: "Bar Settings",          comment: "Toggle bar items on/off, reorder and move between sections", icon: "view_agenda",         keywords: ["bar", "panel", "customize", "modules", "order", "toggle"] },
                 { id: "qs:popup:stats",         name: "System Monitor (Minimon)", comment: "CPU, temperature, memory, network, disk & GPU graphs and settings", icon: "monitoring",   keywords: ["minimon", "cpu", "ram", "memory", "gpu", "network", "disk", "stats"] },
                 { id: "qs:quicksettings",       name: "Quick Settings",        comment: "Toggles, volume/brightness sliders, media and power mode",   icon: "tune",                keywords: ["control", "toggles", "sliders", "tlp"] },

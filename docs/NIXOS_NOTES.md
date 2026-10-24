@@ -13,6 +13,12 @@ so the wallet unlocks at login. Needs another `sudo nixos-rebuild switch --flake
 The sections below are kept for reference. These are snippets for you to add to your own NixOS
 configuration if and when you want them. The project itself runs without any of them.
 
+## Capture, Screen Recorder, Privacy & Removable Storage (2026-10-25 00:30)
+
+`system/matevono/hyprland-desktop.nix` adds `wf-recorder` and `wl-screenrec` alongside `grim`, `slurp`, and `swappy`.
+`scripts/capture.sh` also auto-discovers `wf-recorder`, `wl-screenrec`, and `swappy` in `/nix/store` if not yet on `PATH`.
+Removable drive automounting and safe ejection use `udevadm monitor` + `lsblk -J` + `udisksctl` (`services.udisks2` is active on the system).
+
 ## Quickshell apps & Bar Settings (2026-10-24 22:15)
 
 Pure QML (`Launcher.qml`, `services/BarConfig.qml`, `bar/BarSettingsWindow.qml`, `bar/Bar.qml`, `components/Popup.qml`) plus floating window rules in `hypr/conf/windowrules.lua`; no extra Nix packages or rebuild needed. State is stored in Quickshell's state directory (`bar-config.json`).

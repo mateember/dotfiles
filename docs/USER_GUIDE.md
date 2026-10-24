@@ -70,6 +70,7 @@ System-level notes and NixOS module details are in `NIXOS_NOTES.md`.
 | **SUPER CTRL L** | **Lock screen** (hyprlock, COSMIC-themed: `hypr/hyprlock.conf`) | none |
 | **SUPER comma** | **Quick settings panel** | none |
 | **SUPER Tab** / **SUPER W** | **KDE Plasma-style Overview** (workspaces strip + live window previews, search, move/close windows) | none |
+| **SUPER Print** | **Interactive Screenshot & Screen Record Studio** (region/window/screen, Copy / Save / Swappy annotate, timer, screen recorder with audio) | none |
 | SUPER C | kitty | same |
 | SUPER E | Thunar | same |
 | **SUPER B** | **Brave (`brave-origin`)** | `brave`, which isn't installed, so it did nothing |
@@ -153,12 +154,15 @@ Left to right. Click an icon for its menu; Escape or a click outside closes it.
 | System Monitor (Minimon) | modular dropdown (`General settings`, `CPU`, `CPU Temperature`, `Memory`, `Network`, `Disk`, `GPU`) with live sparkline charts, per-sensor bar toggles (`Prefix in bar: Off / Icon / CPU…`, `Show value in bar`, `Chart in bar: Off / Graph / Ring`), quick style presets (`Graphs`, `Icons`, `CPU/MEM`), and top button to open System Monitor / `btop` | right/middle click = open System Monitor / `btop`; temperature turns orange at 80 °C, red at 90 °C |
 | Weather | today's details (rain chance + mm, humidity, wind + direction + gusts, UV, pressure, sunrise/sunset) and 5-day forecast with rain chance | Open-Meteo for Gyömrő, cached for offline |
 | Date/time | month calendar with your events: "Next up" line, dots under days with events (calendar colors), agenda of the selected day | click a day to see its events; click an event or double-click a day = GNOME Calendar; buttons open GNOME Calendar and Date & Time settings |
+| Screen Recorder (`REC MM:SS`) | appears while recording; left click stops & saves recording to `~/Videos/Recordings/` | right/middle click = open Capture & Record Overlay |
+| Privacy pill (amber) | appears when an app uses your microphone, webcam, or screen; click to see which apps and mute mic / stop recording | auto-hides when idle |
+| USB / Removable Drives | appears when a USB or SD drive is plugged in; click to open in Files, mount, or safely eject (`udisksctl unmount` + `power-off`), or toggle automount | auto-hides when no removable drive is connected |
 | Tray | app tray icons (KDE Connect, …) | right click = app menu |
-| Monitor | brightness, **keyboard backlight**, monitors, screenshots, color picker | scroll = brightness |
+| Monitor | brightness, **keyboard backlight**, monitors, screenshots, screen recording, color picker | scroll = brightness |
 | Layout | toggles scrolling (niri) ↔ dwindle | right click = all layouts, cycle column width, center column, toggle split |
 | Play | player: cover, seek, controls, player switcher | right or middle click = pause/resume |
 | Speaker | output/input volume, devices, per-app volume | scroll = volume, middle click = mute |
-| Bluetooth | on/off, connect/pair devices | middle click = on/off |
+| Bluetooth | on/off, connect/pair devices, **connected device battery %** | middle click = on/off |
 | Wi-Fi | on/off, networks, password prompt | right click a saved network = forget |
 | Battery | charge, time left, health, power mode selector (Power Saver / Balanced / Performance) | |
 | Bell | notification center + do-not-disturb, now-playing card at the top | middle click = do-not-disturb |

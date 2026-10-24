@@ -129,7 +129,7 @@ BarButton {
 
         Separator {}
 
-        StyledText { text: "Screenshot / pick color (copied to clipboard)"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+        StyledText { text: "Capture & Screen Recording"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
         RowLayout {
             Layout.fillWidth: true
             spacing: Theme.spaceXxs
@@ -138,6 +138,7 @@ BarButton {
                     { mode: "region", icon: "screenshot_region", label: "Region" },
                     { mode: "window", icon: "select_window", label: "Window" },
                     { mode: "output", icon: "fullscreen", label: "Screen" },
+                    { mode: "record", icon: Recorder.recording ? "stop_circle" : "videocam", label: Recorder.recording ? "Stop Rec" : "Record" },
                     { mode: "color", icon: "colorize", label: "Color" }
                 ]
                 delegate: Rectangle {
@@ -150,7 +151,11 @@ BarButton {
                     Column {
                         anchors.centerIn: parent
                         spacing: Theme.spaceXxxs
-                        Icon { icon: tile.modelData.icon; anchors.horizontalCenter: parent.horizontalCenter }
+                        Icon {
+                            icon: tile.modelData.icon
+                            color: tile.modelData.mode === "record" && Recorder.recording ? Theme.danger : Theme.text
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                         StyledText { text: tile.modelData.label; font.pixelSize: Theme.fontSizeSmall; anchors.horizontalCenter: parent.horizontalCenter }
                     }
                     MouseArea {
@@ -158,7 +163,18 @@ BarButton {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: tile.modelData.mode === "color" ? ColorPicker.pick() : pop.shot(tile.modelData.mode)
+                        onClicked: {
+                            if (tile.modelData.mode === "color") {
+                                pop.close();
+                                ColorPicker.pick();
+                            } else if (tile.modelData.mode === "record") {
+                                pop.close();
+                                if (Recorder.recording) Recorder.stopRecording();
+                                else Recorder.openOverlay("record");
+                            } else {
+                                pop.shot(tile.modelData.mode);
+                            }
+                        }
                     }
                 }
             }

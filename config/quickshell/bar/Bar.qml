@@ -52,6 +52,9 @@ PanelWindow {
     Component { id: compStats; Stats {} }
     Component { id: compWeather; WeatherModule {} }
     Component { id: compClock; Clock {} }
+    Component { id: compRecorder; RecorderIndicator {} }
+    Component { id: compPrivacy; PrivacyIndicator {} }
+    Component { id: compStorage; StorageModule {} }
     Component { id: compTray; Tray {} }
     Component { id: compDisplay; Display {} }
     Component { id: compLayout; TilingLayout {} }
@@ -73,6 +76,9 @@ PanelWindow {
             case "stats": return compStats;
             case "weather": return compWeather;
             case "clock": return compClock;
+            case "recorder": return compRecorder;
+            case "privacy": return compPrivacy;
+            case "storage": return compStorage;
             case "tray": return compTray;
             case "display": return compDisplay;
             case "layout": return compLayout;
