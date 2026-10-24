@@ -41,13 +41,14 @@ Row {
             readonly property HyprlandWorkspace workspace: root.workspaceFor(modelData)
             readonly property bool urgent: workspace?.urgent ?? false
 
-            // COSMIC: ~36 px per workspace, circle nearly the full bar height
-            width: Theme.barHeight + 4
+            // One cell per workspace; the circle is smaller than the bar.
+            width: Theme.barHeight
             height: Theme.barHeight
 
             Rectangle {
+                id: circle
                 anchors.centerIn: parent
-                width: Theme.barHeight - 2
+                width: Theme.workspaceCircle
                 height: width
                 radius: width / 2
                 color: ws.isActive ? Theme.accent
@@ -57,12 +58,22 @@ Row {
                 Behavior on color { ColorAnimation { duration: Theme.animFast } }
             }
 
+            // Center the digits' visible shape (not the text line box, whose ascent/descent
+            // pushed the number down and to one side inside the circle).
             StyledText {
-                anchors.centerIn: parent
+                id: number
                 text: ws.modelData
-                font.pixelSize: Theme.barFontSize
+                font.pixelSize: Theme.barFontSize - 1
                 font.weight: Font.Bold
                 color: ws.isActive ? Theme.fgOnAccent : Theme.text
+                x: circle.x + (circle.width - metrics.tightBoundingRect.width) / 2 - metrics.tightBoundingRect.x
+                // tightBoundingRect.y is relative to the baseline (negative = above it)
+                y: circle.y + (circle.height - metrics.tightBoundingRect.height) / 2 - (baselineOffset + metrics.tightBoundingRect.y)
+                TextMetrics {
+                    id: metrics
+                    font: number.font
+                    text: number.text
+                }
             }
 
             MouseArea {

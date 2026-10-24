@@ -115,7 +115,8 @@ Singleton {
     readonly property int barFontSize: 16
     readonly property int fontSizeTitle: 20
     readonly property int iconSize: 18
-    readonly property int barIconSize: 19   // icons in the bar itself (popups keep iconSize)
+    readonly property int barIconSize: 19
+    readonly property int workspaceCircle: 26   // active workspace circle diameter   // icons in the bar itself (popups keep iconSize)
 
     // ---- motion ----
     readonly property int animFast: 120
