@@ -155,9 +155,10 @@ Scope {
                         QuickTile {
                             icon: "coffee"
                             title: "Caffeine"
-                            subtitle: Idle.caffeine ? "Screen stays awake" : "Off"
+                            subtitle: Idle.caffeine ? Idle.statusText : "Off"
                             checked: Idle.caffeine
                             onClicked: Idle.toggle()
+                            onMore: { QuickSettingsState.close(); Popups.open("caffeine@" + (win.screen?.name ?? "")); }
                         }
                         QuickTile {
                             icon: "keyboard"

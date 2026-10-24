@@ -44,7 +44,12 @@ Scope {
     // ---- toggles ----
     Connections {
         target: Idle
-        function onCaffeineChanged() { Osd.show("coffee", Idle.caffeine ? "Caffeine on: screen stays awake" : "Caffeine off", -1, 1); }
+        function onCaffeineChanged() {
+            const msg = Idle.caffeine
+                ? (Idle.durationMinutes > 0 ? ("Caffeine on (" + Idle.durationMinutes + " min)") : "Caffeine on: screen stays awake")
+                : "Caffeine off";
+            Osd.show("coffee", msg, -1, 1);
+        }
     }
     Connections {
         target: Notifs
