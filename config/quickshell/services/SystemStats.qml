@@ -45,14 +45,18 @@ Singleton {
     property string monitorApp: "gnome-system-monitor"
 
     readonly property var defaultSensors: ({
-        cpu:  { text: true,  chart: "graph" },
-        temp: { text: true,  chart: "graph" },
-        mem:  { text: true,  chart: "graph" },
-        net:  { text: true,  chart: "graph" },
-        disk: { text: false, chart: "none"  },
-        gpu:  { text: true,  chart: "graph" }
+        cpu:  { prefix: "none", text: true,  chart: "graph" },
+        temp: { prefix: "none", text: true,  chart: "graph" },
+        mem:  { prefix: "none", text: true,  chart: "graph" },
+        net:  { prefix: "none", text: true,  chart: "graph" },
+        disk: { prefix: "none", text: false, chart: "none"  },
+        gpu:  { prefix: "none", text: true,  chart: "graph" }
     })
     property var sensors: JSON.parse(JSON.stringify(defaultSensors))
+
+    function sensorPrefix(id: string): string {
+        return (root.sensors[id] ?? root.defaultSensors[id])?.prefix ?? "none";
+    }
 
     function sensorText(id: string): bool {
         return Boolean((root.sensors[id] ?? root.defaultSensors[id])?.text);
@@ -62,9 +66,17 @@ Singleton {
         return (root.sensors[id] ?? root.defaultSensors[id])?.chart ?? "none";
     }
 
+    function setSensorPrefix(id: string, mode: string) {
+        const next = JSON.parse(JSON.stringify(root.sensors));
+        if (!next[id]) next[id] = { prefix: "none", text: true, chart: "none" };
+        next[id].prefix = mode;
+        root.sensors = next;
+        root.saveConfig();
+    }
+
     function setSensorText(id: string, on: bool) {
         const next = JSON.parse(JSON.stringify(root.sensors));
-        if (!next[id]) next[id] = { text: true, chart: "none" };
+        if (!next[id]) next[id] = { prefix: "none", text: true, chart: "none" };
         next[id].text = on;
         root.sensors = next;
         root.saveConfig();
@@ -72,8 +84,26 @@ Singleton {
 
     function setSensorChart(id: string, mode: string) {
         const next = JSON.parse(JSON.stringify(root.sensors));
-        if (!next[id]) next[id] = { text: true, chart: "none" };
+        if (!next[id]) next[id] = { prefix: "none", text: true, chart: "none" };
         next[id].chart = mode;
+        root.sensors = next;
+        root.saveConfig();
+    }
+
+    function applyPreset(preset: string) {
+        const next = JSON.parse(JSON.stringify(root.sensors));
+        for (const k of Object.keys(next)) {
+            if (preset === "icons") {
+                next[k].prefix = "icon";
+                next[k].chart = "none";
+            } else if (preset === "labels") {
+                next[k].prefix = "label";
+                next[k].chart = "none";
+            } else if (preset === "graphs") {
+                next[k].prefix = "none";
+                if (next[k].text) next[k].chart = "graph";
+            }
+        }
         root.sensors = next;
         root.saveConfig();
     }
@@ -247,6 +277,7 @@ Singleton {
                     const merged = JSON.parse(JSON.stringify(root.defaultSensors));
                     for (const k of Object.keys(merged)) {
                         if (d.sensors[k]) {
+                            merged[k].prefix = String(d.sensors[k].prefix || "none");
                             merged[k].text = Boolean(d.sensors[k].text);
                             merged[k].chart = String(d.sensors[k].chart || "none");
                         }

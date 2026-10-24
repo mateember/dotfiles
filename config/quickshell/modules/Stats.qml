@@ -13,12 +13,12 @@ BarButton {
     onClicked: button => button === Qt.LeftButton ? pop.toggle() : SystemStats.openSystemMonitor()
 
     readonly property var sensorDefs: [
-        { id: "cpu",  title: "CPU",             color: "#2b79ff", fill: "#442b79ff" },
-        { id: "temp", title: "CPU Temperature", color: "#d96b27", fill: "#55d96b27" },
-        { id: "mem",  title: "Memory",          color: "#9b3be8", fill: "#559b3be8" },
-        { id: "net",  title: "Network",         color: "#2ecc71", fill: "#442ecc71" },
-        { id: "disk", title: "Disk",            color: "#00bcd4", fill: "#4400bcd4" },
-        { id: "gpu",  title: "GPU",             color: "#e74c3c", fill: "#44e74c3c" }
+        { id: "cpu",  title: "CPU",             shortLabel: "CPU",  icon: "memory",            color: "#2b79ff", fill: "#442b79ff" },
+        { id: "temp", title: "CPU Temperature", shortLabel: "TEMP", icon: "device_thermostat", color: "#d96b27", fill: "#55d96b27" },
+        { id: "mem",  title: "Memory",          shortLabel: "MEM",  icon: "memory_alt",        color: "#9b3be8", fill: "#559b3be8" },
+        { id: "net",  title: "Network",         shortLabel: "NET",  icon: "swap_vert",         color: "#2ecc71", fill: "#442ecc71" },
+        { id: "disk", title: "Disk",            shortLabel: "DISK", icon: "hard_drive",        color: "#00bcd4", fill: "#4400bcd4" },
+        { id: "gpu",  title: "GPU",             shortLabel: "GPU",  icon: "developer_board",   color: "#e74c3c", fill: "#44e74c3c" }
     ]
 
     function sensorHistory(id: string): var {
@@ -188,7 +188,7 @@ BarButton {
         Icon {
             visible: {
                 for (const s of root.sensorDefs) {
-                    if (SystemStats.sensorText(s.id) || SystemStats.sensorChart(s.id) !== "none")
+                    if (SystemStats.sensorPrefix(s.id) !== "none" || SystemStats.sensorText(s.id) || SystemStats.sensorChart(s.id) !== "none")
                         return false;
                 }
                 return true;
@@ -203,11 +203,27 @@ BarButton {
                 id: barSensor
                 required property var modelData
                 readonly property string sid: modelData.id
+                readonly property string prefixMode: SystemStats.sensorPrefix(sid)
                 readonly property bool showText: SystemStats.sensorText(sid)
                 readonly property string chartMode: SystemStats.sensorChart(sid)
 
-                visible: showText || chartMode !== "none"
+                visible: prefixMode !== "none" || showText || chartMode !== "none"
                 spacing: 3
+
+                // Optional sensor icon (classic style)
+                Icon {
+                    visible: barSensor.prefixMode === "icon"
+                    icon: barSensor.modelData.icon
+                }
+
+                // Optional short text label ("CPU", "TEMP", "MEM", "NET", "DISK", "GPU")
+                StyledText {
+                    visible: barSensor.prefixMode === "label"
+                    text: barSensor.modelData.shortLabel
+                    font.pixelSize: Theme.barFontSize - 2
+                    font.weight: Font.Bold
+                    color: Theme.textDim
+                }
 
                 // Single-line text (CPU, Temp, Memory, GPU)
                 StyledText {
@@ -475,6 +491,41 @@ BarButton {
                     anchors.margins: Theme.spaceS
                     spacing: Theme.spaceS
 
+                    // Quick bar style preset across all sensors
+                    RowLayout {
+                        Layout.fillWidth: true
+                        StyledText { Layout.fillWidth: true; text: "Quick style" }
+                        Repeater {
+                            model: [
+                                { id: "graphs", label: "Graphs" },
+                                { id: "icons",  label: "Icons" },
+                                { id: "labels", label: "CPU/MEM" }
+                            ]
+                            delegate: Rectangle {
+                                required property var modelData
+                                implicitWidth: presetLbl.implicitWidth + 16
+                                implicitHeight: 26
+                                radius: 13
+                                color: presetMouse.containsMouse ? Theme.componentHover : Theme.component
+                                StyledText {
+                                    id: presetLbl
+                                    anchors.centerIn: parent
+                                    text: modelData.label
+                                    font.pixelSize: Theme.fontSizeSmall
+                                }
+                                MouseArea {
+                                    id: presetMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: SystemStats.applyPreset(modelData.id)
+                                }
+                            }
+                        }
+                    }
+
+                    Separator {}
+
                     // Refresh rate
                     RowLayout {
                         Layout.fillWidth: true
@@ -642,6 +693,44 @@ BarButton {
                     anchors.fill: parent
                     anchors.margins: Theme.spaceS
                     spacing: Theme.spaceS
+
+                    // Select prefix in bar (Off / Icon / Text label like CPU, MEM)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: "Prefix in bar"
+                        }
+                        Repeater {
+                            model: [
+                                { mode: "none",  label: "Off" },
+                                { mode: "icon",  label: "Icon" },
+                                { mode: "label", label: pop.page.toUpperCase() }
+                            ]
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property bool active: SystemStats.sensorPrefix(pop.page) === modelData.mode
+                                implicitWidth: pfxLbl.implicitWidth + 20
+                                implicitHeight: 26
+                                radius: 13
+                                color: active ? Theme.accent : Theme.component
+                                StyledText {
+                                    id: pfxLbl
+                                    anchors.centerIn: parent
+                                    text: modelData.label
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: active ? Theme.accentText : Theme.text
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: SystemStats.setSensorPrefix(pop.page, modelData.mode)
+                                }
+                            }
+                        }
+                    }
+
+                    Separator {}
 
                     // Toggle value text on bar
                     RowLayout {
