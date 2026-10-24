@@ -71,7 +71,7 @@ Singleton {
     readonly property real panelOpacity: 0.66
     readonly property color panelBg: alpha(bg, panelOpacity)
     readonly property int panelMargin: 4
-    readonly property int barHeight: 32
+    readonly property int barHeight: 35
     readonly property int barPadding: spaceXxs
 
     // Popups / launcher / toasts use the frosted transparent background.
