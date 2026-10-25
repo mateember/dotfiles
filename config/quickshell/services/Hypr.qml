@@ -14,6 +14,7 @@ Singleton {
 
     readonly property bool lua: Hyprland.usingLua
     property string layout: "dwindle"
+    property bool blurEnabled: true
     readonly property var layouts: ["dwindle", "master", "scrolling", "monocle"]
     property bool overviewOpen: false
     property bool overviewSwiping: false
@@ -106,6 +107,26 @@ Singleton {
     }
     function refreshLayout() {
         getLayout.running = true;
+        getBlur.running = true;
+    }
+
+    // Session-only runtime blur toggle (does not write config/state, so logout/reboot resets it).
+    function setBlur(on: bool) {
+        const val = Boolean(on);
+        if (root.lua) {
+            Quickshell.execDetached([
+                "hyprctl", "eval",
+                "hl.config({ decoration = { blur = { enabled = " + (val ? "true" : "false") + " } } })"
+            ]);
+        } else {
+            Quickshell.execDetached(["hyprctl", "keyword", "decoration:blur:enabled", val ? "true" : "false"]);
+        }
+        root.blurEnabled = val;
+        refreshTimer.restart();
+    }
+
+    function toggleBlur() {
+        setBlur(!root.blurEnabled);
     }
 
     Process {
@@ -114,6 +135,19 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.layout = JSON.parse(text).str; } catch (e) {}
+            }
+        }
+    }
+    Process {
+        id: getBlur
+        command: ["hyprctl", "getoption", "decoration:blur:enabled", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const j = JSON.parse(text);
+                    if (typeof j.bool === "boolean") root.blurEnabled = j.bool;
+                    else if (typeof j.int === "number") root.blurEnabled = j.int !== 0;
+                } catch (e) {}
             }
         }
     }

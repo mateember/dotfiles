@@ -758,6 +758,11 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Enabled `watchChanges: true` on `FileView` (`/sys/firmware/acpi/platform_profile`), connected `Battery.onChargingChanged` to reload immediately when AC is plugged/unplugged, and increased the fallback reload interval in `PowerProfile.qml` from `5s` to `30s`.
   - Added `divider` and `accentText` aliases in `Theme.qml` so reload completes with zero QML warnings.
 
+### 2026-10-25 10:49–10:52 – 60/120 Hz refresh rate & session-only blur toggles in Battery widget
+- Updated `config/quickshell/services/Hypr.qml` and `config/quickshell/modules/BatteryModule.qml`:
+  - Added `Hypr.blurEnabled` (`hyprctl getoption decoration:blur:enabled -j`) and `Hypr.setBlur(on)` / `Hypr.toggleBlur()` using `hyprctl eval 'hl.config({ decoration = { blur = { enabled = ... } } })'` at runtime (not persisted to config or state, so blur automatically resets on logout/reboot).
+  - Added a **Display & effects** section inside the Battery popup (`BatteryModule.qml`) with both the **Refresh rate (`60 Hz` / `120 Hz`)** selector (synced with `Brightness.refreshRate` in the Display menu) and the **Window blur** switch. Verified via screenshot.
+
 ---
 
 ## Decisions (defaults, user may override)

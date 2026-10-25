@@ -164,7 +164,7 @@ Left to right. Click an icon for its menu; Escape or a click outside closes it.
 | Speaker | output/input volume, devices, per-app volume | scroll = volume, middle click = mute |
 | Bluetooth | on/off, connect/pair devices, **connected device battery %** | middle click = on/off |
 | Wi-Fi | on/off, networks, password prompt | right click a saved network = forget |
-| Battery | charge, time left, health, power mode selector (Power Saver / Balanced / Performance) | |
+| Battery | charge, time left, health, power mode selector (Power Saver / Balanced / Performance), **60 Hz / 120 Hz refresh rate**, **session-only Window blur toggle** | |
 | Bell | notification center + do-not-disturb, now-playing card at the top | middle click = do-not-disturb |
 | Sliders (tune) | quick settings panel (same as SUPER comma) | click again to close |
 | Power | power menu (same as SUPER L) | |
