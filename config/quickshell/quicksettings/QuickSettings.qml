@@ -110,9 +110,10 @@ Scope {
                         QuickTile {
                             icon: Net.wiredConnected ? "lan" : (Net.wifiEnabled ? "wifi" : "wifi_off")
                             title: Net.wiredConnected ? "Ethernet" : "Wi-Fi"
-                            subtitle: Net.wiredConnected ? "Connected"
+                            subtitle: (Net.wiredConnected ? "Connected"
                                     : !Net.wifiEnabled ? "Off"
-                                    : Net.activeWifi ? Net.activeWifi.name : "Not connected"
+                                    : Net.activeWifi ? Net.activeWifi.name : "Not connected")
+                                    + (Net.vpnConnected ? " · VPN" : "")
                             checked: Net.wifiEnabled
                             detail: true
                             onClicked: Net.setWifiEnabled(!Net.wifiEnabled)

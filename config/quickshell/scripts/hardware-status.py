@@ -181,6 +181,70 @@ def cmd_bt_battery():
     print(json.dumps(batteries))
 
 
+def cmd_vpns():
+    def split_nmcli(line):
+        parts = re.split(r"(?<!\\):", line)
+        return [p.replace(r"\:", ":").replace(r"\\", "\\") for p in parts]
+
+    out = run_cmd(["nmcli", "-t", "-f", "NAME,UUID,TYPE,DEVICE,STATE", "connection", "show"])
+    vpns = []
+    if out:
+        for raw in out.splitlines():
+            if not raw.strip():
+                continue
+            cols = split_nmcli(raw)
+            if len(cols) < 5:
+                continue
+            name, uuid, ctype, device, state = cols[:5]
+            if ctype not in ("vpn", "wireguard"):
+                continue
+            kind_label = "WireGuard" if ctype == "wireguard" else "VPN"
+            server = ""
+            if ctype == "vpn":
+                det = run_cmd(["nmcli", "-t", "-f", "vpn.service-type,vpn.data", "connection", "show", "uuid", uuid])
+                svc = ""
+                data = ""
+                for dline in det.splitlines():
+                    if dline.startswith("vpn.service-type:"):
+                        svc = dline.split(":", 1)[1].strip()
+                    elif dline.startswith("vpn.data:"):
+                        data = dline.split(":", 1)[1].strip()
+                s_low = svc.lower()
+                if "strongswan" in s_low or "libreswan" in s_low or "ipsec" in s_low:
+                    kind_label = "IPsec"
+                elif "openvpn" in s_low:
+                    kind_label = "OpenVPN"
+                elif "openconnect" in s_low:
+                    kind_label = "OpenConnect"
+                elif "l2tp" in s_low:
+                    kind_label = "L2TP"
+                elif "pptp" in s_low:
+                    kind_label = "PPTP"
+                elif "vpnc" in s_low:
+                    kind_label = "Cisco VPN"
+                for kv in data.split(","):
+                    if "=" in kv:
+                        k, v = [x.strip() for x in kv.split("=", 1)]
+                        if k in ("address", "remote", "gateway"):
+                            server = v
+                            break
+            connected = state == "activated"
+            connecting = state in ("activating", "deactivating")
+            vpns.append({
+                "name": name,
+                "uuid": uuid,
+                "type": ctype,
+                "kindLabel": kind_label,
+                "server": server,
+                "device": device,
+                "state": state,
+                "connected": connected,
+                "connecting": connecting,
+            })
+    vpns.sort(key=lambda v: (not v["connected"], not v["connecting"], v["name"].lower()))
+    print(json.dumps(vpns))
+
+
 if __name__ == "__main__":
     sub = sys.argv[1] if len(sys.argv) > 1 else "privacy"
     if sub == "privacy":
@@ -189,3 +253,5 @@ if __name__ == "__main__":
         cmd_storage()
     elif sub == "bt-battery":
         cmd_bt_battery()
+    elif sub == "vpns":
+        cmd_vpns()

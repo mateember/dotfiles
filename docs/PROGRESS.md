@@ -771,6 +771,12 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Wired `Bar.qml` (`Theme.barBg`), `Popup.qml` (`Theme.notificationsBg` for `notifications`, `Theme.widgetsBg` for all other popups), `NotificationCard.qml` (`Theme.notificationsBg` for toasts), `OsdWindow.qml` (`Theme.osdBg`), `Overview.qml` (`Theme.overviewBg` + `Theme.panelBorder`), `Launcher.qml` (`!opacity`), and `BarSettingsWindow.qml` (`Opacity` header button).
   - Lowered `ignore_alpha` on `hcs-blur` in `config/hypr/conf/shell.lua` from `0.3` to `0.05` so frosted blur stays active at low opacities, and added `opacity = "1.0 override"` for `HCS — *` floating windows in `config/hypr/conf/windowrules.lua`. Verified zero QML/Hyprland errors and screenshot.
 
+### 2026-10-25 14:59–15:14 – Event-driven VPN Manager inside the Network widget
+- Updated `config/quickshell/scripts/hardware-status.py`, `config/quickshell/services/Net.qml`, `config/quickshell/modules/NetworkModule.qml`, `config/quickshell/quicksettings/QuickSettings.qml`, `config/quickshell/osd/OsdTriggers.qml`, `config/quickshell/launcher/Launcher.qml`, and `config/quickshell/services/BarConfig.qml`:
+  - Added `vpns` subcommand to `hardware-status.py` querying NetworkManager `vpn` & `wireguard` profiles (extracting protocol label such as `IPsec`, `OpenVPN`, `OpenConnect`, `WireGuard` and server host such as `vpn.net.bme.hu`).
+  - Added event-driven `nmcli monitor` listener in `Net.qml` (zero idle CPU wakeups), `toggleVpn` / `connectVpn` / `disconnectVpn` with inline password fallback (`passwd-file` in `$XDG_RUNTIME_DIR` with `0600` perms) if a VPN requires interactive secrets, plus `createVpn`, `editVpn`, and `openConnectionEditor` (`nm-connection-editor`).
+  - Added a dedicated **VPN** manager section at the top of `NetworkModule.qml` (with `+` create button, `tune` manager button, per-profile gear edit button, and connect/disconnect switch), an amber `vpn_key` bar indicator next to Wi-Fi/Ethernet when a VPN is connected, `· VPN` status in Quick Settings, and connect/disconnect OSD toast. Verified live with `BME-eduID` (`vpn.net.bme.hu · IPsec`).
+
 ---
 
 ## Decisions (defaults, user may override)

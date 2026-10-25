@@ -163,7 +163,7 @@ Left to right. Click an icon for its menu; Escape or a click outside closes it.
 | Play | player: cover, seek, controls, player switcher | right or middle click = pause/resume |
 | Speaker | output/input volume, devices, per-app volume | scroll = volume, middle click = mute |
 | Bluetooth | on/off, connect/pair devices, **connected device battery %** | middle click = on/off |
-| Wi-Fi | on/off, networks, password prompt | right click a saved network = forget |
+| Wi-Fi | **VPN manager** (connect/disconnect toggle, per-VPN edit gear, `+` add VPN, `nm-connection-editor`), Wi-Fi on/off, networks, inline Wi-Fi & VPN password prompts; shows an amber key icon on the bar while a VPN is connected | right click a saved Wi-Fi = forget; right click a VPN = edit |
 | Battery | charge, time left, health, power mode selector (Power Saver / Balanced / Performance), **60 Hz / 120 Hz refresh rate**, **session-only Window blur toggle** | |
 | Bell | notification center + do-not-disturb, now-playing card at the top | middle click = do-not-disturb |
 | Sliders (tune) | quick settings panel (same as SUPER comma) | click again to close |

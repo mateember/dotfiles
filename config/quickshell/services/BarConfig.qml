@@ -35,7 +35,7 @@ Singleton {
         { id: "media",         name: "Media Player",         subtitle: "Now playing and MPRIS controls",           icon: "play_arrow",          section: "right",  enabled: true },
         { id: "volume",        name: "Volume",               subtitle: "Output, input and app volume mixer",       icon: "volume_up",           section: "right",  enabled: true },
         { id: "bluetooth",     name: "Bluetooth",            subtitle: "Bluetooth toggle and device list",         icon: "bluetooth",           section: "right",  enabled: true },
-        { id: "network",       name: "Network",              subtitle: "Wi-Fi and Ethernet connections",           icon: "wifi",                section: "right",  enabled: true },
+        { id: "network",       name: "Network",              subtitle: "Wi-Fi, Ethernet and VPN connections",      icon: "wifi",                section: "right",  enabled: true },
         { id: "battery",       name: "Battery",              subtitle: "Battery status and TLP power mode",        icon: "battery_full",        section: "right",  enabled: true },
         { id: "notifications", name: "Notifications",        subtitle: "Notification center and Do Not Disturb",   icon: "notifications",       section: "right",  enabled: true },
         { id: "quicksettings", name: "Quick Settings",       subtitle: "Quick settings panel button",              icon: "tune",                section: "right",  enabled: true },

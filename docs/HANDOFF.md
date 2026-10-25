@@ -49,7 +49,8 @@ The user is low on tokens: keep replies short, ask only what blocks you.
   - **Quick Settings sub-widgets position** (`b7ed8ef`): `services/Popups.qml` (`openFromQuickSettings`) + `components/Popup.qml` + `services/Recorder.qml` so any widget opened from Quick Settings opens as a dropdown in the top-right Quick Settings spot even if hidden on the bar.
   - **Battery / wakeup optimizations** (`b112250`): `services/Privacy.qml` (event-driven on `Pipewire.nodes.values`, 20s idle fallback instead of 2.5s) and `services/PowerProfile.qml` (`FileView` `watchChanges: true` + `Battery.onChargingChanged` + 30s fallback).
   - **Battery widget 60/120 Hz & session-only blur toggles** (`e315916`): `modules/BatteryModule.qml` + `services/Hypr.qml` (`setBlur` via runtime `hyprctl eval`, resets after logout/reboot).
-  - **Per-component Opacity & Transparency widget app (`!opacity`)**: `services/OpacityConfig.qml` + `bar/OpacitySettingsWindow.qml` + `Theme.qml` (separate persistent sliders for Widgets, Bar, Notifications, and Volume/Brightness OSD Toast + quick presets + live preview buttons).
+  - **Per-component Opacity & Transparency widget app (`!opacity`)** (`871f665`): `services/OpacityConfig.qml` + `bar/OpacitySettingsWindow.qml` + `Theme.qml` (separate persistent sliders for Widgets, Bar, Notifications, and Volume/Brightness OSD Toast + quick presets + live preview buttons).
+  - **VPN Manager in Network widget**: `services/Net.qml` + `modules/NetworkModule.qml` + `scripts/hardware-status.py` (`vpns`) with event-driven `nmcli monitor`, connect/disconnect toggles, inline secret prompt fallback, per-profile `nm-connection-editor` actions, and active VPN bar indicator.
 - `TZDIR=/etc/zoneinfo` is set in `config/hypr/conf/environment.lua` (NixOS' Hyprland capability wrapper makes glibc
   drop it; GNOME Calendar crashed with `tz != NULL`).
 - nm-applet hidden via `~/.config/autostart/nm-applet.desktop` (`Hidden=true`). polkit-gnome likewise (Home Manager).

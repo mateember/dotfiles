@@ -58,6 +58,12 @@ Scope {
     Connections {
         target: Net
         function onWifiEnabledChanged() { Osd.show(Net.wifiEnabled ? "wifi" : "wifi_off", Net.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off", -1, 1); }
+        function onVpnConnectedChanged() {
+            if (!root.popupOpen("network"))
+                Osd.show(Net.vpnConnected ? "vpn_lock" : "vpn_key_off",
+                         Net.vpnConnected ? ("VPN connected: " + (Net.activeVpn?.name ?? "")) : "VPN disconnected",
+                         -1, 1);
+        }
     }
     Connections {
         target: Bt

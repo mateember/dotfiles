@@ -6,28 +6,50 @@ import qs
 import qs.components
 import qs.services
 
-// Wi-Fi / Ethernet via NetworkManager. Click a network to connect; secured unknown
-// networks ask for the password inline.
+// Wi-Fi, Ethernet & VPN manager via NetworkManager.
+// Click a network or VPN to connect/disconnect; secured unknown Wi-Fi networks or
+// prompt-only VPNs ask for the password inline.
 BarButton {
     id: root
 
     active: pop.open
     onClicked: pop.toggle()
 
-    Icon { icon: Net.icon; filled: true }
+    Row {
+        spacing: 3
+        Icon {
+            icon: Net.icon
+            filled: true
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Icon {
+            visible: Net.vpnConnected
+            icon: "vpn_key"
+            size: 14
+            color: Theme.accent
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
 
     Popup {
         id: pop
         name: "network"
         anchorItem: root
-        contentWidth: 340
+        contentWidth: 350
 
-        property var pending: null      // network waiting for a password
+        property var pending: null      // Wi-Fi network waiting for a password
         property string error: ""
 
         onOpenChanged: {
             Net.scanning = open;
-            if (!open) { pending = null; error = ""; }
+            if (open) {
+                Net.refreshVpns();
+            } else {
+                pending = null;
+                error = "";
+                Net.vpnError = "";
+                Net.vpnSecretUuid = "";
+            }
         }
 
         function activate(n) {
@@ -38,7 +60,7 @@ BarButton {
         }
 
         PopupHeader {
-            title: "Wi-Fi"
+            title: "Network"
             Toggle {
                 checked: Net.wifiEnabled
                 enabled: Networking.wifiHardwareEnabled
@@ -57,6 +79,155 @@ BarButton {
             enabled: false
         }
 
+        // ---- VPN Manager ----
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spaceXs
+
+            Icon {
+                icon: Net.vpnConnected ? "vpn_lock" : "vpn_key"
+                size: 18
+                color: Net.vpnConnected ? Theme.accent : Theme.textDim
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Net.vpnConnected ? ("VPN · " + Net.activeVpn.name) : "VPN"
+                font.weight: Font.DemiBold
+                color: Net.vpnConnected ? Theme.accent : Theme.text
+                elide: Text.ElideRight
+            }
+            IconButton {
+                icon: "add_circle"
+                implicitWidth: 28
+                implicitHeight: 28
+                iconSize: 18
+                onClicked: {
+                    Popups.close();
+                    Net.createVpn();
+                }
+            }
+            IconButton {
+                icon: "tune"
+                implicitWidth: 28
+                implicitHeight: 28
+                iconSize: 18
+                onClicked: {
+                    Popups.close();
+                    Net.openConnectionEditor();
+                }
+            }
+        }
+
+        StyledText {
+            visible: Net.vpns.length === 0
+            Layout.fillWidth: true
+            font.pixelSize: Theme.fontSizeSmall
+            color: Theme.textDim
+            text: "No VPN profiles configured — click + to add one."
+        }
+
+        ColumnLayout {
+            visible: Net.vpns.length > 0
+            Layout.fillWidth: true
+            spacing: 4
+
+            Repeater {
+                model: Net.vpns
+                delegate: ColumnLayout {
+                    id: vpnEntry
+                    required property var modelData
+                    readonly property bool busy: Net.vpnBusyUuid === modelData.uuid || modelData.connecting
+                    readonly property string subtitleText: {
+                        if (busy) return modelData.connected ? "Disconnecting…" : "Connecting…";
+                        if (modelData.connected)
+                            return "Connected" + (modelData.server ? " · " + modelData.server : "");
+                        return [modelData.server, modelData.kindLabel].filter(Boolean).join(" · ");
+                    }
+
+                    Layout.fillWidth: true
+                    spacing: Theme.spaceXxs
+
+                    ListItem {
+                        icon: vpnEntry.modelData.connected ? "vpn_lock" : "vpn_key"
+                        iconFilled: vpnEntry.modelData.connected
+                        text: vpnEntry.modelData.name
+                        subtext: vpnEntry.subtitleText
+                        highlighted: vpnEntry.modelData.connected
+                        enabled: !vpnEntry.busy
+                        onClicked: button => {
+                            if (button === Qt.RightButton) {
+                                Popups.close();
+                                Net.editVpn(vpnEntry.modelData.uuid);
+                            } else {
+                                Net.toggleVpn(vpnEntry.modelData);
+                            }
+                        }
+
+                        IconButton {
+                            icon: "settings"
+                            implicitWidth: 28
+                            implicitHeight: 28
+                            iconSize: 16
+                            onClicked: {
+                                Popups.close();
+                                Net.editVpn(vpnEntry.modelData.uuid);
+                            }
+                        }
+                        Toggle {
+                            checked: vpnEntry.modelData.connected
+                            enabled: !vpnEntry.busy
+                            onToggled: Net.toggleVpn(vpnEntry.modelData)
+                        }
+                    }
+
+                    // Inline password prompt if the VPN requires interactive secrets
+                    RowLayout {
+                        visible: Net.vpnSecretUuid === vpnEntry.modelData.uuid
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Theme.spaceXs
+                        Layout.rightMargin: Theme.spaceXs
+                        spacing: Theme.spaceXxs
+
+                        TextField {
+                            id: vpnPsk
+                            Layout.fillWidth: true
+                            placeholder: "VPN password"
+                            echoMode: TextInput.Password
+                            onVisibleChanged: if (visible) { text = ""; focusInput(); }
+                            onAccepted: vpnConnectBtn.clicked()
+                        }
+                        IconButton {
+                            id: vpnConnectBtn
+                            icon: "arrow_forward"
+                            highlighted: true
+                            onClicked: {
+                                const pw = vpnPsk.text;
+                                vpnPsk.text = "";
+                                Net.connectVpn(vpnEntry.modelData.uuid, pw);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: Net.vpnError !== ""
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            text: Net.vpnError
+            color: Theme.destructive
+            font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Separator {}
+
+        // ---- Wi-Fi ----
+        StyledText {
+            text: "Wi-Fi"
+            font.weight: Font.DemiBold
+        }
+
         StyledText {
             visible: !Net.wifiEnabled
             text: Networking.wifiHardwareEnabled ? "Wi-Fi is off" : "Wi-Fi is blocked by a hardware switch"
@@ -67,7 +238,7 @@ BarButton {
             id: list
             visible: Net.wifiEnabled
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(contentHeight, 360)
+            Layout.preferredHeight: Math.min(contentHeight, 280)
             clip: true
             spacing: 2
             boundsBehavior: Flickable.StopAtBounds
