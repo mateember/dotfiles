@@ -29,23 +29,25 @@ Singleton {
     readonly property color bgTransparent: ron("#1B1B1BC8") // v2/transparent_background
     readonly property color fgOnBg: ron("#EEEEEEFF")
     readonly property color bgDivider: ron("#454545FF")
-    readonly property color component: ron("#2E2E2EFF")
-    readonly property color componentHover: ron("#434343FF")
-    readonly property color componentPressed: ron("#585858FF")
+    // Translucent white overlays calibrated to match COSMIC's #2E2E2E / #434343 / #585858
+    // over #1B1B1B at 0.96 opacity, while scaling naturally when surface opacity is lowered.
+    readonly property color component: Qt.rgba(1, 1, 1, 0.083)
+    readonly property color componentHover: Qt.rgba(1, 1, 1, 0.175)
+    readonly property color componentPressed: Qt.rgba(1, 1, 1, 0.268)
     readonly property color componentDivider: ron("#FFFFFF33")
     readonly property color divider: componentDivider
     readonly property color componentBorder: ron("#BEBEBEFF")
 
     // ---- primary / secondary containers (v2/primary, v2/secondary) ----
     readonly property color primary: ron("#272727FF")
-    readonly property color primaryComponent: ron("#363636FF")
-    readonly property color primaryHover: ron("#4A4A4AFF")
-    readonly property color primaryPressed: ron("#5E5E5EFF")
+    readonly property color primaryComponent: Qt.rgba(1, 1, 1, 0.118)
+    readonly property color primaryHover: Qt.rgba(1, 1, 1, 0.206)
+    readonly property color primaryPressed: Qt.rgba(1, 1, 1, 0.294)
     readonly property color primaryDivider: ron("#525252FF")
     readonly property color fgOnPrimary: ron("#FFFFFFFF")
     readonly property color secondary: ron("#343434FF")
-    readonly property color secondaryComponent: ron("#3B3B3BFF")
-    readonly property color secondaryHover: ron("#4F4F4FFF")
+    readonly property color secondaryComponent: Qt.rgba(1, 1, 1, 0.14)
+    readonly property color secondaryHover: Qt.rgba(1, 1, 1, 0.228)
 
     // ---- buttons (v2/button, v2/icon_button, v2/text_button) ----
     readonly property color button: ron("#9E9E9E40")
@@ -71,16 +73,28 @@ Singleton {
     // v2/shade: rgba(0,0,0,0.32), used to dim the screen behind modal surfaces
     readonly property color shade: Qt.rgba(0, 0, 0, 0.32)
 
+    // ---- configurable surface opacities (managed by services/OpacityConfig.qml) ----
+    property real widgetsOpacity: 0.96
+    property real barOpacity: 0.66
+    property real notificationsOpacity: 0.96
+    property real osdOpacity: 0.96
+
     // ---- panel (com.system76.CosmicPanel.Panel/v1) ----
     // opacity 0.66 applied to background.base, anchor_gap -> margin 4, border_radius 160 (pill)
-    readonly property real panelOpacity: 0.66
-    readonly property color panelBg: alpha(bg, panelOpacity)
+    readonly property real panelOpacity: barOpacity
+    readonly property color barBg: alpha(bg, barOpacity)
+    readonly property color panelBg: barBg
+    readonly property color panelBorder: componentDivider
     readonly property int panelMargin: 4
     readonly property int barHeight: 35
     readonly property int barPadding: spaceXxs
 
-    // Popups / launcher / toasts use the frosted transparent background.
-    readonly property color popupBg: alpha(bg, 0.96)
+    // Popups / launcher / notifications / OSD use configurable frosted backgrounds.
+    readonly property color widgetsBg: alpha(bg, widgetsOpacity)
+    readonly property color popupBg: widgetsBg
+    readonly property color notificationsBg: alpha(bg, notificationsOpacity)
+    readonly property color osdBg: alpha(bg, osdOpacity)
+    readonly property color overviewBg: alpha(bg, widgetsOpacity * 0.69)
     readonly property color popupBorder: componentDivider
     readonly property int popupGap: 6        // space between bar and popup
     readonly property int popupWidth: 320    // default popup width

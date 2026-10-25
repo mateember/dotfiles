@@ -94,7 +94,7 @@ PanelWindow {
         parent: root.openAsWindow ? floatWin.contentItem : root.contentItem
         anchors.fill: parent
         radius: root.openAsWindow ? 0 : Theme.radiusM
-        color: Theme.popupBg
+        color: root.name === "notifications" ? Theme.notificationsBg : Theme.widgetsBg
         border.color: Theme.popupBorder
         border.width: root.openAsWindow ? 0 : 1
         clip: true

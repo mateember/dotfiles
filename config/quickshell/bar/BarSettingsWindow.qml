@@ -90,6 +90,35 @@ Scope {
                             }
                         }
                         Rectangle {
+                            implicitWidth: opacityRow.implicitWidth + 2 * Theme.spaceXs
+                            implicitHeight: 30
+                            radius: 15
+                            color: opacityMouse.pressed ? Theme.componentPressed
+                                 : opacityMouse.containsMouse ? Theme.componentHover
+                                 : Theme.component
+                            RowLayout {
+                                id: opacityRow
+                                anchors.centerIn: parent
+                                spacing: 4
+                                Icon { icon: "opacity"; size: 15; color: Theme.accent }
+                                StyledText {
+                                    text: "Opacity"
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.text
+                                }
+                            }
+                            MouseArea {
+                                id: opacityMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    BarConfig.settingsOpen = false;
+                                    OpacityConfig.settingsOpen = true;
+                                }
+                            }
+                        }
+                        Rectangle {
                             implicitWidth: resetLabel.implicitWidth + 2 * Theme.spaceXs
                             implicitHeight: 30
                             radius: 15

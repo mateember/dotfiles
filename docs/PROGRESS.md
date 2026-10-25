@@ -760,8 +760,16 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
 
 ### 2026-10-25 10:49–10:52 – 60/120 Hz refresh rate & session-only blur toggles in Battery widget
 - Updated `config/quickshell/services/Hypr.qml` and `config/quickshell/modules/BatteryModule.qml`:
-  - Added `Hypr.blurEnabled` (`hyprctl getoption decoration:blur:enabled -j`) and `Hypr.setBlur(on)` / `Hypr.toggleBlur()` using `hyprctl eval 'hl.config({ decoration = { blur = { enabled = ... } } })'` at runtime (not persisted to config or state, so blur automatically resets on logout/reboot).
+  - Added `Hypr.blurEnabled` (`hyprctl getoption decoration:blur:enabled -j`) and `Hypr.setBlur(on)` / `Hypr.toggleBlur()` using `hyprctl eval 'hl.config({ decoration = { enabled = ... } } })'` at runtime (not persisted to config or state, so blur automatically resets on logout/reboot).
   - Added a **Display & effects** section inside the Battery popup (`BatteryModule.qml`) with both the **Refresh rate (`60 Hz` / `120 Hz`)** selector (synced with `Brightness.refreshRate` in the Display menu) and the **Window blur** switch. Verified via screenshot.
+
+### 2026-10-25 13:40–13:46 – Per-component Opacity & Transparency widget app (`!opacity`)
+- Created `config/quickshell/services/OpacityConfig.qml` and `config/quickshell/bar/OpacitySettingsWindow.qml`:
+  - Persistent per-component opacity configuration stored in `opacity-config.json` (`Quickshell.statePath`): **Widgets** (`widgetsOpacity`, default `96%`), **Bar** (`barOpacity`, default `66%`, `0%` = floating icons), **Notifications** (`notificationsOpacity`, default `96%` for both notification toasts and the notification center), and **Volume & Brightness Toast** (`osdOpacity`, default `96%`).
+  - Added one-click presets (`Default`, `Frosted Glass`, `Clear`, `Solid`), `Reset` button, live preview `Test` buttons for Notifications and OSD Toast, and `IpcHandler` target `opacity` (`toggle`, `open`, `close`, `reset`).
+  - Converted `Theme.component` / `primaryComponent` / `secondaryComponent` (and hover/pressed variants) in `Theme.qml` to calibrated translucent white overlays (`Qt.rgba(1, 1, 1, ...)`) so inner cards look identical at `96%` while scaling naturally into frosted glass when surface opacity is lowered.
+  - Wired `Bar.qml` (`Theme.barBg`), `Popup.qml` (`Theme.notificationsBg` for `notifications`, `Theme.widgetsBg` for all other popups), `NotificationCard.qml` (`Theme.notificationsBg` for toasts), `OsdWindow.qml` (`Theme.osdBg`), `Overview.qml` (`Theme.overviewBg` + `Theme.panelBorder`), `Launcher.qml` (`!opacity`), and `BarSettingsWindow.qml` (`Opacity` header button).
+  - Lowered `ignore_alpha` on `hcs-blur` in `config/hypr/conf/shell.lua` from `0.3` to `0.05` so frosted blur stays active at low opacities, and added `opacity = "1.0 override"` for `HCS — *` floating windows in `config/hypr/conf/windowrules.lua`. Verified zero QML/Hyprland errors and screenshot.
 
 ---
 

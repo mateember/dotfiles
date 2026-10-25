@@ -42,7 +42,7 @@ PanelWindow {
         id: background
         anchors.fill: parent
         radius: Math.min(Theme.radiusXl, height / 2)
-        color: Theme.panelBg
+        color: Theme.barBg
     }
 
     Component { id: compWorkspaces; Workspaces { screen: root.screen } }

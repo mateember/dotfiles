@@ -30,7 +30,7 @@ PanelWindow {
         id: pill
         anchors.fill: parent
         radius: height / 2
-        color: Theme.popupBg
+        color: Theme.osdBg
         border.color: Theme.popupBorder
         border.width: 1
         opacity: Osd.visible ? 1 : 0

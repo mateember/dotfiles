@@ -179,8 +179,18 @@ Opens the **Bar Settings** window where you can:
 - **Toggle** any of the 21 bar items on or off. (When an item is hidden on the bar, opening it from the `!` launcher menu or its keybind opens it as a centered floating window; opening it from the Quick Settings `>` chevron opens it in the top-right Quick Settings dropdown position.)
 - **Reorder** items within each section using the **↑ / ↓** buttons.
 - **Move** an item between **Left**, **Center**, and **Right** by clicking its section pill.
-- **Reset** the bar back to the default layout.
+- **Reset** the bar back to the default layout, or jump straight to **Opacity & Transparency**.
 Changes take effect immediately and are saved across restarts.
+
+### Opacity & Transparency (`!opacity` in the launcher, or `qs ipc call opacity toggle`)
+
+Opens the **Opacity & Transparency** window where you can separately adjust background opacity (`0%–100%`) for:
+- **Widgets** (all bar popups, Quick Settings, Launcher, Capture overlay, and shell widget windows — default `96%`)
+- **Bar** (top panel pill background; `0%` = floating icons — default `66%`)
+- **Notifications** (incoming notification pop-up toasts & notification center — default `96%`, with live **Test** button)
+- **Volume & Brightness Toast** (on-screen volume/brightness/keyboard indicator pill — default `96%`, previews live while dragging or via **Test**)
+
+Includes quick presets (**Default**, **Frosted Glass**, **Clear**, **Solid**) and **Reset**, persisted across restarts.
 
 ### Calendar events
 
@@ -220,7 +230,7 @@ Escape or a click outside closes it.
 | `=2^10*3` (or just `2*21`) | calculator (qalc); Enter copies the result |
 | `>command` | run a command; Shift+Enter runs it in kitty |
 | `:fire` (or SUPER period) | emoji; Enter types it into the focused window and copies it, Shift+Enter only copies |
-| `!` (or `/`, `@`) | **Quickshell apps & panels** (open as centered floating windows when launched here): Bar Settings, Quick Settings, Calendar, Weather, Clipboard, Notifications, Volume, Network, Bluetooth, Display, Media, Night Light, Battery, Layout, Color Picker, Next Wallpaper, Power Menu |
+| `!` (or `/`, `@`) | **Quickshell apps & panels** (open as centered floating windows when launched here): Bar Settings, Opacity & Transparency, Quick Settings, Calendar, Weather, Clipboard, Notifications, Volume, Network, Bluetooth, Display, Media, Night Light, Battery, Layout, Color Picker, Next Wallpaper, Power Menu |
 
 ↑/↓, Tab, Ctrl+J/K select · Enter launches · Escape or a click outside closes.
 

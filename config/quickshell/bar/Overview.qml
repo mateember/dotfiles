@@ -229,7 +229,7 @@ Scope {
                         implicitHeight: 132
                         radius: Theme.radiusM
                         color: isSelected ? Qt.rgba(1, 0.68, 0, 0.14)
-                             : (wsHover.containsMouse ? Theme.componentHover : Theme.panelBg)
+                             : (wsHover.containsMouse ? Theme.componentHover : Theme.overviewBg)
                         border.width: isSelected ? 2 : 1
                         border.color: isSelected ? Theme.accent
                                     : (isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.55) : Theme.panelBorder)
@@ -348,7 +348,7 @@ Scope {
                     implicitWidth: 120
                     implicitHeight: 132
                     radius: Theme.radiusM
-                    color: newWsHover.containsMouse ? Theme.componentHover : Theme.panelBg
+                    color: newWsHover.containsMouse ? Theme.componentHover : Theme.overviewBg
                     border.width: 1
                     border.color: Theme.panelBorder
 
@@ -390,7 +390,7 @@ Scope {
                     implicitWidth: 460
                     implicitHeight: 42
                     radius: 21
-                    color: Theme.panelBg
+                    color: Theme.overviewBg
                     border.width: searchInput.activeFocus ? 2 : 1
                     border.color: searchInput.activeFocus ? Theme.accent : Theme.panelBorder
 
@@ -493,7 +493,7 @@ Scope {
                     implicitWidth: allRow.implicitWidth + 24
                     implicitHeight: 42
                     radius: 21
-                    color: win.showAllWorkspaces ? Theme.accent : (allHover.containsMouse ? Theme.componentHover : Theme.panelBg)
+                    color: win.showAllWorkspaces ? Theme.accent : (allHover.containsMouse ? Theme.componentHover : Theme.overviewBg)
                     border.width: 1
                     border.color: win.showAllWorkspaces ? Theme.accent : Theme.panelBorder
 
@@ -615,7 +615,7 @@ Scope {
                             Layout.alignment: Qt.AlignCenter
 
                             radius: Theme.radiusL
-                            color: isHighlighted ? Qt.rgba(0.2, 0.2, 0.22, 0.92) : Theme.panelBg
+                            color: isHighlighted ? Qt.rgba(0.2, 0.2, 0.22, 0.92) : Theme.overviewBg
                             border.width: index === win.selectedIndex ? 2 : 1
                             border.color: index === win.selectedIndex ? Theme.accent
                                         : (cardHover.containsMouse ? Qt.rgba(1, 1, 1, 0.35) : Theme.panelBorder)

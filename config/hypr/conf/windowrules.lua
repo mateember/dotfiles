@@ -12,7 +12,7 @@ rule({ match = { class = "^(rofi)$" }, stay_focused = true })
 
 -- Quickshell standalone apps (opened from the Launcher `!` menu as FloatingWindows)
 rule({ match = { class = [[^(org\.quickshell|quickshell)$]] }, float = true, center = true })
-rule({ match = { title = "^(HCS — ).*" }, float = true, center = true })
+rule({ match = { title = "^(HCS — ).*" }, float = true, center = true, opacity = "1.0 override" })
 
 -- Volume Control (40% width, 50% height)
 rule({ match = { title = "^(Pipewire Volume Control)$" }, float = true, size = "monitor_w*0.5 monitor_h*0.6", center = true })

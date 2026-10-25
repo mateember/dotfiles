@@ -37,5 +37,5 @@ hl.layer_rule({
     match = { namespace = "^(hcs-(bar|popup|launcher|overview|osd|toast|notifications|quicksettings|power))$" },
     blur = true,
     blur_popups = true,
-    ignore_alpha = 0.3,
+    ignore_alpha = 0.05,
 })
