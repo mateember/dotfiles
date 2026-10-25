@@ -22,6 +22,7 @@ Singleton {
     readonly property color accentHover: ron("#E09E14FF")
     readonly property color accentPressed: ron("#8A610BFF")
     readonly property color fgOnAccent: ron("#000000FF")
+    readonly property color accentText: fgOnAccent
 
     // ---- background (v2/background) ----
     readonly property color bg: ron("#1B1B1BFF")
@@ -32,6 +33,7 @@ Singleton {
     readonly property color componentHover: ron("#434343FF")
     readonly property color componentPressed: ron("#585858FF")
     readonly property color componentDivider: ron("#FFFFFF33")
+    readonly property color divider: componentDivider
     readonly property color componentBorder: ron("#BEBEBEFF")
 
     // ---- primary / secondary containers (v2/primary, v2/secondary) ----

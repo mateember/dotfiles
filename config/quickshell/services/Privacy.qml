@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 // Real-time privacy monitor: tracks active Microphone, Camera, and Screen Sharing streams.
+// Event-driven on PipeWire node changes (instant response), with lightweight fallback polling.
 Singleton {
     id: root
 
@@ -41,12 +42,29 @@ Singleton {
         if (!proc.running) proc.running = true;
     }
 
-    // Immediate refresh when PipeWire node count changes
-    readonly property int _pwNodeCount: Pipewire.nodes.values.length
-    on_PwNodeCountChanged: refresh()
+    // Immediate event-driven refresh whenever PipeWire nodes (streams/sources) are added or removed
+    readonly property string _pwNodesSig: Pipewire.nodes.values.map(n => n.id).join(",")
+    on_PwNodesSigChanged: {
+        debounceTimer.restart();
+        followUpTimer.restart();
+    }
 
     Timer {
-        interval: 2500
+        id: debounceTimer
+        interval: 150
+        onTriggered: root.refresh()
+    }
+
+    // Second check once a newly created stream node transitions from "suspended" to "running"
+    Timer {
+        id: followUpTimer
+        interval: 900
+        onTriggered: root.refresh()
+    }
+
+    // When a stream is active, check every 4s for state changes; when idle, only every 20s (for raw V4L2 /dev/video*)
+    Timer {
+        interval: root.active ? 4000 : 20000
         repeat: true
         running: true
         triggeredOnStart: true

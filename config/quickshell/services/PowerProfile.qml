@@ -5,7 +5,8 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// Power profile / TLP mode (reads /sys/firmware/acpi/platform_profile and switches via ~/dotfiles/scripts/tlpmodes.sh).
+// Power profile / TLP mode (reads /sys/firmware/acpi/platform_profile in-process via FileView
+// and switches via ~/dotfiles/scripts/tlpmodes.sh).
 // Modes: "low-power" (Power Saver), "balanced" (Balanced), "performance" (Performance).
 Singleton {
     id: root
@@ -45,11 +46,19 @@ Singleton {
     FileView {
         id: prof
         path: "/sys/firmware/acpi/platform_profile"
+        watchChanges: true
         printErrors: false
+        onFileChanged: reload()
         onLoaded: {
             const v = text().trim();
             if (v) root.mode = v;
         }
+    }
+
+    // Re-check immediately when AC charger is plugged/unplugged (TLP auto-switches profile)
+    Connections {
+        target: Battery
+        function onChargingChanged() { prof.reload(); }
     }
 
     Process {
@@ -59,8 +68,9 @@ Singleton {
         onExited: prof.reload()
     }
 
+    // Low-frequency fallback reload (in-process FileView read, zero subprocesses)
     Timer {
-        interval: 5000
+        interval: 30000
         running: true
         repeat: true
         onTriggered: prof.reload()

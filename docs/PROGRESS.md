@@ -752,6 +752,12 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Added `Popups.fromQuickSettings` + `Popups.openFromQuickSettings(id)` and `Recorder.openOverlayFromQuickSettings(tab)`.
   - Every widget opened from Quick Settings (`Wi-Fi`, `Bluetooth`, `Night light`, `Notifications`, `Caffeine`, `Layout`, `Power mode / Battery`, `Volume`, `Display`, `Power`, and `Screenshot / Screen Record`) now opens as a dropdown in the exact top-right position of the Quick Settings menu, even if that widget is disabled/hidden on the bar in `BarConfig`.
 
+### 2026-10-25 10:44–10:47 – Battery & wakeup optimizations in `Privacy.qml` and `PowerProfile.qml`
+- Updated `config/quickshell/services/Privacy.qml`, `config/quickshell/services/PowerProfile.qml`, and `config/quickshell/Theme.qml`:
+  - Made `Privacy.qml` event-driven on `Pipewire.nodes.values` (`_pwNodesSig` + 150ms debounce and 900ms follow-up once newly created stream nodes transition to `"running"`), reducing idle fallback polling from `2.5s` to `20s` (and `4s` while an audio/video capture stream is active).
+  - Enabled `watchChanges: true` on `FileView` (`/sys/firmware/acpi/platform_profile`), connected `Battery.onChargingChanged` to reload immediately when AC is plugged/unplugged, and increased the fallback reload interval in `PowerProfile.qml` from `5s` to `30s`.
+  - Added `divider` and `accentText` aliases in `Theme.qml` so reload completes with zero QML warnings.
+
 ---
 
 ## Decisions (defaults, user may override)
