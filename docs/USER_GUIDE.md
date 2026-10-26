@@ -82,7 +82,7 @@ System-level notes and NixOS module details are in `NIXOS_NOTES.md`.
 | SUPER Q | close window |
 | SUPER M | exit Hyprland |
 | SUPER V | toggle floating |
-| **SUPER F** | **maximize / restore (toggle)**, keeps the bar and gaps | was real fullscreen |
+| **SUPER F** | **toggle column width 1.0 ↔ 0.5** (full width ↔ half screen on scrolling layout; maximize in dwindle/floating) | was real fullscreen |
 | **SUPER SHIFT F** | **real fullscreen (toggle)** | new |
 | SUPER P | pseudotile |
 | SUPER J | toggle split (dwindle) |
@@ -121,7 +121,8 @@ Windows open as columns on an endless horizontal strip. Workspaces slide horizon
 
 Column widths when a window opens: terminals (kitty, COSMIC Terminal, foot, Alacritty, WezTerm, GNOME Console)
 and file managers (Thunar, COSMIC Files, Nautilus, Dolphin) get **half** the screen; everything else
-gets the **full** width. Apps can no longer maximize themselves (kitty used to); use SUPER F.
+gets the **full** width. Press **SUPER F** at any time on any window to toggle directly between half-screen (0.5)
+and full-screen (1.0). SUPER SHIFT F is real fullscreen.
 A strip narrower than the screen (e.g. one terminal) is shown centered; Hyprland can't left-align it.
 
 Back to the old dwindle tiling: click the layout icon on the bar (toggles scrolling ↔ dwindle until the next

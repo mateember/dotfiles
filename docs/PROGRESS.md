@@ -777,6 +777,13 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - Added event-driven `nmcli monitor` listener in `Net.qml` (zero idle CPU wakeups), `toggleVpn` / `connectVpn` / `disconnectVpn` with inline password fallback (`passwd-file` in `$XDG_RUNTIME_DIR` with `0600` perms) if a VPN requires interactive secrets, plus `createVpn`, `editVpn`, and `openConnectionEditor` (`nm-connection-editor`).
   - Added a dedicated **VPN** manager section at the top of `NetworkModule.qml` (with `+` create button, `tune` manager button, per-profile gear edit button, and connect/disconnect switch), an amber `vpn_key` bar indicator next to Wi-Fi/Ethernet when a VPN is connected, `· VPN` status in Quick Settings, and connect/disconnect OSD toast. Verified live with `BME-eduID` (`vpn.net.bme.hu · IPsec`).
 
+### 2026-10-26 23:17 – Half / Full width column toggle in scrolling layout (`SUPER + F`)
+- Updated `config/hypr/conf/niri.lua`:
+  - Replaced generic maximize bind with a smart Lua function for `SUPER + F` that checks the active window:
+    - If floating or not in scrolling layout (e.g. dwindle): falls back to standard maximize.
+    - If in scrolling layout: toggles directly between `1.0` (full width) and `0.5` (half width column) using `hl.dsp.layout("colresize 0.5")` / `colresize 1.0` (and unmaximizes first if previously maximized).
+  - This allows windows that open at full width by default (browsers, apps) to toggle instantly to half-width scrolled columns with `SUPER + F`. Verified live with `hyprctl reload`.
+
 ---
 
 ## Decisions (defaults, user may override)

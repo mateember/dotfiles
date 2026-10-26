@@ -126,7 +126,37 @@ hl.bind(M .. " + udiaeresis", layout("colresize -0.1"))   -- niri Mod+Minus
 hl.bind(M .. " + oacute",     layout("colresize +0.1"))   -- niri Mod+Equal
 hl.bind(M .. " + CTRL + C",   layout("center"))
 
--- SUPER F (in keyboard.lua) toggles maximize; real fullscreen is here, like niri's Mod+Shift+F.
+-- SUPER F toggles between full width (1.0) and default half width (0.5) in scrolling layout
+-- (or falls back to traditional maximize in other layouts / floating).
+local function toggle_width()
+    local w = hl.get_active_window()
+    if not w then return end
+
+    if w.floating or hl.get_config("general:layout") ~= "scrolling" then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
+        return
+    end
+
+    if w.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
+        hl.dispatch(hl.dsp.layout("colresize 0.5"))
+        return
+    end
+
+    local mon = hl.get_active_monitor()
+    local mon_w = (mon and mon.scale and mon.scale > 0) and (mon.width / mon.scale) or 1440
+    local ratio = w.size.x / mon_w
+
+    if ratio > 0.75 then
+        hl.dispatch(hl.dsp.layout("colresize 0.5"))
+    else
+        hl.dispatch(hl.dsp.layout("colresize 1.0"))
+    end
+end
+
+hl.bind(M .. " + F", toggle_width)
+
+-- Real fullscreen (SUPER + SHIFT + F), like niri's Mod+Shift+F.
 hl.bind(M .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 
 -- Pull the next window into this column / push a window out into its own column
