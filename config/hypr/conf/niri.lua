@@ -126,8 +126,10 @@ hl.bind(M .. " + udiaeresis", layout("colresize -0.1"))   -- niri Mod+Minus
 hl.bind(M .. " + oacute",     layout("colresize +0.1"))   -- niri Mod+Equal
 hl.bind(M .. " + CTRL + C",   layout("center"))
 
--- SUPER F toggles between full width (1.0) and default half width (0.5) in scrolling layout
--- (or falls back to traditional maximize in other layouts / floating).
+-- SUPER F toggles between full width (1.0) and the window's previous width (or 0.5 default)
+-- in scrolling layout (or falls back to traditional maximize in other layouts / floating).
+local prev_widths = {}
+
 local function toggle_width()
     local w = hl.get_active_window()
     if not w then return end
@@ -139,21 +141,32 @@ local function toggle_width()
 
     if w.fullscreen ~= 0 then
         hl.dispatch(hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
-        hl.dispatch(hl.dsp.layout("colresize 0.5"))
         return
     end
 
     local mon = hl.get_active_monitor()
     local mon_w = (mon and mon.scale and mon.scale > 0) and (mon.width / mon.scale) or 1440
-    local ratio = w.size.x / mon_w
+    local is_full = (w.size.x / mon_w) >= 0.85
 
-    if ratio > 0.75 then
-        hl.dispatch(hl.dsp.layout("colresize 0.5"))
+    if is_full then
+        -- Window is currently full width.
+        -- Shrink to previous unmaximized size, or default to 0.5 if it opened full width.
+        local target = prev_widths[w.address] or 0.5
+        if target >= 0.85 or target < 0.2 then target = 0.5 end
+        prev_widths[w.address] = target
+        hl.dispatch(hl.dsp.layout(string.format("colresize %.2f", target)))
     else
+        -- Window is currently at a partial width (0.5, 0.6, 0.7, etc.).
+        -- Read its actual size right now before maximizing.
+        local ratio = math.floor(((w.size.x + 18) / mon_w) * 100 + 0.5) / 100
+        prev_widths[w.address] = ratio
         hl.dispatch(hl.dsp.layout("colresize 1.0"))
     end
 end
 
+_G.toggle_width = toggle_width
+
+hl.unbind(M .. " + F")
 hl.bind(M .. " + F", toggle_width)
 
 -- Real fullscreen (SUPER + SHIFT + F), like niri's Mod+Shift+F.

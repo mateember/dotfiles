@@ -18,7 +18,8 @@ hl.config({
             natural_scroll = false,
         },
 
-        sensitivity = -0.4, -- -1.0 - 1.0, 0 means no modification.
+        sensitivity = -0.35, -- -1.0 - 1.0, 0 means no modification.
+	accel_profile = "flat",
     },
 })
 

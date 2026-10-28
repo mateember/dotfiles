@@ -9,3 +9,4 @@ config/nvim/lazy-lock.json
 /config/fish/fish_variables
 config/fish/fish_variables
 kiro.txt
+config/nvim/lazy-lock.json
