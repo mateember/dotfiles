@@ -66,7 +66,15 @@ Row {
                 font.pixelSize: Theme.barFontSize - 1
                 font.weight: Font.Bold
                 color: ws.isActive ? Theme.fgOnAccent : Theme.text
-                x: circle.x + (circle.width - metrics.tightBoundingRect.width) / 2 - metrics.tightBoundingRect.x
+
+                // Optical adjustment for digits with asymmetrical visual weight.
+                // "1" is nudged left so its vertical stem aligns with the circle's center.
+                readonly property var opticalOffsets: ({
+                    "1": -1.5,
+                })
+                readonly property real opticalShiftX: opticalOffsets[text] ?? 0
+
+                x: circle.x + (circle.width - metrics.tightBoundingRect.width) / 2 - metrics.tightBoundingRect.x + opticalShiftX
                 // tightBoundingRect.y is relative to the baseline (negative = above it)
                 y: circle.y + (circle.height - metrics.tightBoundingRect.height) / 2 - (baselineOffset + metrics.tightBoundingRect.y)
                 TextMetrics {

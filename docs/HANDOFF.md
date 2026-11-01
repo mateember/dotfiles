@@ -1,58 +1,150 @@
-# Handoff for the next agent (updated 2026-10-25 00:12)
+# Developer Handoff
 
-The user is low on tokens: keep replies short, ask only what blocks you.
+This document provides context, conventions, and status for developers and agent sessions working on this repository.
 
-## Read these first (all in `~/dotfiles/docs/`)
-- `PROGRESS.md`: full dated log of every step, decision and gotcha. Newest entries are just above
-  `## Decisions`; `## Next steps` is at the end. **Append an entry after every step.**
-- `USER_GUIDE.md`: what the user has: keybinds (before/after), bar items, launcher, config changes. Keep it in sync.
-- `NIXOS_NOTES.md`: system-level notes (UWSM vs plain session, packages to remove, PAM, nm-applet, KWallet, calendar events, TLP NOPASSWD).
-- `HANDOFF.md`: this file. Update all four `.md` files in `~/dotfiles/docs/` as you go.
-- Note: the old `~/hypr-cosmic-shell/` project directory has been removed now that everything lives on git branches.
+---
 
-## Where the real work is
-- `~/dotfiles` branch `hypr-cosmic-shell`: `config/hypr` (Lua config), `config/quickshell` (the shell), and `docs/`
-  (`PROGRESS.md`, `USER_GUIDE.md`, `NIXOS_NOTES.md`, `HANDOFF.md`).
-  Symlinked into `~/.config/hypr` and `~/.config/quickshell`. Commit per feature with `git commit -m ... -- <your paths>`.
-  The user's own uncommitted files (e.g. `config/hypr/conf/keyboard.lua`) are theirs: never commit them unless asked.
-- `~/Nix` branch `hypr-cosmic-shell`: `system/matevono/hyprland-desktop.nix`, `system/matevono/calendar-events.nix`,
-  `system/matevono/configuration.nix`. Check `git diff` before touching; never run `nixos-rebuild switch` (needs root, user does it).
+## 1. Project Overview & Codebase Structure
 
-## Working rules learned the hard way
-- Wrap every `qs`, `hyprctl`, `busctl`, `systemctl` call in `timeout N`; hung IPC calls blocked earlier turns.
-- Restart the shell with `~/.config/hypr/scripts/restart-shell.sh`. New directories under `config/quickshell`
-  need a full restart (hot reload says "module not installed").
-- My tool shell has NoNewPrivs: no `pkexec`/`sudo`, and never start long-running session processes from it
-  (use `hyprctl dispatch 'hl.dsp.exec_cmd("...")'`). `/proc/<pid>/environ` of user processes is unreadable.
-- **Screenshots / temporary test images**: ALWAYS place any `grim` / ImageMagick test screenshots or scratch images
-  in `/tmp` or `$XDG_RUNTIME_DIR` (never in `~/dotfiles` or the home directory).
-- Verify UI by `timeout 5 qs ipc call bar toggle <name>` + `grim /tmp/...` + `nix shell nixpkgs#imagemagick -c magick` crop.
-- QML: never name a property `onXxx`; avoid binding loops; text weight goes through `StyledText` (sets styleName);
-  icons are Material Symbols via `Icon`; all colors/sizes from `Theme.qml`.
-- Don't fix problems the display manager / UWSM already solves. The user runs "Hyprland (uwsm-managed)".
-- Never ask for or handle passwords (Nextcloud app password: the user types it into GNOME Calendar themselves).
+The project is a custom Wayland desktop environment running on NixOS:
+- **Hyprland (Lua API, version >= 0.55)**: Configured in `~/dotfiles/config/hypr/` (symlinked to `~/.config/hypr/`).
+- **Quickshell (qs 0.3.2)**: Desktop shell in `~/dotfiles/config/quickshell/` (symlinked to `~/.config/quickshell/`).
+- **Documentation**: Located in `~/dotfiles/docs/`:
+  - `USER_GUIDE.md`: Full user guide, keybindings, and widget documentation.
+  - `HANDOFF.md`: This architecture and development handoff document.
+  - `PROGRESS.md`: Historical implementation and development log.
 
-## State to be aware of
-- Recently completed (all committed on `~/dotfiles` branch `hypr-cosmic-shell`):
-  - **Nextcloud / EDS calendar events** (`cf8bdc2` in dotfiles, `609092b` in Nix): `services/CalendarEvents.qml`, `Clock.qml`, `scripts/calendar-events.py`.
-  - **Battery & Quick Settings power mode selector** (`712f2a4`, `20db4c6` in dotfiles; `8e05413` in Nix): `services/PowerProfile.qml` wrapping `~/dotfiles/scripts/tlpmodes.sh`.
-  - **Launcher `!` Quickshell apps & Bar Settings (`!bar`)** (`6bdba0e`): `services/BarConfig.qml`, `bar/BarSettingsWindow.qml`, standalone centered floating `PanelWindow` fallback in `components/Popup.qml`.
-  - **`hyprlock` & Media fixes** (`a960e00`): removed dark `$card` shape behind password box, fixed brace-free `playerctl` loop in `hyprlock-gen.py` so track info never shows `"Sample Text"`, moved `playerctl pause-all` to `before_sleep_cmd` in `hypridle.conf`, filtered idle `kdeconnect` in `services/Media.qml`.
-  - **Low-battery notifications** (`1ef2516`): `< 20%` (normal) and `< 10%` (critical) in `osd/OsdTriggers.qml`.
-  - **Floating desktop portal / screen-share pickers** (`cf7f29d`): `hyprland-share-picker` & `xdg-desktop-portal-*` in `conf/windowrules.lua`.
-  - **Pop icon theme unification, horizontal workspaces + 4-finger horizontal workspace swipe, and KDE Plasma-style Overview** (`9bae90f`, `7ccb9c9`): `bar/Overview.qml` (`SUPER+Tab` / `SUPER+W`, `Escape` closes, 4-finger vertical swipe up/down follows fingers 1:1 via `hl.dsp.event("hcs_overview:...")` on `socket2`).
-  - **COSMIC Minimon-style modular system monitor** (`938601a`, `bbf0aa6`): `services/SystemStats.qml` + `modules/Stats.qml` (CPU, Temp, Memory, Network, Disk, GPU sparklines/rings/labels/icons + multi-page dropdown).
-  - **Caffeine right-click interval dropdown & left-click toggle** (`e123361`): `services/Idle.qml` + `modules/Caffeine.qml` (left click toggles on indefinitely or turns off if active; right click opens `Indefinitely` / `15m` / `30m` / `1h` / `2h` / `4h` dropdown with countdown).
-  - **Capture & Screen Recording Studio + Hardware/Privacy Peripherals** (`9821877` in dotfiles, `7dd8f2f` in Nix): `services/Recorder.qml`, `bar/CaptureOverlay.qml` (`SUPER+Print`), `modules/RecorderIndicator.qml`, `services/Privacy.qml`, `modules/PrivacyIndicator.qml`, `services/Storage.qml`, `modules/StorageModule.qml`, and Bluetooth battery levels in `services/Bt.qml` + `modules/BluetoothModule.qml`.
-  - **Notification toast fade & click-to-focus app activation** (`9c750e8`): `services/Notifs.qml`, `notifications/Toasts.qml`, `components/NotificationCard.qml`, and `misc.focus_on_activate = true` in `config/hypr/conf/looks.lua`.
-  - **60 Hz / 120 Hz refresh rate toggle in Display menu** (`487537f`): `services/Brightness.qml` + `modules/Display.qml` via `hyprctl eval 'hl.monitor(...)'`.
-  - **Quick Settings sub-widgets position** (`b7ed8ef`): `services/Popups.qml` (`openFromQuickSettings`) + `components/Popup.qml` + `services/Recorder.qml` so any widget opened from Quick Settings opens as a dropdown in the top-right Quick Settings spot even if hidden on the bar.
-  - **Battery / wakeup optimizations** (`b112250`): `services/Privacy.qml` (event-driven on `Pipewire.nodes.values`, 20s idle fallback instead of 2.5s) and `services/PowerProfile.qml` (`FileView` `watchChanges: true` + `Battery.onChargingChanged` + 30s fallback).
-  - **Battery widget 60/120 Hz & session-only blur toggles** (`e315916`): `modules/BatteryModule.qml` + `services/Hypr.qml` (`setBlur` via runtime `hyprctl eval`, resets after logout/reboot).
-  - **Per-component Opacity & Transparency widget app (`!opacity`)** (`871f665`): `services/OpacityConfig.qml` + `bar/OpacitySettingsWindow.qml` + `Theme.qml` (separate persistent sliders for Widgets, Bar, Notifications, and Volume/Brightness OSD Toast + quick presets + live preview buttons).
-  - **VPN Manager in Network widget** (`1c3d663`): `services/Net.qml` + `modules/NetworkModule.qml` + `scripts/hardware-status.py` (`vpns`) with event-driven `nmcli monitor`, connect/disconnect toggles, inline secret prompt fallback, per-profile `nm-connection-editor` actions, and active VPN bar indicator.
-  - **Half / Full column width toggle (`SUPER + F`)**: in `conf/niri.lua`, toggles scrolling columns between `1.0` (full width) and `0.5` (half width), allowing windows opened at full width to shrink to half-screen scrolled columns instantly. Falls back to standard maximize in dwindle / floating.
-- `TZDIR=/etc/zoneinfo` is set in `config/hypr/conf/environment.lua` (NixOS' Hyprland capability wrapper makes glibc
-  drop it; GNOME Calendar crashed with `tz != NULL`).
-- nm-applet hidden via `~/.config/autostart/nm-applet.desktop` (`Hidden=true`). polkit-gnome likewise (Home Manager).
-- Env-sync lines in `autostart.lua` are commented out on purpose (UWSM does it).
+### Key File Locations
+
+```
+~/dotfiles/
+├── config/
+│   ├── hypr/
+│   │   ├── hyprland.lua            # Compositor entry point (monitors, devices, includes)
+│   │   ├── conf/
+│   │   │   ├── niri.lua            # Scrolling layout, column width rules, gestures, SUPER+F toggle
+│   │   │   ├── keyboard.lua        # Input devices, core shortcuts, hardware keys
+│   │   │   ├── windowrules.lua     # Window floating, centering, and sizing rules
+│   │   │   ├── autostart.lua       # Background services (hypridle, hyprsunset, quickshell)
+│   │   │   ├── looks.lua           # Borders, gaps, blur, inactive opacity
+│   │   │   ├── environment.lua     # Wayland environment variables (TZDIR, BROWSER, QS_ICON_THEME)
+│   │   │   └── shell.lua           # Shell launch command and shell-specific binds
+│   │   ├── scripts/
+│   │   │   └── restart-shell.sh    # Script to restart Quickshell cleanly (SUPER+SHIFT+R)
+│   │   ├── hypridle.conf           # Idle timeouts for lock and screen power
+│   │   └── hyprlock-gen.py         # Monitor-aware generator for hyprlock.conf
+│   └── quickshell/
+│       ├── shell.qml               # Quickshell root, variants over screens, global IPC
+│       ├── Theme.qml               # Single source of truth for colors, typography, spacing (COSMIC Dark)
+│       ├── Config.qml              # User-tunable shell properties (weather, wallpaper directory)
+│       ├── bar/                    # Top panel (Bar.qml), Overview, Bar Settings, Opacity Settings
+│       ├── modules/                # 21 modular widgets for the top panel
+│       ├── services/               # Singletons (Net, Bt, Notifs, Wallpapers, SystemStats, etc.)
+│       ├── components/             # Reusable UI primitives (Popup, ListItem, Toggle, StyledText, Icon)
+│       ├── launcher/               # Unified App & Shell Launcher (SUPER+Space)
+│       ├── quicksettings/          # Quick Settings dropdown panel (SUPER+Comma)
+│       └── wallpaper/              # Background wallpaper layer surface
+```
+
+---
+
+## 2. Working Rules & Guidelines
+
+1. **Keep Responses Concise**:
+   - Deliver clear, direct answers without unnecessary conversational filler.
+   - Format paths and symbols as clickable markdown links (`file:///...`).
+2. **Commands & Timeouts**:
+   - Wrap interactive CLI commands (`qs`, `hyprctl`, `systemctl`, `busctl`) in a reasonable timeout (e.g. `timeout 5 ...`) to prevent stalled processes.
+3. **Preserve User Files**:
+   - The user has personal, uncommitted changes in files such as `config/hypr/conf/keyboard.lua` (sensitivity/accel_profile) and `config/fish/config.fish`.
+   - **Never revert, overwrite, or stage/commit these files** unless explicitly requested.
+4. **Scratch Files & Screenshots**:
+   - Always place temporary test scripts, screenshots (`grim`), and cropped images in `/tmp` (never in `~/dotfiles` or `~`).
+5. **Quickshell QML Conventions**:
+   - Never name a custom property starting with `onXxx` (reserved for signal handlers in Qt).
+   - Use `StyledText` instead of standard `Text` to ensure proper `styleName` weight mapping with Fira Sans.
+   - Use `Icon` with Material Symbols Rounded glyph names.
+   - Source all colors, spacing, and corner radii from `Theme.qml`.
+   - After creating a new subfolder in `config/quickshell/`, restart Quickshell via `restart-shell.sh` (hot-reload only monitors existing directories).
+
+---
+
+## 3. Key Components & Implementation Details
+
+### Niri-Style Scrolling Layout (`config/hypr/conf/niri.lua`)
+- Hyprland runs the `scrolling` layout as default.
+- Terminals and file managers open at `0.5` width; other applications open at `1.0`.
+- **`SUPER + F` Smart Width Toggle**:
+  - Dynamically inspects the window's current width ratio.
+  - If `< 0.85`: remembers its exact width ratio in a Lua table `prev_widths[w.address]` and resizes to `1.0`.
+  - If `>= 0.85`: restores `prev_widths[w.address]`. If the window opened at full width without a saved prior size, it defaults to `0.5`.
+  - Unbinds `SUPER + F` before binding to prevent collision with legacy maximize dispatchers.
+
+### Workspaces Optical Centering (`config/quickshell/modules/Workspaces.qml`)
+- Workspace digits are centered inside active amber circles using `tightBoundingRect`.
+- Because the digit `1` in Fira Sans has a prominent top-left flag and no bottom serif, pure bounding-box centering pushes its vertical stem to the right.
+- An `opticalOffsets` map (`"1": -1.5`) applies subpixel adjustment so the stem sits dead-center in the circle.
+
+### Network & VPN Module (`config/quickshell/modules/NetworkModule.qml`)
+- Top `PopupHeader` provides the title "Network" and a settings gear opening `["cosmic-settings", "network"]`.
+- The Wi-Fi on/off switch (`Toggle`) is placed directly beside the "Wi-Fi" section title.
+- The VPN manager tracks connections, supports interactive inline password prompts, and routes configuration to `nm-connection-editor`.
+
+### Wallpaper Slideshow (`config/quickshell/services/Wallpapers.qml`)
+- Slideshow sources images from `~/Pictures/BingWallpaper` every 5 minutes.
+- `Wallpapers` exposes `next()` on its root singleton to allow manual rotation from both the launcher app (`qs:wallpaper`) and IPC (`qs ipc call wallpaper next`).
+
+---
+
+## 4. Development Workflow, Testing & Debugging
+
+### Shell Management & Restart Script
+Quickshell owns system-level singletons (StatusNotifier tray, notifications D-Bus name `org.freedesktop.Notifications`, and layer-shell namespaces `hcs-bar`, `hcs-wallpaper`). Running two instances simultaneously causes socket and namespace conflicts.
+
+Always use the restart script:
+```bash
+# Restart Quickshell cleanly (kills old instance first)
+~/.config/hypr/scripts/restart-shell.sh
+
+# Restart Quickshell AND reload Hyprland configuration
+~/.config/hypr/scripts/restart-shell.sh --reload-hyprland
+# (Or press SUPER + SHIFT + R from anywhere)
+```
+
+### Hot Reloading vs. Restarting
+- **Existing files**: Saving any `.qml` file in `config/quickshell/` triggers an immediate hot-reload.
+- **New folders**: Adding a new directory under `config/quickshell/` (e.g. creating a new module or service category) requires running `restart-shell.sh` so Qt QML import scanners register the path.
+
+### Logs & Error Checking
+```bash
+# Monitor live Quickshell logs (QML runtime warnings, JS exceptions)
+qs log
+
+# Check Hyprland Lua syntax errors
+hyprctl configerrors
+```
+
+### IPC Scripting & Testing
+You can interact with and trigger shell components directly from the command line:
+```bash
+# Toggle bar popups (volume, network, bluetooth, clipboard, weather, calendar, etc.)
+qs ipc call bar toggle network
+qs ipc call bar toggle volume
+
+# Trigger shell actions
+qs ipc call wallpaper next          # Switch to next random Bing wallpaper
+qs ipc call launcher toggle         # Toggle app launcher
+qs ipc call overview toggle         # Toggle Overview
+qs ipc call barsettings toggle      # Toggle Bar Settings window
+qs ipc call opacity toggle          # Toggle Opacity & Transparency window
+qs ipc call nightlight toggle       # Toggle night light
+qs ipc call powerprofile cycle      # Cycle power mode (Power Saver -> Balanced -> Performance)
+```
+
+### Adding a New Bar Widget
+1. Create `config/quickshell/modules/MyWidget.qml` using `BarButton`, `Popup`, `StyledText`, and `Icon`.
+2. Register the component in `config/quickshell/bar/Bar.qml`:
+   - Add `Component { id: compMyWidget; MyWidget {} }`
+   - Add `case "mywidget": return compMyWidget;` in `moduleComponent()`.
+3. Register the widget in `config/quickshell/services/BarConfig.qml` with its default section (`left`, `center`, or `right`).
+4. Restart Quickshell via `~/.config/hypr/scripts/restart-shell.sh`.

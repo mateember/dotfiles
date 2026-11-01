@@ -15,6 +15,8 @@ Singleton {
     readonly property int count: folder.count
     signal tick()   // time to change wallpaper
 
+    function next(): void { root.tick(); }
+
     function randomUrl(exclude: string): string {
         if (folder.count === 0) return "";
         let url = "";
@@ -43,6 +45,6 @@ Singleton {
     // qs -p <root>/shell ipc call wallpaper next
     IpcHandler {
         target: "wallpaper"
-        function next(): void { root.tick(); }
+        function next(): void { root.next(); }
     }
 }

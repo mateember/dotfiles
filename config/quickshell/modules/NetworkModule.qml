@@ -61,13 +61,7 @@ BarButton {
 
         PopupHeader {
             title: "Network"
-            Toggle {
-                checked: Net.wifiEnabled
-                enabled: Networking.wifiHardwareEnabled
-                onToggled: Net.setWifiEnabled(!Net.wifiEnabled)
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            AppButton { command: ["cosmic-settings", "wireless"] }
+            AppButton { command: ["cosmic-settings", "network"] }
         }
 
         ListItem {
@@ -223,9 +217,21 @@ BarButton {
         Separator {}
 
         // ---- Wi-Fi ----
-        StyledText {
-            text: "Wi-Fi"
-            font.weight: Font.DemiBold
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spaceXs
+
+            StyledText {
+                Layout.fillWidth: true
+                text: "Wi-Fi"
+                font.weight: Font.DemiBold
+            }
+
+            Toggle {
+                checked: Net.wifiEnabled
+                enabled: Networking.wifiHardwareEnabled
+                onToggled: Net.setWifiEnabled(!Net.wifiEnabled)
+            }
         }
 
         StyledText {

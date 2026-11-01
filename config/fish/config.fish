@@ -11,3 +11,4 @@ zoxide init fish | source
 set -gx PATH $PATH /home/mate/.lmstudio/bin
 # End of LM Studio CLI section
 
+
