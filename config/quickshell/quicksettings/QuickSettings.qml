@@ -18,6 +18,15 @@ Scope {
     function setOpen(v: bool) { QuickSettingsState.open = v; }
     function toggle() { QuickSettingsState.toggle(); }
 
+    property real cardOpacity: open ? 1 : 0
+    Behavior on cardOpacity { NumberAnimation { duration: Theme.animFast } }
+
+    // Opening Quick Settings closes any open bar popup, and vice versa.
+    Connections {
+        target: QuickSettingsState
+        function onOpenChanged() { if (QuickSettingsState.open && Popups.current !== "") Popups.close(); }
+    }
+
     // Close the panel and open a bar popup (e.g. "network") in the Quick Settings position.
     function openPopup(name: string, screenName: string) {
         root.setOpen(false);
@@ -38,13 +47,13 @@ Scope {
     }
 
     LazyLoader {
-        active: root.open
+        active: root.open || root.cardOpacity > 0
 
         PanelWindow {
             id: win
 
             screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
-            visible: !QuickSettingsState.asWindow
+            visible: !QuickSettingsState.asWindow && (root.open || root.cardOpacity > 0)
             color: "transparent"
             anchors.top: true
             anchors.right: true
@@ -57,12 +66,12 @@ Scope {
 
             WlrLayershell.namespace: "hcs-quicksettings"
             WlrLayershell.layer: WlrLayer.Top
-            WlrLayershell.keyboardFocus: !QuickSettingsState.asWindow ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (root.open && !QuickSettingsState.asWindow) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
             readonly property string screenName: screen?.name ?? ""
 
             HyprlandFocusGrab {
-                active: !QuickSettingsState.asWindow
+                active: root.open && !QuickSettingsState.asWindow
                 windows: [win]
                 onCleared: if (!QuickSettingsState.asWindow) root.setOpen(false)
             }
@@ -92,6 +101,8 @@ Scope {
                 clip: true
                 focus: true
                 Keys.onEscapePressed: root.setOpen(false)
+
+                opacity: QuickSettingsState.asWindow ? 1 : root.cardOpacity
 
                 ColumnLayout {
                     id: col

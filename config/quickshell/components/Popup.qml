@@ -47,7 +47,7 @@ PanelWindow {
     onOpenChanged: if (open) bg.forceActiveFocus()
 
     screen: barWindow?.screen ?? null
-    visible: openDropdown
+    visible: openDropdown || (!Popups.asWindow && bg.opacity > 0)
     color: "transparent"
 
     anchors.top: true
