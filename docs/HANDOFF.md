@@ -22,13 +22,12 @@ The project is a custom Wayland desktop environment running on NixOS:
 │   ├── hypr/
 │   │   ├── hyprland.lua            # Compositor entry point (monitors, devices, includes)
 │   │   ├── conf/
-│   │   │   ├── niri.lua            # Scrolling layout, column width rules, gestures, SUPER+F toggle
-│   │   │   ├── keyboard.lua        # Input devices, core shortcuts, hardware keys
-│   │   │   ├── windowrules.lua     # Window floating, centering, and sizing rules
-│   │   │   ├── autostart.lua       # Background services (hypridle, hyprsunset, quickshell)
+│   │   │   ├── scrolling.lua       # Scrolling layout, column width rules, gestures, SUPER+F toggle
+│   │   │   ├── keybinds.lua        # Input devices, core & shell shortcuts, hardware keys
+│   │   │   ├── rules.lua           # Window and layer rules (floating, centering, sizing, blur)
+│   │   │   ├── autostart.lua       # Background services (qs, hypridle, hyprsunset, cliphist)
 │   │   │   ├── looks.lua           # Borders, gaps, blur, inactive opacity
-│   │   │   ├── environment.lua     # Wayland environment variables (TZDIR, BROWSER, QS_ICON_THEME)
-│   │   │   └── shell.lua           # Shell launch command and shell-specific binds
+│   │   │   └── environment.lua     # Wayland environment variables (TZDIR, BROWSER, QS_ICON_THEME)
 │   │   ├── scripts/
 │   │   │   └── restart-shell.sh    # Script to restart Quickshell cleanly (SUPER+SHIFT+R)
 │   │   ├── hypridle.conf           # Idle timeouts for lock and screen power
@@ -71,7 +70,7 @@ The project is a custom Wayland desktop environment running on NixOS:
 
 ## 3. Key Components & Implementation Details
 
-### Niri-Style Scrolling Layout (`config/hypr/conf/niri.lua`)
+### Niri-Style Scrolling Layout (`config/hypr/conf/scrolling.lua`)
 - Hyprland runs the `scrolling` layout as default.
 - Terminals and file managers open at `0.5` width; other applications open at `1.0`.
 - **`SUPER + F` Smart Width Toggle**:

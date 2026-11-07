@@ -38,37 +38,31 @@ hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("uwsm check is-active && uwsm stop ||
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(filemanager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 -- HCS (user request): SUPER F toggles maximize (keeps bar and gaps). Was `fullscreen, 0`;
--- real fullscreen moved to SUPER SHIFT F (conf/niri.lua).
+-- real fullscreen moved to SUPER SHIFT F (conf/scrolling.lua).
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 
---bindr = $mainMod,SPACE ,exec, wofi --show drun -I -a -n -W 500 -H 376 -s ~/.config/wofi/themes/gruvbox.css
---bindr = $mainMod,SPACE ,exec, rofi -show drun
--- HCS: rofi replaced by the shell's launcher (same key, still on release). Was:
---   rofi -show drun -theme ~/.config/rofi/launcher.rasi
+-- Desktop shell (Quickshell) IPC shortcuts
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(HCS_QS .. " ipc call launcher toggle"), { release = true })
-
--- HCS: hyprestart.sh restarted waybar/dunst + waypaper + `hyprctl reload`. Now: restart the shell
--- (through the project's flake, so package changes are picked up) and reload Hyprland.
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HYPR .. "/scripts/restart-shell.sh --reload-hyprland"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(HCS_QS .. " ipc call power toggle"))
+hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd(HCS_QS .. " ipc call clipboard toggle"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd(HCS_QS .. " ipc call notifications toggle"))
+hl.bind("SUPER + Tab", hl.dsp.exec_cmd(HCS_QS .. " ipc call overview toggle"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd(HCS_QS .. " ipc call overview toggle"))
+hl.bind("SUPER + CTRL + L", hl.dsp.exec_cmd("loginctl lock-session"))
+hl.bind("SUPER + comma", hl.dsp.exec_cmd(HCS_QS .. " ipc call quicksettings toggle"))
+hl.bind("SUPER + period", hl.dsp.exec_cmd(HCS_QS .. " ipc call launcher emoji"))
+hl.bind("SUPER + SHIFT + P", hl.dsp.exec_cmd(HCS_QS .. " ipc call picker color"))
+hl.bind("SUPER + PRINT", hl.dsp.exec_cmd(HCS_QS .. " ipc call capture toggle"))
 
---bindr=SUPER, SUPER_L, exec, pkill wofi || wofi
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
--- HCS: wlogout replaced by the shell's power menu (same key).
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(HCS_QS .. " ipc call power toggle"))
---bind = $mainMod, B, exec, com.brave.Browser
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 
 --Screenshot
--- Original used $altMod / $shiftMod, which Hyprland resolved to ALT / SHIFT.
 hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"))
 hl.bind("ALT + PRINT", hl.dsp.exec_cmd("hyprshot -m window --clipboard-only"))
 hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
-
---Clipboard
--- HCS: the rofi/cliphist picker (which had a 'cfish_greeting' paste typo) is replaced by the shell's
--- clipboard popup, same key.
-hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd(HCS_QS .. " ipc call clipboard toggle"))
 
 --function keys
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"), { repeating = true })

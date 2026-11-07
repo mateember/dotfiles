@@ -1,6 +1,6 @@
 -- Niri-style workflow on Hyprland's built-in "scrolling" layout (Hyprland >= 0.55).
 -- Loaded from hyprland.lua after looks.lua (overrides general.layout). To go back to dwindle,
--- comment out `require("conf.niri")` there, or toggle the layout from the bar.
+-- comment out `require("conf.scrolling")` there, or toggle the layout from the bar.
 --
 -- Model (like niri): every window opens in a new COLUMN on an endless horizontal strip;
 -- columns can hold several windows stacked vertically; WORKSPACES are stacked vertically

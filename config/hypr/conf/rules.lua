@@ -96,3 +96,15 @@ rule({ match = { title = "^(Fallout4)$" }, fullscreen = true })
 rule({ match = { class = "^(steam_app_)$" }, fullscreen = true })
 rule({ match = { class = "^(com.moonlight_stream.Moonlight)$" }, fullscreen = true })
 rule({ match = { title = "^(Ultimate Chicken Horse)$" }, fullscreen = true })
+
+-- -----------------------------------------------------
+-- Layer Rules (Quickshell frosted glass blur)
+-- -----------------------------------------------------
+
+hl.layer_rule({
+    name = "hcs-blur",
+    match = { namespace = "^(hcs-(bar|popup|launcher|overview|osd|toast|notifications|quicksettings|power))$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.05,
+})

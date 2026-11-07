@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 
-// Desktop shell entry point (COSMIC-themed). Started by ~/.config/hypr/conf/shell.lua (`qs`).
+// Desktop shell entry point (COSMIC-themed). Started by ~/.config/hypr/conf/autostart.lua (`qs`).
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -61,7 +61,7 @@ ShellRoot {
         function close(): void { Popups.close(); }
     }
 
-    // Targets used by the binds in hypr/conf/shell.lua.
+    // Targets used by the binds in hypr/conf/keybinds.lua.
     IpcHandler {
         target: "clipboard"
         function toggle(): void { Popups.toggle("clipboard@" + (Hyprland.focusedMonitor?.name ?? "")); }

@@ -118,7 +118,7 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
 | `SUPER + Right Drag` | Resize Window | Resizes window with the mouse. |
 | `SUPER + CTRL + Left Drag` | Resize Window | Alternative resize using mouse drag. |
 
-### Niri-Style Scrolling Layout (`config/hypr/conf/niri.lua`)
+### Niri-Style Scrolling Layout (`config/hypr/conf/scrolling.lua`)
 
 Hyprland uses the built-in scrolling layout. Windows open as columns on an endless horizontal strip, with workspaces stacked per monitor.
 
@@ -141,7 +141,7 @@ Hyprland uses the built-in scrolling layout. Windows open as columns on an endle
 | **`SUPER + SHIFT + CTRL + Arrows`**| Move Window to Monitor | Moves the focused window to that monitor and follows focus. |
 | **`SUPER + SHIFT + Mouse Scroll`**| Scroll Columns | Scrolls through the columns horizontally. |
 | **3-Finger Horizontal Swipe** | Touchpad Column Scroll | 1:1 smooth touchpad scrolling across the horizontal column strip (snaps to column edges). |
-| **4-Finger Horizontal Swipe** | Touchpad Workspace Switch | Switches workspaces horizontally. Swiping past the last workspace creates a new one. |
+| **3-Finger Vertical Swipe** | Touchpad Workspace Switch | Switches workspaces vertically. Swiping past the last workspace creates a new one. |
 | **4-Finger Vertical Swipe** | Live Overview Swipe | Pulls the Overview down or pushes it away with 1:1 finger tracking. |
 
 #### Automatic Column Width Rules
@@ -236,13 +236,12 @@ A unified search and command palette:
 | Path | Purpose |
 |---|---|
 | `config/hypr/hyprland.lua` | Main compositor entry point; defines display monitors, devices, and loads submodules. |
-| `config/hypr/conf/niri.lua` | Niri-style scrolling layout configuration, column widths, touchpad gestures, and `toggle_width`. |
-| `config/hypr/conf/keyboard.lua` | Core keyboard shortcuts, mouse bindings, touchpad sensitivity, and hardware keys. |
-| `config/hypr/conf/windowrules.lua` | Window rules for floating popups, Quickshell windows, and file pickers. |
-| `config/hypr/conf/autostart.lua` | Services started on compositor launch (`hypridle`, `hyprsunset`, cliphist, `quickshell`). |
+| `config/hypr/conf/scrolling.lua` | Niri-style scrolling layout configuration, column widths, touchpad gestures, and `toggle_width`. |
+| `config/hypr/conf/keybinds.lua` | Core keyboard shortcuts, Quickshell IPC shortcuts, mouse bindings, touchpad sensitivity, and hardware keys. |
+| `config/hypr/conf/rules.lua` | Window and layer rules for floating popups, Quickshell windows, frosted blur, and file pickers. |
+| `config/hypr/conf/autostart.lua` | Services started on compositor launch (`qs`, `hypridle`, `hyprsunset`, cliphist). |
 | `config/hypr/conf/looks.lua` | Window borders, gaps, rounding, inactive opacity, and animations. |
 | `config/hypr/conf/environment.lua` | Wayland environment variables, default browser, icon theme, and timezone directory. |
-| `config/hypr/conf/shell.lua` | Launches Quickshell (`qs`) and binds shell shortcuts. |
 | `config/hypr/hypridle.conf` | Idle management (screen blanking, locking with hyprlock, system suspend). |
 | `config/hypr/hyprlock-gen.py` | Generator script creating `hyprlock.conf` with monitor-specific scaling and geometry. |
 | `config/quickshell/Config.qml` | User-tunable shell variables (wallpaper directory, weather coordinates, clock format). |
