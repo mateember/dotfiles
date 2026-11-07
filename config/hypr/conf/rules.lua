@@ -55,23 +55,107 @@ rule({ match = { class = "^(lact)$" }, float = true })
 -- Cider (60% width, 70% height)
 rule({ match = { title = "^(Cider)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.7", center = true })
 
+
+-- Chrome / Brave / Firefox Extension pop-outs & Bitwarden
+-- Chromium/Brave extension pop-outs open with initialTitle "_crx_<ext_id>" and class
+-- "<browser>-<ext_id>-Default" before the page title ("Bitwarden", etc.) loads.
+rule({
+    match = { initial_title = "^(_crx_.*)$" },
+    float = true,
+    center = true,
+})
+rule({
+    match = { class = "^((brave|chrome|chromium)-[a-z]{32}-.*|[Bb]itwarden)$" },
+    float = true,
+    center = true,
+})
+rule({
+    match = { title = "^(Bitwarden|Extension:.*)$" },
+    float = true,
+    center = true,
+})
+
 -- Calculator
 rule({ match = { title = "^(KCalc)$" }, float = true })
 
 -- -----------------------------------------------------
--- Picture-in-Picture
+-- Picture-in-Picture (Brave / Chrome / Firefox)
 -- -----------------------------------------------------
 
 -- Fixed Size (560x315) and Move (Bottom-Right minus 20px)
--- Using (monitor_w - window_w - 20) calculates the right edge position.
 rule({
-    match = { title = "^(Picture[- ]in[- ][Pp]icture)$" },
+    match = { title = "^([Pp]icture[- ]in[- ][Pp]icture)$" },
     float = true,
     pin = true,
+    keep_aspect_ratio = true,
     size = "560 315",
     move = "monitor_w-window_w-20 monitor_h-window_h-20",
     opacity = "1.0 override",
 })
+rule({
+    match = { initial_title = "^([Pp]icture[- ]in[- ][Pp]icture)$" },
+    float = true,
+    pin = true,
+    keep_aspect_ratio = true,
+    size = "560 315",
+    move = "monitor_w-window_w-20 monitor_h-window_h-20",
+    opacity = "1.0 override",
+})
+
+-- Dynamic fallback for Chromium/Brave and Firefox on Wayland:
+-- Extension pop-outs and Picture-in-Picture windows often set their title AFTER mapping,
+-- which is too late for creation-time window rules (float, pin, size, move).
+local pip_configured = {}
+
+local function win_selector(w)
+    local a = tostring(w.address or "")
+    if not a:match("^0x") then a = "0x" .. a end
+    return "address:" .. a
+end
+
+local function handle_dynamic_window(w)
+    if not w then return end
+    local t = w.title or ""
+    local it = w.initial_title or ""
+    local addr = win_selector(w)
+
+    if t == "Bitwarden" or t:match("^Extension:") or it:match("^_crx_") then
+        if not w.floating then
+            hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
+            hl.dispatch(hl.dsp.window.center())
+        end
+    elseif t:match("^[Pp]icture[- ]in[- ][Pp]icture$") and not pip_configured[addr] then
+        pip_configured[addr] = true
+        local mon = w.monitor or hl.get_active_monitor()
+        local mw = mon and mon.width or 1920
+        local mh = mon and mon.height or 1080
+        local scale = (mon and mon.scale and mon.scale > 0) and mon.scale or 1
+        local mx = mon and mon.x or 0
+        local my = mon and mon.y or 0
+        local lw = math.floor(mw / scale)
+        local lh = math.floor(mh / scale)
+        local pw, ph = 560, 315
+        local px = mx + lw - pw - 20
+        local py = my + lh - ph - 20
+
+        if not w.floating then
+            hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
+        end
+        if not w.pinned then
+            hl.dispatch(hl.dsp.window.pin({ window = addr }))
+        end
+        hl.dispatch(hl.dsp.window.resize({ x = pw, y = ph, window = addr }))
+        hl.dispatch(hl.dsp.window.move({ x = px, y = py, window = addr }))
+    end
+end
+
+hl.on("window.open", handle_dynamic_window)
+hl.on("window.title", handle_dynamic_window)
+hl.on("window.close", function(w)
+    if w and w.address then
+        pip_configured[win_selector(w)] = nil
+    end
+end)
 
 -- -----------------------------------------------------
 -- XWayland Video Bridge
