@@ -54,16 +54,16 @@ hl.window_rule({
     scrolling_width = 0.5,
 })
 
--- Workspaces slide horizontally.
-hl.animation({ leaf = "workspaces", enabled = true, speed = 6, bezier = "default", style = "slide" })
+-- Workspaces slide vertically, like niri.
+hl.animation({ leaf = "workspaces", enabled = true, speed = 6, bezier = "default", style = "slidevert" })
 
 ------------------------------------------------------------------------
 -- Touchpad
 ------------------------------------------------------------------------
 -- 3 fingers left/right: scroll the strip (1:1, snaps to columns)
 hl.gesture({ fingers = 3, direction = "horizontal", action = "scroll_move" })
--- 4 fingers left/right: previous/next workspace on this monitor
-hl.gesture({ fingers = 4, direction = "horizontal", action = "workspace" })
+-- 3 fingers up/down: previous/next workspace on this monitor
+hl.gesture({ fingers = 3, direction = "vertical", action = "workspace" })
 
 -- 4 fingers up/down: bring Overview up / down (follows fingers 1:1 via socket2 event)
 local overview_dy = 0
