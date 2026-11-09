@@ -19,6 +19,11 @@ PanelWindow {
     default property alias content: body.data
     property int padding: Theme.spaceS
     property int contentWidth: Theme.popupWidth - 2 * padding
+    // Take keyboard focus as soon as the dropdown opens (e.g. when opened from a keybind),
+    // instead of only after it's clicked. Clicking outside still closes it via the focus grab.
+    property bool grabKeyboard: false
+    // Optional key handler (event) => void, called before the built-in Escape handling.
+    property var keyHandler: null
 
     readonly property var barWindow: anchorItem.QsWindow.window
     readonly property string popupId: name + "@" + (barWindow?.screen?.name ?? "")
@@ -44,7 +49,8 @@ PanelWindow {
              + anchorItem.x
              + anchorItem.width / 2;
     }
-    onOpenChanged: if (open) bg.forceActiveFocus()
+    // Deferred so it runs after `bg` has been reparented into the floating window (window mode).
+    onOpenChanged: if (open) Qt.callLater(() => bg.forceActiveFocus())
 
     screen: barWindow?.screen ?? null
     visible: openDropdown || (!Popups.asWindow && bg.opacity > 0)
@@ -66,7 +72,9 @@ PanelWindow {
 
     WlrLayershell.namespace: "hcs-popup"
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.keyboardFocus: openDropdown ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: !openDropdown ? WlrKeyboardFocus.None
+        : grabKeyboard ? WlrKeyboardFocus.Exclusive
+        : WlrKeyboardFocus.OnDemand
 
     HyprlandFocusGrab {
         active: root.openDropdown
@@ -86,6 +94,7 @@ PanelWindow {
         minimumSize: Qt.size(targetW, targetH)
         maximumSize: Qt.size(targetW, targetH)
         color: "transparent"
+        onVisibleChanged: if (visible) Qt.callLater(() => bg.forceActiveFocus())
         onClosed: root.close()
     }
 
@@ -99,6 +108,7 @@ PanelWindow {
         border.width: root.openAsWindow ? 0 : 1
         clip: true
         focus: true
+        Keys.onPressed: e => { if (root.keyHandler) root.keyHandler(e); }
         Keys.onEscapePressed: root.close()
 
         opacity: root.open ? 1 : 0

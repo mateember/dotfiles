@@ -13,16 +13,18 @@ Rectangle {
     property string subtext: ""
     property bool highlighted: false
     property bool enabled: true
+    property bool selected: false   // keyboard selection (arrow / vim keys), drawn like hover
     default property alias trailing: trail.data
 
     signal clicked(int button)
+    signal hovered()
 
     Layout.fillWidth: true
     implicitWidth: row.implicitWidth + 2 * Theme.spaceXs
     implicitHeight: subtext !== "" ? 48 : 38
     radius: Theme.radiusS
     color: mouse.pressed ? Theme.componentPressed
-         : mouse.containsMouse && enabled ? Theme.componentHover
+         : (mouse.containsMouse || selected) && enabled ? Theme.componentHover
          : "transparent"
     opacity: enabled ? 1 : 0.5
     Behavior on color { ColorAnimation { duration: Theme.animFast } }
@@ -35,6 +37,7 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
         onClicked: e => root.clicked(e.button)
+        onContainsMouseChanged: if (containsMouse) root.hovered()
     }
 
     RowLayout {
