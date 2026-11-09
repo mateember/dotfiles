@@ -176,6 +176,11 @@ hl.bind(M .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", act
 hl.bind(M .. " + odoubleacute", layout("consume_or_expel prev"))  -- niri Mod+[
 hl.bind(M .. " + uacute",       layout("consume_or_expel next"))  -- niri Mod+]
 
--- SUPER + SHIFT + wheel scrolls through columns (SUPER + wheel still switches workspaces)
-hl.bind(M .. " + SHIFT + mouse_down", layout("focus r"))
-hl.bind(M .. " + SHIFT + mouse_up",   layout("focus l"))
+-- SUPER + wheel scrolls through columns, SUPER + SHIFT + wheel switches workspaces (like niri).
+-- Overrides the SUPER + wheel workspace binds from keybinds.lua.
+hl.unbind(M .. " + mouse_down")
+hl.unbind(M .. " + mouse_up")
+hl.bind(M .. " + mouse_down", layout("focus r"))
+hl.bind(M .. " + mouse_up",   layout("focus l"))
+hl.bind(M .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(M .. " + SHIFT + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
