@@ -118,12 +118,14 @@ Singleton {
         onTriggered: poll.running = true
     }
 
-    // qs ipc call nightlight toggle | auto | on | off
+    // qs ipc call nightlight toggle | auto | on | off | reapply
     IpcHandler {
         target: "nightlight"
         function toggle(): void { root.toggle(); }
         function auto(): void { root.setMode("auto"); }
         function on(): void { root.setMode("on"); }
         function off(): void { root.setMode("off"); }
+        // After hyprsunset restarts (hypr/scripts/after-sleep.sh): restore a manual mode, refresh state.
+        function reapply(): void { root.apply(); }
     }
 }
