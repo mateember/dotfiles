@@ -102,6 +102,7 @@ The project is a custom Wayland desktop environment running on NixOS:
 - **Pre-suspend Howdy race prevention**: `hypridle.conf`'s `before_sleep_cmd` calls `qs ipc call lock lockForSleep`, which locks all screens and starts `passwordPam` *without* starting `facePam` (aborting any active scan) so Howdy never unlocks the laptop while closing the lid. `after_sleep_cmd` calls `qs ipc call lock wakeFromSleep`, starting `facePam` after a 250ms camera resume settle delay.
 - **Hands-free idle reset**: Unlocking restarts `hypridle` via `hyprctl dispatch` (when not `PreparingForSleep`) so a hands-free Howdy face unlock resets the 245s/600s idle timers.
 - **Lock screen actions**: Bottom-left MPRIS pill allows pausing/stopping active media only (never starting playback while locked); bottom-right Suspend pill calls `lockForSleep()`, pauses media, and triggers `systemctl suspend`.
+- **Cursor after DPMS**: `config/hypr/conf/looks.lua` sets `cursor:no_hardware_cursors = true`. Without it Hyprland 0.57/Aquamarine can leave the DRM cursor plane invisible after an idle DPMS off/on cycle (the cursor still appeared in `grim -c` screenshots but was not visible on screen, most noticeably on the lock screen). Do not re-enable hardware cursors without re-testing DPMS off/on.
 
 ---
 

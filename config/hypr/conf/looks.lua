@@ -16,6 +16,13 @@ hl.config({
         allow_tearing = true,
     },
 
+    -- Hyprland 0.57 + Aquamarine can leave the DRM hardware cursor plane invisible
+    -- after a DPMS off/on cycle (most noticeable on the Quickshell lock screen after
+    -- the idle blank). Rendering the cursor in software keeps it visible across DPMS.
+    cursor = {
+        no_hardware_cursors = true,
+    },
+
     decoration = {
         rounding = 5,
         inactive_opacity = 0.75,

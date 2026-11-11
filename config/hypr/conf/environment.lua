@@ -9,7 +9,8 @@ hl.env("QT_QPA_PLATFORM", "wayland")
 -- env = XDG_MENU_PREFIX,arch-
 -- env = XDG_MENU_PREFIX,plasma-
 hl.env("TERM", "kitty")
-hl.env("WLR_NO_HARDWARE_CURSORS", "0")
+-- Cursor rendering mode lives in conf/looks.lua (`cursor:no_hardware_cursors`), not the
+-- obsolete wlroots `WLR_NO_HARDWARE_CURSORS` env var (ignored by Hyprland 0.57).
 -- env = GDK_SCALE,2
 -- env = GTK_SCALE,2
 hl.env("GTK_USE_PORTAL", "1")

@@ -804,6 +804,11 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
   - **Gotcha fixed (`PamContext.configDirectory = ""` wedging password submit):** `PamContext.configDirectory` defaults to `"/etc/pam.d"`, NOT `""`. Setting `passwordPam.configDirectory = ""` caused `passwordPam.start()` to return `false` (`specified config directory "" is not a directory`), leaving `submittingPassword = true` (`"Unlocking…"`) stuck forever. Fixed by defaulting `passwordPamDir` to `"/etc/pam.d"`, checking `passwordPam.start()`'s boolean return value, adding a 6-second `submitWatchdog` timer, and allowing `Escape` (`cancelSubmit()`) to cancel an in-flight password check.
   - **Pause-only media control on lock screen (`Media.qml`, `LockSurface.qml`):** Removed play/resume and skip-next controls from the lock screen's MPRIS pill and added `Media.pause()` (`pause()` / `stop()`), showing only a pause button while `Media.playing` is `true` so media can be stopped from the lock screen without ever being started.
   - **Suspend button & legacy file cleanup:** Added a bottom-right `Suspend` pill on `LockSurface.qml` (`suspendSystem()` in `LockScreen.qml`: immediately runs `lockForSleep()` to stop Howdy before sleep, pauses media, and runs `systemctl suspend`), and removed the retired `config/hypr/scripts/lock.sh`, `config/hypr/hyprlock-gen.py`, and `config/hypr/hyprlock.conf` files.
+  - **Gotcha fixed (invisible mouse cursor on the lock screen after DPMS):** After the idle DPMS off/on cycle the cursor was invisible and could not be moved on the lock screen. Reproduction with a minimal `WlSessionLock` surface showed Hyprland still exported the cursor through `grim -c` screencopy (so the cursor image existed in the scene), but the DRM hardware cursor plane never became visible again after `dpms disable` / `enable`. Fixed by forcing software cursor rendering in `config/hypr/conf/looks.lua`:
+    ```lua
+    cursor = { no_hardware_cursors = true },
+    ```
+    and removing the obsolete `WLR_NO_HARDWARE_CURSORS` env var from `config/hypr/conf/environment.lua`. Tradeoff: hardware-plane cursor optimizations (hardware cursor + direct scanout cursor updates) are disabled; if tearing in fullscreen games becomes an issue, revisit with a DPMS-resume cursor re-assert instead.
 
 ---
 
