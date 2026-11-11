@@ -797,6 +797,7 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
     - Hands-free idle reset: unlocking restarts `hypridle` via `hyprctl dispatch` (unless `PreparingForSleep` is active) so hands-free face unlock resets idle timers.
   - Wired `LockScreen {}` in `config/quickshell/shell.qml`, added `!lock` (`Lock Screen`) in `config/quickshell/launcher/Launcher.qml`, enabled `misc.allow_session_lock_restore = true` in `config/hypr/conf/looks.lua`, guarded `config/hypr/scripts/restart-shell.sh` while locked (`qs ipc call lock isLocked`), and updated `config/hypr/hypridle.conf`.
   - Verified zero Hyprland/QML errors, `NoNewPrivs: 0` on `quickshell` and `hypridle`, IPC endpoints (`lock`, `lockForSleep`, `wakeFromSleep`, `isLocked`), and visual layout via preview screenshot.
+  - **Gotcha fixed (manual password Enter restarting Howdy):** `Keys.forwardTo: [passwordInput]` on the parent `Item` combined with `enabled: !submittingPassword` caused `Key_Return` to drop focus to the parent item after clearing the input and fire a second empty `submitPassword("")` -> `retryFaceScan()` -> `pam.abort()`, canceling `pam_unix` mid-flight and restarting `pam_howdy`. Fixed by removing `Keys.forwardTo`, keeping `passwordInput` `readOnly: submittingPassword` (avoiding Wayland `QWaylandTextInputv3` focus churn), consuming `Key_Return`/`Key_Enter` once with `event.accepted = true` (`!event.isAutoRepeat`), and guarding `submitPassword` & `retryFaceScan` while `submittingPassword` is true.
 
 ---
 

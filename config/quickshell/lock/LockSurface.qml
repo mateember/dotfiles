@@ -15,15 +15,31 @@ Item {
     property string screenName: ""
 
     focus: true
-    Keys.forwardTo: [passwordInput]
 
+    readonly property bool isPrimaryScreen: {
+        const focused = Hyprland.focusedMonitor?.name ?? "";
+        if (focused !== "") return screenName === focused;
+        return screenName === (Quickshell.screens[0]?.name ?? "");
+    }
     readonly property string wallpaperUrl: Wallpapers.urlForScreen(screenName)
     property bool showPassword: false
 
     opacity: 0
     Component.onCompleted: {
         fadeIn.start();
-        passwordInput.forceActiveFocus();
+        if (stage.isPrimaryScreen) passwordInput.forceActiveFocus();
+    }
+
+    Keys.onPressed: event => {
+        if (!passwordInput.activeFocus) {
+            passwordInput.forceActiveFocus();
+            if (event.text && event.text.length > 0 && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Escape) {
+                passwordInput.insert(passwordInput.cursorPosition, event.text);
+                stage.controller.clearError();
+                stage.controller.notifyUserActivity();
+                event.accepted = true;
+            }
+        }
     }
 
     NumberAnimation on opacity {
@@ -270,22 +286,27 @@ Item {
                             echoMode: stage.showPassword ? TextInput.Normal : TextInput.Password
                             passwordCharacter: "•"
                             clip: true
-                            enabled: !stage.controller.submittingPassword
+                            readOnly: stage.controller.submittingPassword
 
                             onTextEdited: {
                                 stage.controller.clearError();
                                 stage.controller.notifyUserActivity();
                             }
 
-                            onAccepted: stage.controller.submitPassword(passwordInput.text)
-
-                            Keys.onEscapePressed: event => {
-                                if (passwordInput.text.length > 0) {
-                                    passwordInput.text = "";
-                                    stage.showPassword = false;
+                            Keys.onPressed: event => {
+                                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                    event.accepted = true;
+                                    if (!event.isAutoRepeat && !stage.controller.submittingPassword) {
+                                        stage.controller.submitPassword(passwordInput.text);
+                                    }
+                                } else if (event.key === Qt.Key_Escape) {
+                                    event.accepted = true;
+                                    if (!stage.controller.submittingPassword && passwordInput.text.length > 0) {
+                                        passwordInput.text = "";
+                                        stage.showPassword = false;
+                                    }
+                                    stage.controller.clearError();
                                 }
-                                stage.controller.clearError();
-                                event.accepted = true;
                             }
                         }
 

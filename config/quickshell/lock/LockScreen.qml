@@ -113,7 +113,7 @@ Scope {
     }
 
     function retryFaceScan(): void {
-        if (!persist.locked) return;
+        if (!persist.locked || root.submittingPassword) return;
         persist.sleeping = false;
         root.errorText = "";
         root.pendingPassword = "";
@@ -129,7 +129,7 @@ Scope {
     }
 
     function submitPassword(text: string): void {
-        if (!persist.locked) return;
+        if (!persist.locked || root.submittingPassword) return;
         persist.sleeping = false;
         wakePamTimer.stop();
         root.errorText = "";
@@ -140,17 +140,16 @@ Scope {
             return;
         }
 
+        root.submittingPassword = true;
         root.clearInputs();
 
         if (pam.active && pam.responseRequired) {
             root.pendingPassword = "";
-            root.submittingPassword = true;
             pam.respond(text);
         } else {
             // Buffer password while Howdy is still scanning (or PAM is starting) so it submits
             // automatically the instant pam_unix sets responseRequired = true.
             root.pendingPassword = text;
-            root.submittingPassword = true;
             if (!pam.active && !pamRestartTimer.running) {
                 root.startPam();
             }
@@ -222,10 +221,14 @@ Scope {
         function onResponseRequiredChanged(): void {
             if (!pam.responseRequired) return;
             if (root.pendingPassword !== "") {
-                const pw = root.pendingPassword;
-                root.pendingPassword = "";
-                root.submittingPassword = true;
-                pam.respond(pw);
+                Qt.callLater(() => {
+                    if (pam.active && pam.responseRequired && root.pendingPassword !== "") {
+                        const pw = root.pendingPassword;
+                        root.pendingPassword = "";
+                        root.submittingPassword = true;
+                        pam.respond(pw);
+                    }
+                });
             } else {
                 root.submittingPassword = false;
             }
