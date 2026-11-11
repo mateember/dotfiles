@@ -19,6 +19,11 @@ Singleton {
     readonly property bool playing: active?.isPlaying ?? false
 
     function togglePlaying() { if (root.active?.canTogglePlaying) root.active.togglePlaying(); }
+    function pause() {
+        if (!root.active?.isPlaying) return;
+        if (root.active.canPause) root.active.pause();
+        else if (root.active.canControl) root.active.stop();
+    }
     function next() { if (root.active?.canGoNext) root.active.next(); }
     function previous() { if (root.active?.canGoPrevious) root.active.previous(); }
 

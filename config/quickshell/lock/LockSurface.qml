@@ -386,16 +386,17 @@ Item {
         }
         spacing: Theme.spaceM
 
-        // Bottom-left: Active MPRIS track + quick playback controls
+        // Bottom-left: Active MPRIS track (pause/stop only — media cannot be started while locked)
         Rectangle {
             id: mediaPill
             readonly property var player: Media.active
             readonly property string trackTitle: player?.trackTitle ?? ""
             readonly property string trackArtist: player?.trackArtist ?? ""
             readonly property string labelText: trackArtist !== "" ? `${trackArtist} – ${trackTitle}` : trackTitle
+            readonly property bool canStopMedia: Media.playing && Boolean(player?.canPause || player?.canControl)
 
             visible: player !== null && trackTitle !== ""
-            implicitWidth: Math.min(440, mediaRow.implicitWidth + 2 * Theme.spaceXs)
+            implicitWidth: Math.min(440, mediaRow.implicitWidth + Theme.spaceXs + (canStopMedia ? Theme.spaceXxs : Theme.spaceXs))
             implicitHeight: 32
             radius: 16
             color: Qt.rgba(0.11, 0.11, 0.11, 0.62)
@@ -406,40 +407,31 @@ Item {
                 id: mediaRow
                 anchors.fill: parent
                 anchors.leftMargin: Theme.spaceXs
-                anchors.rightMargin: Theme.spaceXxs
+                anchors.rightMargin: mediaPill.canStopMedia ? Theme.spaceXxs : Theme.spaceXs
                 spacing: Theme.spaceXxs
 
                 Icon {
                     icon: Media.playing ? "music_note" : "pause"
                     size: 16
-                    color: Theme.accent
+                    color: Media.playing ? Theme.accent : Theme.textDim
                 }
 
                 StyledText {
                     Layout.fillWidth: true
-                    Layout.maximumWidth: 320
+                    Layout.maximumWidth: 340
                     text: mediaPill.labelText
                     font.pixelSize: Theme.fontSizeSmall
-                    color: Theme.text
+                    color: Media.playing ? Theme.text : Theme.textDim
                     elide: Text.ElideRight
                 }
 
                 IconButton {
-                    visible: Media.active?.canTogglePlaying ?? false
+                    visible: mediaPill.canStopMedia
                     implicitWidth: 24
                     implicitHeight: 24
-                    icon: Media.playing ? "pause" : "play_arrow"
+                    icon: "pause"
                     iconSize: 16
-                    onClicked: Media.togglePlaying()
-                }
-
-                IconButton {
-                    visible: Media.active?.canGoNext ?? false
-                    implicitWidth: 24
-                    implicitHeight: 24
-                    icon: "skip_next"
-                    iconSize: 16
-                    onClicked: Media.next()
+                    onClicked: Media.pause()
                 }
             }
         }
