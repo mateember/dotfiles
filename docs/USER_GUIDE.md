@@ -245,6 +245,6 @@ A unified search and command palette:
 | `config/hypr/conf/environment.lua` | Wayland environment variables, default browser, icon theme, and timezone directory. |
 | `config/hypr/hypridle.conf` | Idle & sleep hooks calling Quickshell lock IPC (`lock`, `lockForSleep`, `wakeFromSleep`), DPMS, and suspend. |
 | `config/quickshell/lock/LockScreen.qml` | Native Wayland session lock (`WlSessionLock`) & PAM/Howdy state machine (`PamContext`). |
-| `config/quickshell/lock/LockSurface.qml` | Per-monitor COSMIC Dark lock screen UI (blurred wallpaper, clock, greeting, password pill, MPRIS, battery). |
+| `config/quickshell/lock/LockSurface.qml` | Per-monitor COSMIC Dark lock screen UI (blurred wallpaper, clock, greeting, password pill, pause-only MPRIS, battery & Suspend pills). |
 | `config/quickshell/Config.qml` | User-tunable shell variables (wallpaper directory, weather coordinates, clock format). |
 | `config/quickshell/Theme.qml` | Single source of truth for COSMIC dark colors, radii, spacing, and fonts. |

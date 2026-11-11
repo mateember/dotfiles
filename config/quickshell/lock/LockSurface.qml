@@ -438,33 +438,78 @@ Item {
 
         Item { Layout.fillWidth: true }
 
-        // Bottom-right: Battery icon & percentage
-        Rectangle {
-            visible: Battery.available
-            implicitWidth: batRow.implicitWidth + 2 * Theme.spaceXs
-            implicitHeight: 32
-            radius: 16
-            color: Qt.rgba(0.11, 0.11, 0.11, 0.62)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.10)
+        // Bottom-right: Battery status & Suspend action pill
+        RowLayout {
+            spacing: Theme.spaceXxs
 
-            RowLayout {
-                id: batRow
-                anchors.centerIn: parent
-                spacing: 6
+            Rectangle {
+                visible: Battery.available
+                implicitWidth: batRow.implicitWidth + 2 * Theme.spaceXs
+                implicitHeight: 32
+                radius: 16
+                color: Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.10)
 
-                Icon {
-                    icon: Battery.icon
-                    size: 16
-                    color: Battery.charging ? Theme.success
-                         : Battery.percent < 0.20 ? Theme.warning
-                         : Theme.textDim
+                RowLayout {
+                    id: batRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Icon {
+                        icon: Battery.icon
+                        size: 16
+                        color: Battery.charging ? Theme.success
+                             : Battery.percent < 0.20 ? Theme.warning
+                             : Theme.textDim
+                    }
+
+                    StyledText {
+                        text: Math.round(Battery.percent * 100) + "%"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.textDim
+                    }
+                }
+            }
+
+            Rectangle {
+                id: suspendPill
+                implicitWidth: suspendRow.implicitWidth + 2 * Theme.spaceXs
+                implicitHeight: 32
+                radius: 16
+                color: suspendMouse.pressed ? Qt.rgba(1, 1, 1, 0.22)
+                     : suspendMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
+                     : Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: suspendMouse.containsMouse ? Theme.accent : Qt.rgba(1, 1, 1, 0.10)
+
+                Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+                RowLayout {
+                    id: suspendRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Icon {
+                        icon: "bedtime"
+                        size: 16
+                        color: suspendMouse.containsMouse ? Theme.accent : Theme.text
+                    }
+
+                    StyledText {
+                        text: "Suspend"
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.text
+                    }
                 }
 
-                StyledText {
-                    text: Math.round(Battery.percent * 100) + "%"
-                    font.pixelSize: Theme.fontSizeSmall
-                    color: Theme.textDim
+                MouseArea {
+                    id: suspendMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: stage.controller.suspendSystem()
                 }
             }
         }

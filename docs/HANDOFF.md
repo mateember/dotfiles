@@ -101,6 +101,7 @@ The project is a custom Wayland desktop environment running on NixOS:
 - **Automatic Howdy & Face-Model Detection (`pamProbeProc`)**: Checks whether a PAM service contains `pam_howdy.so`, Howdy is not `disabled=true`, the configured camera `device_path` exists, and `$USER` has at least one enrolled face model (`<user>.dat`). On machines without Howdy or users without enrolled faces, `howdyAvailable` becomes `false`, `facePam` never starts, and face-scan UI elements hide automatically.
 - **Pre-suspend Howdy race prevention**: `hypridle.conf`'s `before_sleep_cmd` calls `qs ipc call lock lockForSleep`, which locks all screens and starts `passwordPam` *without* starting `facePam` (aborting any active scan) so Howdy never unlocks the laptop while closing the lid. `after_sleep_cmd` calls `qs ipc call lock wakeFromSleep`, starting `facePam` after a 250ms camera resume settle delay.
 - **Hands-free idle reset**: Unlocking restarts `hypridle` via `hyprctl dispatch` (when not `PreparingForSleep`) so a hands-free Howdy face unlock resets the 245s/600s idle timers.
+- **Lock screen actions**: Bottom-left MPRIS pill allows pausing/stopping active media only (never starting playback while locked); bottom-right Suspend pill calls `lockForSleep()`, pauses media, and triggers `systemctl suspend`.
 
 ---
 

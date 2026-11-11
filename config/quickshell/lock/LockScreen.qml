@@ -162,6 +162,12 @@ Scope {
         root.startPasswordPam();
     }
 
+    function suspendSystem(): void {
+        root.lockForSleep();
+        Media.pause();
+        Quickshell.execDetached(["systemctl", "suspend"]);
+    }
+
     function wakeFromSleep(): void {
         persist.locked = true;
         persist.sleeping = false;

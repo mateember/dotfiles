@@ -7,7 +7,7 @@ import qs.services
 
 // Session menu. Log out / reboot / shut down need a second click (or Enter) to confirm.
 // Grabs the keyboard when open (SUPER+L): ↑/↓ or j/k to move, Enter/Space/l to run, Esc/q/h to close.
-// Lock goes through loginctl so hypridle's lock_cmd decides what locks (shell lock, else hyprlock).
+// Lock goes through loginctl so hypridle's lock_cmd triggers the Quickshell lock screen.
 BarButton {
     id: root
 
