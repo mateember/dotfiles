@@ -75,7 +75,7 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
     - Toggle overview: `qs ipc call overview toggle`
     - Toggle night light: `qs ipc call nightlight toggle` (or `on` / `off` / `auto`)
     - Cycle power profiles: `qs ipc call powerprofile cycle`
-    - Lock screen: `qs ipc call lock lock` (also `lockForSleep`, `wakeFromSleep`, `isLocked`)
+    - Lock screen: `qs ipc call lock lock` (also `lockForSleep`, `wakeFromSleep`, `isLocked`, `status`)
 
 ---
 

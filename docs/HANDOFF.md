@@ -95,9 +95,11 @@ The project is a custom Wayland desktop environment running on NixOS:
 - `Wallpapers` tracks per-screen active wallpaper URLs (`urlForScreen(screenName)` and `current`) via `PersistentProperties`, and exposes `next()` on its root singleton for both the launcher app (`qs:wallpaper`) and IPC (`qs ipc call wallpaper next`).
 
 ### Native Lock Screen (`config/quickshell/lock/LockScreen.qml` & `LockSurface.qml`)
-- Uses Wayland `ext-session-lock-v1` (`WlSessionLock` / `WlSessionLockSurface`) for automatic per-monitor logical DPI scaling and `PamContext` (`config: "hyprlock"`) for Howdy IR facial recognition + `pam_unix` password fallback.
-- **Pre-suspend Howdy race prevention**: `hypridle.conf`'s `before_sleep_cmd` calls `qs ipc call lock lockForSleep`, which locks all screens *without* starting PAM (aborting any active scan) so Howdy never unlocks the laptop while closing the lid. `after_sleep_cmd` calls `qs ipc call lock wakeFromSleep`, starting PAM after a 250ms camera resume settle delay.
-- **Password buffering & face retry**: Typing and submitting a password while Howdy is still scanning buffers `pendingPassword` and forwards it immediately once `pam.responseRequired` becomes `true`. Pressing `Enter` on an empty field or clicking the `face` icon restarts Howdy face scanning cleanly.
+- Uses Wayland `ext-session-lock-v1` (`WlSessionLock` / `WlSessionLockSurface`) for automatic per-monitor logical DPI scaling and **two parallel `PamContext` instances**:
+  - `passwordPam` (pure `pam_unix`, e.g. `/etc/pam.d/vlock`, or a stripped runtime PAM config in `$XDG_RUNTIME_DIR/hcs-pam/password` if every system PAM file includes Howdy): reaches `responseRequired = true` at `0ms`, so submitting a password **unlocks immediately** even while Howdy is still scanning (aborting `facePam` and shutting off the IR camera).
+  - `facePam` (`/etc/pam.d/hyprlock`): runs Howdy IR facial recognition concurrently when Howdy is available.
+- **Automatic Howdy & Face-Model Detection (`pamProbeProc`)**: Checks whether a PAM service contains `pam_howdy.so`, Howdy is not `disabled=true`, the configured camera `device_path` exists, and `$USER` has at least one enrolled face model (`<user>.dat`). On machines without Howdy or users without enrolled faces, `howdyAvailable` becomes `false`, `facePam` never starts, and face-scan UI elements hide automatically.
+- **Pre-suspend Howdy race prevention**: `hypridle.conf`'s `before_sleep_cmd` calls `qs ipc call lock lockForSleep`, which locks all screens and starts `passwordPam` *without* starting `facePam` (aborting any active scan) so Howdy never unlocks the laptop while closing the lid. `after_sleep_cmd` calls `qs ipc call lock wakeFromSleep`, starting `facePam` after a 250ms camera resume settle delay.
 - **Hands-free idle reset**: Unlocking restarts `hypridle` via `hyprctl dispatch` (when not `PreparingForSleep`) so a hands-free Howdy face unlock resets the 245s/600s idle timers.
 
 ---

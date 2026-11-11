@@ -6,26 +6,37 @@ import Quickshell.Wayland
 import qs
 import qs.services
 
-// Native COSMIC Dark Wayland session lock screen (ext-session-lock-v1 + PAM/Howdy).
-// Replaces hyprlock + hyprlock-gen.py + lock.sh:
-//   qs ipc call lock lock           — lock immediately and start PAM (Howdy face scan -> password)
-//   qs ipc call lock lockForSleep   — lock before suspend WITHOUT starting PAM (prevents Howdy pre-sleep race)
-//   qs ipc call lock wakeFromSleep  — start PAM on wake so Howdy scans when opening the laptop
-//   qs ipc call lock isLocked       — returns "true" / "false"
+// Native COSMIC Dark Wayland session lock screen (ext-session-lock-v1 + dual PAM).
+// Runs two independent PAM conversations in parallel:
+//   1. `passwordPam` (pure pam_unix, e.g. /etc/pam.d/vlock): ready at 0ms so typing and
+//      pressing Enter unlocks IMMEDIATELY even while Howdy is still scanning.
+//   2. `facePam` (/etc/pam.d/hyprlock): runs Howdy IR face recognition when Howdy is
+//      installed, enabled, camera is present, and $USER has >= 1 enrolled face model.
+//
+// IPC (`qs ipc call lock ...`):
+//   lock           — lock immediately and start passwordPam + facePam (if howdyAvailable)
+//   lockForSleep   — lock before suspend WITHOUT starting facePam (prevents Howdy pre-sleep race)
+//   wakeFromSleep  — start facePam on wake so Howdy scans when opening the laptop
+//   isLocked       — returns "true" / "false"
 Scope {
     id: root
 
     readonly property bool locked: persist.locked
     readonly property bool sleeping: persist.sleeping
+    property bool howdyAvailable: false
+    property string facePamConfig: "hyprlock"
+    property string passwordPamConfig: "vlock"
+    property string passwordPamDir: ""
+    property bool probeDone: false
+
     property bool submittingPassword: false
     property string pendingPassword: ""
     property string errorText: ""
-    property bool abortingPam: false
+    property bool abortingFacePam: false
+    property bool abortingPasswordPam: false
 
-    // Howdy runs first in /etc/pam.d/hyprlock (`auth sufficient pam_howdy.so`) before
-    // `pam_unix.so` sets `responseRequired = true`.
-    readonly property bool faceScanning: persist.locked && !persist.sleeping
-                                         && pam.active && !pam.responseRequired && !root.submittingPassword
+    readonly property bool faceScanning: persist.locked && !persist.sleeping && root.howdyAvailable
+                                         && facePam.active && !facePam.responseRequired
 
     readonly property string rawUser: Quickshell.env("USER") || "User"
     readonly property string displayName: rawUser.charAt(0).toUpperCase() + rawUser.slice(1)
@@ -53,8 +64,14 @@ Scope {
     }
 
     function notifyUserActivity(): void {
-        if (persist.sleeping) root.wakeFromSleep();
-        else if (persist.locked && !pam.active && !pamRestartTimer.running && !wakePamTimer.running) root.startPam();
+        if (!persist.locked) return;
+        if (persist.sleeping) {
+            root.wakeFromSleep();
+            return;
+        }
+        if (!passwordPam.active && !passwordPamRestartTimer.running) {
+            root.startPasswordPam();
+        }
     }
 
     function dismissShellOverlays(): void {
@@ -63,107 +80,134 @@ Scope {
         if (Hypr.overviewOpen) Hypr.closeOverview();
     }
 
-    function startPam(): void {
-        if (!persist.locked || persist.sleeping) return;
-        if (pam.active) {
-            if (pam.responseRequired && root.pendingPassword !== "") {
+    function startPasswordPam(): void {
+        if (!persist.locked) return;
+        if (passwordPam.active) {
+            if (passwordPam.responseRequired && root.pendingPassword !== "") {
                 const pw = root.pendingPassword;
                 root.pendingPassword = "";
                 root.submittingPassword = true;
-                pam.respond(pw);
+                passwordPam.respond(pw);
             }
             return;
         }
-        root.abortingPam = false;
-        pam.start();
+        if (passwordPam.config !== root.passwordPamConfig) passwordPam.config = root.passwordPamConfig;
+        if (passwordPam.configDirectory !== root.passwordPamDir) passwordPam.configDirectory = root.passwordPamDir;
+        root.abortingPasswordPam = false;
+        passwordPam.start();
+    }
+
+    function startFacePam(): void {
+        if (!persist.locked || persist.sleeping || !root.howdyAvailable || !root.facePamConfig) return;
+        if (facePam.active) return;
+        if (facePam.config !== root.facePamConfig) facePam.config = root.facePamConfig;
+        root.abortingFacePam = false;
+        facePam.start();
+    }
+
+    function stopFacePam(): void {
+        wakeFaceTimer.stop();
+        facePamRestartTimer.stop();
+        if (facePam.active) {
+            root.abortingFacePam = true;
+            facePam.abort();
+        }
+    }
+
+    function stopAllPam(): void {
+        root.stopFacePam();
+        passwordPamRestartTimer.stop();
+        if (passwordPam.active) {
+            root.abortingPasswordPam = true;
+            passwordPam.abort();
+        }
+    }
+
+    function refreshPamProbe(): void {
+        if (!pamProbeProc.running) pamProbeProc.running = true;
     }
 
     function lock(): void {
         root.dismissShellOverlays();
-        wakePamTimer.stop();
+        wakeFaceTimer.stop();
         root.errorText = "";
         root.pendingPassword = "";
         root.submittingPassword = false;
         persist.sleeping = false;
         persist.locked = true;
-        root.startPam();
+        root.refreshPamProbe();
+        root.startPasswordPam();
+        if (root.howdyAvailable) root.startFacePam();
     }
 
     function lockForSleep(): void {
         root.dismissShellOverlays();
-        wakePamTimer.stop();
-        pamRestartTimer.stop();
+        root.stopFacePam();
         root.errorText = "";
         root.pendingPassword = "";
         root.submittingPassword = false;
         persist.sleeping = true;
         persist.locked = true;
-        if (pam.active) {
-            root.abortingPam = true;
-            pam.abort();
-        }
+        root.refreshPamProbe();
+        // Keep passwordPam ready (touches zero hardware/camera) while facePam stays off before sleep.
+        root.startPasswordPam();
     }
 
     function wakeFromSleep(): void {
         persist.locked = true;
         persist.sleeping = false;
         root.errorText = "";
+        root.refreshPamProbe();
+        root.startPasswordPam();
         // Give USB/IR camera ~250ms to resume from suspend before Howdy opens /dev/video*.
-        if (!pam.active) wakePamTimer.restart();
+        if (root.howdyAvailable && !facePam.active) wakeFaceTimer.restart();
     }
 
     function retryFaceScan(): void {
-        if (!persist.locked || root.submittingPassword) return;
+        if (!persist.locked || root.submittingPassword || !root.howdyAvailable) return;
         persist.sleeping = false;
         root.errorText = "";
-        root.pendingPassword = "";
-        root.submittingPassword = false;
-        wakePamTimer.stop();
-        if (pam.active) {
-            root.abortingPam = true;
-            pam.abort();
-            pamRestartTimer.restart();
+        wakeFaceTimer.stop();
+        if (!passwordPam.active && !passwordPamRestartTimer.running) root.startPasswordPam();
+        if (facePam.active) {
+            root.abortingFacePam = true;
+            facePam.abort();
+            facePamRestartTimer.restart();
         } else {
-            root.startPam();
+            root.startFacePam();
         }
     }
 
     function submitPassword(text: string): void {
         if (!persist.locked || root.submittingPassword) return;
         persist.sleeping = false;
-        wakePamTimer.stop();
         root.errorText = "";
 
-        // Empty Enter re-triggers Howdy face unlock cleanly without showing an error.
+        // Empty Enter re-triggers Howdy face unlock when Howdy is available; no-op otherwise.
         if (text.length === 0) {
-            root.retryFaceScan();
+            if (root.howdyAvailable) root.retryFaceScan();
             return;
         }
 
         root.submittingPassword = true;
         root.clearInputs();
 
-        if (pam.active && pam.responseRequired) {
+        // passwordPam has no pam_howdy, so it verifies immediately even while facePam is scanning!
+        if (passwordPam.active && passwordPam.responseRequired) {
             root.pendingPassword = "";
-            pam.respond(text);
+            passwordPam.respond(text);
         } else {
-            // Buffer password while Howdy is still scanning (or PAM is starting) so it submits
-            // automatically the instant pam_unix sets responseRequired = true.
             root.pendingPassword = text;
-            if (!pam.active && !pamRestartTimer.running) {
-                root.startPam();
+            if (!passwordPam.active && !passwordPamRestartTimer.running) {
+                root.startPasswordPam();
             }
         }
     }
 
     function unlock(): void {
-        wakePamTimer.stop();
-        pamRestartTimer.stop();
-        if (pam.active) {
-            root.abortingPam = true;
-            pam.abort();
-        }
-        root.abortingPam = false;
+        root.stopAllPam();
+        root.abortingFacePam = false;
+        root.abortingPasswordPam = false;
         root.pendingPassword = "";
         root.submittingPassword = false;
         root.errorText = "";
@@ -177,24 +221,103 @@ Scope {
     }
 
     Timer {
-        id: pamRestartTimer
+        id: passwordPamRestartTimer
         interval: 80
         repeat: false
         onTriggered: {
-            if (pam.active) {
-                pamRestartTimer.restart();
+            if (passwordPam.active) {
+                passwordPamRestartTimer.restart();
                 return;
             }
-            root.abortingPam = false;
-            root.startPam();
+            root.abortingPasswordPam = false;
+            root.startPasswordPam();
         }
     }
 
     Timer {
-        id: wakePamTimer
+        id: facePamRestartTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            if (facePam.active) {
+                facePamRestartTimer.restart();
+                return;
+            }
+            root.abortingFacePam = false;
+            root.startFacePam();
+        }
+    }
+
+    Timer {
+        id: wakeFaceTimer
         interval: 250
         repeat: false
-        onTriggered: root.startPam()
+        onTriggered: root.startFacePam()
+    }
+
+    // Probes PAM configs & Howdy availability (installed + enabled + camera exists + user has >=1 face model).
+    Process {
+        id: pamProbeProc
+        command: [
+            "sh", "-c",
+            "user=\"${USER:-$(id -un)}\"; " +
+            "face_cfg=\"\"; " +
+            "for c in hyprlock swaylock login su; do " +
+            "  if [ -f \"/etc/pam.d/$c\" ] && grep -q \"pam_howdy\" \"/etc/pam.d/$c\" 2>/dev/null; then face_cfg=\"$c\"; break; fi; " +
+            "done; " +
+            "howdy_ok=0; " +
+            "if [ -n \"$face_cfg\" ]; then " +
+            "  disabled=0; dev_ok=1; " +
+            "  if [ -f /etc/howdy/config.ini ]; then " +
+            "    grep -Eq '^[[:space:]]*disabled[[:space:]]*=[[:space:]]*true' /etc/howdy/config.ini && disabled=1; " +
+            "    dev=$(sed -n 's/^[[:space:]]*device_path[[:space:]]*=[[:space:]]*//p' /etc/howdy/config.ini | head -n1 | tr -d '[:space:]'); " +
+            "    [ -n \"$dev\" ] && [ \"$dev\" != \"none\" ] && [ ! -e \"$dev\" ] && dev_ok=0; " +
+            "  fi; " +
+            "  models_ok=0; unreadable_dir=0; " +
+            "  for d in /var/lib/howdy/models /etc/howdy/models /lib/security/howdy/models /usr/lib/security/howdy/models; do " +
+            "    if [ -d \"$d\" ]; then " +
+            "      if [ -r \"$d\" ]; then " +
+            "        [ -s \"$d/$user.dat\" ] && grep -q '\"data\"' \"$d/$user.dat\" 2>/dev/null && models_ok=1 && break; " +
+            "      else unreadable_dir=1; fi; " +
+            "    fi; " +
+            "  done; " +
+            "  [ \"$models_ok\" -eq 0 ] && [ \"$unreadable_dir\" -eq 1 ] && models_ok=1; " +
+            "  [ \"$disabled\" -eq 0 ] && [ \"$dev_ok\" -eq 1 ] && [ \"$models_ok\" -eq 1 ] && howdy_ok=1; " +
+            "fi; " +
+            "pw_dir=\"\"; pw_cfg=\"\"; " +
+            "for c in vlock xlock hyprlock swaylock login; do " +
+            "  if [ -f \"/etc/pam.d/$c\" ] && ! grep -q \"pam_howdy\" \"/etc/pam.d/$c\" 2>/dev/null; then pw_cfg=\"$c\"; break; fi; " +
+            "done; " +
+            "if [ -z \"$pw_cfg\" ]; then " +
+            "  pw_dir=\"${XDG_RUNTIME_DIR:-/tmp}/hcs-pam\"; mkdir -p -m 700 \"$pw_dir\"; " +
+            "  src=\"/etc/pam.d/${face_cfg:-login}\"; " +
+            "  if [ -f \"$src\" ]; then grep -v \"pam_howdy\" \"$src\" > \"$pw_dir/password\"; chmod 600 \"$pw_dir/password\"; pw_cfg=\"password\"; " +
+            "  else pw_dir=\"\"; pw_cfg=\"login\"; fi; " +
+            "fi; " +
+            "printf '{\"howdyAvailable\":%s,\"faceConfig\":\"%s\",\"passwordConfig\":\"%s\",\"passwordDir\":\"%s\"}\\n' " +
+            "  \"$([ \"$howdy_ok\" -eq 1 ] && echo true || echo false)\" \"$face_cfg\" \"$pw_cfg\" \"$pw_dir\""
+        ]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const info = JSON.parse(line.trim());
+                    root.howdyAvailable = Boolean(info.howdyAvailable);
+                    if (info.faceConfig) root.facePamConfig = String(info.faceConfig);
+                    if (info.passwordConfig) root.passwordPamConfig = String(info.passwordConfig);
+                    root.passwordPamDir = String(info.passwordDir ?? "");
+                    root.probeDone = true;
+
+                    if (persist.locked) {
+                        if (!passwordPam.active && !passwordPamRestartTimer.running) root.startPasswordPam();
+                        if (root.howdyAvailable && !persist.sleeping && !facePam.active && !wakeFaceTimer.running) {
+                            root.startFacePam();
+                        } else if (!root.howdyAvailable && facePam.active) {
+                            root.stopFacePam();
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
     }
 
     Process {
@@ -210,27 +333,26 @@ Scope {
         ]
     }
 
+    // Pure password PAM conversation (instant prompt, zero Howdy wait).
     PamContext {
-        id: pam
-        config: "hyprlock"
+        id: passwordPam
+        config: "vlock"
     }
 
     Connections {
-        target: pam
+        target: passwordPam
 
         function onResponseRequiredChanged(): void {
-            if (!pam.responseRequired) return;
+            if (!passwordPam.responseRequired) return;
             if (root.pendingPassword !== "") {
                 Qt.callLater(() => {
-                    if (pam.active && pam.responseRequired && root.pendingPassword !== "") {
+                    if (passwordPam.active && passwordPam.responseRequired && root.pendingPassword !== "") {
                         const pw = root.pendingPassword;
                         root.pendingPassword = "";
                         root.submittingPassword = true;
-                        pam.respond(pw);
+                        passwordPam.respond(pw);
                     }
                 });
-            } else {
-                root.submittingPassword = false;
             }
         }
 
@@ -239,8 +361,8 @@ Scope {
                 root.unlock();
                 return;
             }
-            if (root.abortingPam || !persist.locked || persist.sleeping) {
-                root.abortingPam = false;
+            if (root.abortingPasswordPam || !persist.locked) {
+                root.abortingPasswordPam = false;
                 root.submittingPassword = false;
                 return;
             }
@@ -248,25 +370,57 @@ Scope {
             root.pendingPassword = "";
             if (result === PamResult.MaxTries) {
                 root.errorText = "Too many attempts, try again";
-            } else if (pam.message && pam.messageIsError) {
-                root.errorText = pam.message;
+            } else if (passwordPam.message && passwordPam.messageIsError) {
+                root.errorText = passwordPam.message;
             } else {
                 root.errorText = "Wrong password, try again";
             }
             root.authFailed();
-            pamRestartTimer.restart();
+            passwordPamRestartTimer.restart();
         }
 
         function onError(err): void {
-            if (root.abortingPam || !persist.locked || persist.sleeping) {
-                root.abortingPam = false;
+            if (root.abortingPasswordPam || !persist.locked) {
+                root.abortingPasswordPam = false;
                 return;
             }
             root.submittingPassword = false;
             root.pendingPassword = "";
             root.errorText = "Authentication error (" + PamError.toString(err) + ")";
             root.authFailed();
-            pamRestartTimer.restart();
+            passwordPamRestartTimer.restart();
+        }
+    }
+
+    // Parallel biometric (Howdy) PAM conversation.
+    PamContext {
+        id: facePam
+        config: "hyprlock"
+    }
+
+    Connections {
+        target: facePam
+
+        function onResponseRequiredChanged(): void {
+            // Once /etc/pam.d/hyprlock falls through from pam_howdy.so to pam_unix.so,
+            // Howdy has finished scanning without a match; abort facePam cleanly since
+            // passwordPam is already handling password entry in parallel.
+            if (facePam.responseRequired) {
+                root.abortingFacePam = true;
+                facePam.abort();
+            }
+        }
+
+        function onCompleted(result): void {
+            if (result === PamResult.Success) {
+                root.unlock();
+                return;
+            }
+            root.abortingFacePam = false;
+        }
+
+        function onError(): void {
+            root.abortingFacePam = false;
         }
     }
 
@@ -276,12 +430,25 @@ Scope {
         function lockForSleep(): void { root.lockForSleep(); }
         function wakeFromSleep(): void { root.wakeFromSleep(); }
         function isLocked(): bool { return persist.locked; }
+        function status(): string {
+            return JSON.stringify({
+                locked: persist.locked,
+                sleeping: persist.sleeping,
+                howdyAvailable: root.howdyAvailable,
+                faceConfig: root.facePamConfig,
+                passwordConfig: root.passwordPamConfig,
+                passwordDir: root.passwordPamDir
+            });
+        }
     }
 
-    // Ensures PAM restarts after a QML hot-reload if the session was already locked & awake.
     Component.onCompleted: {
-        if (persist.locked && !persist.sleeping && !pam.active) {
-            Qt.callLater(() => root.startPam());
+        root.refreshPamProbe();
+        if (persist.locked) {
+            Qt.callLater(() => {
+                root.startPasswordPam();
+                if (!persist.sleeping && root.howdyAvailable) root.startFacePam();
+            });
         }
     }
 

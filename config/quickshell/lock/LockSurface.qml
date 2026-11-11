@@ -336,9 +336,9 @@ Item {
                         }
                     }
 
-                    // Submit arrow when password typed, or Retry Face Unlock button when empty
+                    // Submit arrow when password typed, or Retry Face Unlock button when Howdy is available
                     IconButton {
-                        visible: passwordInput.text.length > 0 || !stage.controller.faceScanning
+                        visible: passwordInput.text.length > 0 || (stage.controller.howdyAvailable && !stage.controller.faceScanning)
                         enabled: !stage.controller.submittingPassword
                         implicitWidth: 34
                         implicitHeight: 34
