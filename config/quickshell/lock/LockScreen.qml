@@ -375,6 +375,7 @@ Scope {
             "prep=$(busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager PreparingForSleep 2>/dev/null); " +
             "[ \"$prep\" = \"b true\" ] && exit 0; " +
             "timeout 3 hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })' >/dev/null 2>&1; " +
+            "~/.config/hypr/scripts/reassert-cursor.sh >/dev/null 2>&1; " +
             "pkill -x hypridle; " +
             "for _ in $(seq 20); do pgrep -x hypridle >/dev/null || break; sleep 0.1; done; " +
             "timeout 3 hyprctl dispatch 'hl.dsp.exec_cmd(\"hypridle\")' >/dev/null 2>&1"

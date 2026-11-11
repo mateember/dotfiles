@@ -9,8 +9,9 @@ hl.env("QT_QPA_PLATFORM", "wayland")
 -- env = XDG_MENU_PREFIX,arch-
 -- env = XDG_MENU_PREFIX,plasma-
 hl.env("TERM", "kitty")
--- Cursor rendering mode lives in conf/looks.lua (`cursor:no_hardware_cursors`), not the
--- obsolete wlroots `WLR_NO_HARDWARE_CURSORS` env var (ignored by Hyprland 0.57).
+-- Cursor rendering mode is left at Hyprland's default (hardware cursors).
+-- The obsolete wlroots `WLR_NO_HARDWARE_CURSORS` env var is ignored by Hyprland
+-- 0.57; the DPMS wake cursor bug is handled by scripts/reassert-cursor.sh.
 -- env = GDK_SCALE,2
 -- env = GTK_SCALE,2
 hl.env("GTK_USE_PORTAL", "1")

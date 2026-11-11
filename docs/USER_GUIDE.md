@@ -243,7 +243,8 @@ A unified search and command palette:
 | `config/hypr/conf/autostart.lua` | Services started on compositor launch (`qs`, `hypridle`, `hyprsunset`, cliphist). |
 | `config/hypr/conf/looks.lua` | Window borders, gaps, rounding, inactive opacity, and animations. |
 | `config/hypr/conf/environment.lua` | Wayland environment variables, default browser, icon theme, and timezone directory. |
-| `config/hypr/hypridle.conf` | Idle & sleep hooks calling Quickshell lock IPC (`lock`, `lockForSleep`, `wakeFromSleep`), DPMS, and suspend. |
+| `config/hypr/hypridle.conf` | Idle & sleep hooks calling Quickshell lock IPC (`lock`, `lockForSleep`, `wakeFromSleep`), DPMS, cursor re-assert, and suspend. |
+| `config/hypr/scripts/reassert-cursor.sh` | Re-applies the cursor theme after DPMS/sleep resume (Hyprland 0.57 clears the DRM cursor plane on DPMS off). Called by `hypridle` and the lock screen. |
 | `config/quickshell/lock/LockScreen.qml` | Native Wayland session lock (`WlSessionLock`) & PAM/Howdy state machine (`PamContext`). |
 | `config/quickshell/lock/LockSurface.qml` | Per-monitor COSMIC Dark lock screen UI (blurred wallpaper, clock, greeting, password pill, pause-only MPRIS, battery & Suspend pills). |
 | `config/quickshell/Config.qml` | User-tunable shell variables (wallpaper directory, weather coordinates, clock format). |
