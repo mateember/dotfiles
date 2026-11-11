@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Run by hypridle after waking from suspend (after_sleep_cmd in hypridle.conf).
 #
+# 0. Lock again. before_sleep_cmd locks, but Howdy can recognise your face and unlock that
+#    lock before the suspend finishes, which left the laptop unlocked on wake. If the lock
+#    from before sleep is still up, lock.sh does nothing. (Howdy still unlocks for you on wake.)
 # 1. Turn the display back on (so a key doesn't have to be pressed twice).
 # 2. Restart hyprsunset. Its schedule timer doesn't count time spent suspended, so if a
 #    profile time (e.g. 8:30, night light off) passes while the laptop sleeps, it never
 #    switches and the screen stays warm. A fresh hyprsunset picks the profile from the clock.
 # 3. Re-apply a manual Night Light mode (on/off) chosen in the shell, which the restart resets.
 set -u
+
+loginctl lock-session
 
 timeout 3 hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })' >/dev/null
 
