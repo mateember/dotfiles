@@ -26,7 +26,7 @@ Scope {
     property bool howdyAvailable: false
     property string facePamConfig: "hyprlock"
     property string passwordPamConfig: "vlock"
-    property string passwordPamDir: ""
+    property string passwordPamDir: "/etc/pam.d"
     property bool probeDone: false
 
     property bool submittingPassword: false
@@ -80,21 +80,30 @@ Scope {
         if (Hypr.overviewOpen) Hypr.closeOverview();
     }
 
-    function startPasswordPam(): void {
-        if (!persist.locked) return;
+    function startPasswordPam(): bool {
+        if (!persist.locked) return false;
         if (passwordPam.active) {
             if (passwordPam.responseRequired && root.pendingPassword !== "") {
                 const pw = root.pendingPassword;
                 root.pendingPassword = "";
                 root.submittingPassword = true;
+                submitWatchdog.restart();
                 passwordPam.respond(pw);
             }
-            return;
+            return true;
         }
+        const targetDir = root.passwordPamDir || "/etc/pam.d";
         if (passwordPam.config !== root.passwordPamConfig) passwordPam.config = root.passwordPamConfig;
-        if (passwordPam.configDirectory !== root.passwordPamDir) passwordPam.configDirectory = root.passwordPamDir;
+        if (passwordPam.configDirectory !== targetDir) passwordPam.configDirectory = targetDir;
         root.abortingPasswordPam = false;
-        passwordPam.start();
+        const ok = passwordPam.start();
+        if (!ok) {
+            submitWatchdog.stop();
+            root.submittingPassword = false;
+            root.pendingPassword = "";
+            root.errorText = "Failed to start PAM (" + targetDir + "/" + root.passwordPamConfig + ")";
+        }
+        return ok;
     }
 
     function startFacePam(): void {
@@ -178,6 +187,19 @@ Scope {
         }
     }
 
+    function cancelSubmit(): void {
+        if (!root.submittingPassword) return;
+        submitWatchdog.stop();
+        root.submittingPassword = false;
+        root.pendingPassword = "";
+        root.errorText = "";
+        if (passwordPam.active) {
+            root.abortingPasswordPam = true;
+            passwordPam.abort();
+        }
+        passwordPamRestartTimer.restart();
+    }
+
     function submitPassword(text: string): void {
         if (!persist.locked || root.submittingPassword) return;
         persist.sleeping = false;
@@ -190,6 +212,7 @@ Scope {
         }
 
         root.submittingPassword = true;
+        submitWatchdog.restart();
         root.clearInputs();
 
         // passwordPam has no pam_howdy, so it verifies immediately even while facePam is scanning!
@@ -205,6 +228,7 @@ Scope {
     }
 
     function unlock(): void {
+        submitWatchdog.stop();
         root.stopAllPam();
         root.abortingFacePam = false;
         root.abortingPasswordPam = false;
@@ -255,6 +279,24 @@ Scope {
         onTriggered: root.startFacePam()
     }
 
+    // Safety watchdog so password submission can never leave the input stuck in "Unlocking…"
+    Timer {
+        id: submitWatchdog
+        interval: 6000
+        repeat: false
+        onTriggered: {
+            if (!root.submittingPassword) return;
+            root.submittingPassword = false;
+            root.pendingPassword = "";
+            root.errorText = "Authentication timed out, try again";
+            if (passwordPam.active) {
+                root.abortingPasswordPam = true;
+                passwordPam.abort();
+            }
+            passwordPamRestartTimer.restart();
+        }
+    }
+
     // Probes PAM configs & Howdy availability (installed + enabled + camera exists + user has >=1 face model).
     Process {
         id: pamProbeProc
@@ -284,7 +326,7 @@ Scope {
             "  [ \"$models_ok\" -eq 0 ] && [ \"$unreadable_dir\" -eq 1 ] && models_ok=1; " +
             "  [ \"$disabled\" -eq 0 ] && [ \"$dev_ok\" -eq 1 ] && [ \"$models_ok\" -eq 1 ] && howdy_ok=1; " +
             "fi; " +
-            "pw_dir=\"\"; pw_cfg=\"\"; " +
+            "pw_dir=\"/etc/pam.d\"; pw_cfg=\"\"; " +
             "for c in vlock xlock hyprlock swaylock login; do " +
             "  if [ -f \"/etc/pam.d/$c\" ] && ! grep -q \"pam_howdy\" \"/etc/pam.d/$c\" 2>/dev/null; then pw_cfg=\"$c\"; break; fi; " +
             "done; " +
@@ -292,7 +334,7 @@ Scope {
             "  pw_dir=\"${XDG_RUNTIME_DIR:-/tmp}/hcs-pam\"; mkdir -p -m 700 \"$pw_dir\"; " +
             "  src=\"/etc/pam.d/${face_cfg:-login}\"; " +
             "  if [ -f \"$src\" ]; then grep -v \"pam_howdy\" \"$src\" > \"$pw_dir/password\"; chmod 600 \"$pw_dir/password\"; pw_cfg=\"password\"; " +
-            "  else pw_dir=\"\"; pw_cfg=\"login\"; fi; " +
+            "  else pw_dir=\"/etc/pam.d\"; pw_cfg=\"login\"; fi; " +
             "fi; " +
             "printf '{\"howdyAvailable\":%s,\"faceConfig\":\"%s\",\"passwordConfig\":\"%s\",\"passwordDir\":\"%s\"}\\n' " +
             "  \"$([ \"$howdy_ok\" -eq 1 ] && echo true || echo false)\" \"$face_cfg\" \"$pw_cfg\" \"$pw_dir\""
@@ -304,7 +346,7 @@ Scope {
                     root.howdyAvailable = Boolean(info.howdyAvailable);
                     if (info.faceConfig) root.facePamConfig = String(info.faceConfig);
                     if (info.passwordConfig) root.passwordPamConfig = String(info.passwordConfig);
-                    root.passwordPamDir = String(info.passwordDir ?? "");
+                    root.passwordPamDir = String(info.passwordDir || "/etc/pam.d");
                     root.probeDone = true;
 
                     if (persist.locked) {
@@ -357,6 +399,7 @@ Scope {
         }
 
         function onCompleted(result): void {
+            submitWatchdog.stop();
             if (result === PamResult.Success) {
                 root.unlock();
                 return;
@@ -380,6 +423,7 @@ Scope {
         }
 
         function onError(err): void {
+            submitWatchdog.stop();
             if (root.abortingPasswordPam || !persist.locked) {
                 root.abortingPasswordPam = false;
                 return;
@@ -437,7 +481,10 @@ Scope {
                 howdyAvailable: root.howdyAvailable,
                 faceConfig: root.facePamConfig,
                 passwordConfig: root.passwordPamConfig,
-                passwordDir: root.passwordPamDir
+                passwordDir: root.passwordPamDir,
+                passwordPamActive: passwordPam.active,
+                passwordPromptReady: passwordPam.responseRequired,
+                facePamActive: facePam.active
             });
         }
     }

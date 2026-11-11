@@ -301,7 +301,9 @@ Item {
                                     }
                                 } else if (event.key === Qt.Key_Escape) {
                                     event.accepted = true;
-                                    if (!stage.controller.submittingPassword && passwordInput.text.length > 0) {
+                                    if (stage.controller.submittingPassword) {
+                                        stage.controller.cancelSubmit();
+                                    } else if (passwordInput.text.length > 0) {
                                         passwordInput.text = "";
                                         stage.showPassword = false;
                                     }
