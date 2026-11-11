@@ -4,39 +4,45 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Night light, driven by hyprsunset (started by Hyprland, schedule in ~/.config/hypr/hyprsunset.conf).
+// Night light. hyprsunset (started by Hyprland) only applies the colour; the schedule lives
+// here and is checked against the wall clock every few seconds. hyprsunset's own profile
+// timers don't count time spent suspended, so a switch that was due during sleep was missed
+// and the screen stayed warm after waking. Checking the clock here doesn't have that problem.
 // Modes:
-//   "auto" – follow the hyprsunset schedule (default)
+//   "auto" – follow the schedule below (default)
 //   "on"   – warm screen at `temperature` until switched back
 //   "off"  – no filter until switched back
-// hyprsunset re-applies its schedule at every profile time, so a manual mode is re-applied
-// when the scheduled profile changes.
 Singleton {
     id: root
+
+    // ---- Schedule for "auto" (local time, HH:MM; may wrap past midnight) ----
+    readonly property string warmFrom: "20:00"
+    readonly property string warmUntil: "08:30"
+    readonly property int scheduleTemperature: 5500
+    readonly property int scheduleGamma: 80          // percent
 
     readonly property string mode: persist.mode
     readonly property int temperature: persist.temperature       // K used for "on"
     readonly property int minTemperature: 2500
     readonly property int maxTemperature: 6000
 
-    // From the current scheduled profile (`hyprctl hyprsunset profile`)
     property bool scheduleWarm: false
-    property string profileTime: ""
-    property int currentTemperature: 6000
+    property int currentTemperature: 6000            // what hyprsunset reports
     property bool available: false
 
     readonly property bool active: mode === "on" || (mode === "auto" && scheduleWarm)
+    readonly property string scheduleText: `${warmFrom}–${warmUntil}`
 
-    // Schedule from hyprsunset.conf, for display: [{ time, warm, temperature }]
-    property var schedule: []
-    readonly property string scheduleText: {
-        const warm = schedule.find(p => p.warm), cool = schedule.find(p => !p.warm);
-        return warm && cool ? `${warm.time}–${cool.time}` : "";
-    }
+    // What hyprsunset should be showing right now.
+    readonly property int targetTemperature: mode === "on" ? temperature
+        : (mode === "auto" && scheduleWarm) ? scheduleTemperature
+        : 6000
+    readonly property int targetGamma: (mode === "auto" && scheduleWarm) ? scheduleGamma : 100
+    onTargetTemperatureChanged: apply()
+    onTargetGammaChanged: apply()
 
     function setMode(m: string) {
         persist.mode = m;
-        apply();
     }
     function toggle() {
         // Toggling from "auto" goes to the opposite of what the schedule does right now.
@@ -45,16 +51,28 @@ Singleton {
     function setTemperature(k: int) {
         persist.temperature = Math.max(minTemperature, Math.min(maxTemperature, Math.round(k / 100) * 100));
         if (root.mode !== "on") persist.mode = "on";
-        apply();
     }
 
+    function minutesOf(hhmm: string): int {
+        const p = hhmm.split(":");
+        return Number(p[0]) * 60 + Number(p[1] ?? 0);
+    }
+    function updateSchedule() {
+        const d = new Date();
+        const now = d.getHours() * 60 + d.getMinutes();
+        const from = minutesOf(warmFrom), until = minutesOf(warmUntil);
+        root.scheduleWarm = from <= until ? (now >= from && now < until) : (now >= from || now < until);
+    }
+
+    property double lastApplyMs: 0
     function apply() {
-        if (root.mode === "auto") run(["hyprctl", "hyprsunset", "reset"]);
-        else if (root.mode === "on") run(["hyprctl", "hyprsunset", "temperature", String(root.temperature)]);
-        else run(["hyprctl", "hyprsunset", "identity"]);
+        root.lastApplyMs = Date.now();
+        // `identity` alone leaves the reported temperature at the old value, so set 6000 first.
+        const t = root.targetTemperature >= 6000 ? "hyprctl hyprsunset temperature 6000 >/dev/null; hyprctl hyprsunset identity"
+                                                 : `hyprctl hyprsunset temperature ${root.targetTemperature}`;
+        Quickshell.execDetached(["sh", "-c", `${t} >/dev/null; hyprctl hyprsunset gamma ${root.targetGamma} >/dev/null`]);
         refreshTimer.restart();
     }
-    function run(cmd) { Quickshell.execDetached(cmd); }
 
     PersistentProperties {
         id: persist
@@ -63,40 +81,21 @@ Singleton {
         property int temperature: 4500
     }
 
-    // Current scheduled profile + live temperature
+    // Live temperature from hyprsunset. Re-applies if it doesn't match (e.g. hyprsunset was
+    // restarted), but not right after we just applied, so it can't loop.
     Process {
         id: poll
-        command: ["sh", "-c", "hyprctl hyprsunset profile && echo \"Current: $(hyprctl hyprsunset temperature)\""]
+        command: ["hyprctl", "hyprsunset", "temperature"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const get = k => (text.match(new RegExp("^" + k + ":\\s*(.+)$", "m")) || [])[1]?.trim();
-                if (!get("Time")) { root.available = false; retryTimer.restart(); return; }
+                const t = Number(text.trim());
+                if (!t) { root.available = false; retryTimer.restart(); return; }
+                const wasAvailable = root.available;
                 root.available = true;
-                const time = get("Time");
-                const warm = get("Identity") !== "true" && Number(get("Temperature")) < 6000;
-                const changed = root.profileTime !== "" && time !== root.profileTime;
-                root.profileTime = time;
-                root.scheduleWarm = warm;
-                root.currentTemperature = Number(get("Current")) || 6000;
-                if (changed && root.mode !== "auto") root.apply();   // keep the manual choice
+                root.currentTemperature = t;
+                if (!wasAvailable || (t !== root.targetTemperature && Date.now() - root.lastApplyMs > 5000))
+                    root.apply();
             }
-        }
-    }
-
-    // Profiles from hyprsunset.conf (time + whether it warms the screen)
-    FileView {
-        path: (Quickshell.env("HOME") ?? "") + "/.config/hypr/hyprsunset.conf"
-        printErrors: false
-        onLoaded: {
-            const out = [];
-            for (const block of text().split(/profile\s*\{/).slice(1)) {
-                const body = block.split("}")[0];
-                const time = (body.match(/time\s*=\s*([\d:]+)/) || [])[1] ?? "";
-                const temp = Number((body.match(/temperature\s*=\s*(\d+)/) || [])[1] ?? 6000);
-                const identity = /identity\s*=\s*true/.test(body);
-                out.push({ time: time.replace(/^(\d):/, "0$1:"), warm: !identity && temp < 6000, temperature: temp });
-            }
-            root.schedule = out;
         }
     }
 
@@ -110,6 +109,14 @@ Singleton {
         interval: 1500
         onTriggered: poll.running = true
     }
+    // Clock check: cheap (no process), so it can run often; catches up within 10 s after wake.
+    Timer {
+        interval: 10000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.updateSchedule()
+    }
     Timer {
         interval: 60000
         running: true
@@ -118,14 +125,12 @@ Singleton {
         onTriggered: poll.running = true
     }
 
-    // qs ipc call nightlight toggle | auto | on | off | reapply
+    // qs ipc call nightlight toggle | auto | on | off
     IpcHandler {
         target: "nightlight"
         function toggle(): void { root.toggle(); }
         function auto(): void { root.setMode("auto"); }
         function on(): void { root.setMode("on"); }
         function off(): void { root.setMode("off"); }
-        // After hyprsunset restarts (hypr/scripts/after-sleep.sh): restore a manual mode, refresh state.
-        function reapply(): void { root.apply(); }
     }
 }

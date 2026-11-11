@@ -56,12 +56,11 @@ session again, uncomment those lines and start `graphical-session.target` (see b
 
 You can use either entry in the login screen; UWSM is not required.
 - **"Hyprland (uwsm-managed)"** starts `graphical-session.target` by itself.
-- **"Hyprland" (plain)**: Hyprland's autostart runs `~/.config/hypr/scripts/session-target.sh`, which starts
-  `hyprland-session.target` (defined in `hyprland-desktop.nix`, commit 4e0f055; until that is rebuilt the script
-  writes a runtime copy). That target pulls in `graphical-session.target`, so xdg-desktop-portal, `xdg-open`
-  (`xdgOpenUsePortal = true`), screen sharing, polkit-gnome (outside Hyprland it is skipped) and the KWallet unlock
-  service start as in the UWSM session. Without it, `xdg-open` fails with "Could not activate remote peer
-  org.freedesktop.portal.Desktop".
+- **"Hyprland" (plain)**: not supported any more. Nothing starts `graphical-session.target`, so
+  xdg-desktop-portal, `xdg-open` (`xdgOpenUsePortal = true`), screen sharing, polkit-gnome and the KWallet
+  unlock service don't run (`xdg-open` fails with "Could not activate remote peer
+  org.freedesktop.portal.Desktop"). The old `scripts/session-target.sh` workaround and the
+  `hyprland-session.target` it started were removed; use the UWSM session.
 - **`TZDIR` is dropped in both** (not by UWSM): NixOS' `programs.hyprland` installs Hyprland with a `cap_sys_nice`
   wrapper, glibc then removes `TZDIR`/`LD_LIBRARY_PATH` from Hyprland and its children. Fixed in the Hyprland
   config (`hl.env("TZDIR", "/etc/zoneinfo")`), nothing to do in Nix.
@@ -81,7 +80,7 @@ programs.hyprland = {
 ```
 
 To run this setup from that session, `~/.config/hypr/hyprland.lua` and `~/.config/quickshell` are symlinked from `~/dotfiles` (branch `hypr-cosmic-shell`).
-In a plain non-UWSM session, `~/.config/hypr/scripts/session-target.sh start` makes the portal work for the current session.
+In a plain non-UWSM session the portal doesn't work (see section 0).
 
 ## 2. External monitor brightness (Dell U2412M via DDC/CI)
 
