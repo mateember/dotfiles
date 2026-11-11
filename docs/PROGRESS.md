@@ -34,6 +34,7 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
 | niri-style scrolling + gestures | done (gestures untested by hand) |
 | system install (dotfiles + ~/Nix branches) | committed + built, not switched |
 | night light, quick settings, media card | done (dotfiles 38677b7) |
+| native Quickshell lock screen (milestone e) | done (`config/quickshell/lock/`) |
 | system install | live since 18:42 (UWSM session) |
 | (f) polish, README | not started |
 
@@ -783,6 +784,19 @@ After each milestone: launch, check quickshell logs for QML errors, tell the use
     - If floating or not in scrolling layout (e.g. dwindle): falls back to standard maximize.
     - If in scrolling layout: toggles directly between `1.0` (full width) and `0.5` (half width column) using `hl.dsp.layout("colresize 0.5")` / `colresize 1.0` (and unmaximizes first if previously maximized).
   - This allows windows that open at full width by default (browsers, apps) to toggle instantly to half-width scrolled columns with `SUPER + F`. Verified live with `hyprctl reload`.
+
+### 2026-11-11 – Native Quickshell Lock Screen (`LockScreen.qml`, `LockSurface.qml`, `hypridle.conf`)
+- Implemented the native Quickshell lock screen (`docs/LOCKSCREEN_PLAN.md`, Option A):
+  - Created `config/quickshell/lock/LockScreen.qml` and `config/quickshell/lock/LockSurface.qml` using `WlSessionLock` / `WlSessionLockSurface` (`ext-session-lock-v1`) and `PamContext` (`config: "hyprlock"`).
+  - Updated `config/quickshell/services/Wallpapers.qml` and `config/quickshell/wallpaper/Wallpaper.qml` to persist per-monitor active wallpaper URLs (`urlForScreen(screenName)` + `current`) so each monitor's lock surface blurs its active Bing wallpaper via `QtQuick.Effects` `MultiEffect` (decoding at fixed `1280x800` to avoid `1x1` initial configure re-decodes).
+  - Implemented the Howdy + password state machine:
+    - `lock` (`qs ipc call lock lock`): locks immediately and starts PAM/Howdy (`"Scanning face…"`).
+    - `lockForSleep` (`before_sleep_cmd`): locks screens *without* starting PAM (and aborts any active scan) so Howdy never unlocks the laptop right before suspend.
+    - `wakeFromSleep` (`after_sleep_cmd`): resumes PAM after a `250ms` UVC/IR camera settle timer so Howdy scans immediately when opening the laptop.
+    - Password buffering (`pendingPassword`): submitting a password while Howdy is scanning automatically submits to `pam_unix.so` the moment `responseRequired` becomes `true`. Empty `Enter` or clicking the `face` icon restarts Howdy face scanning without error shake.
+    - Hands-free idle reset: unlocking restarts `hypridle` via `hyprctl dispatch` (unless `PreparingForSleep` is active) so hands-free face unlock resets idle timers.
+  - Wired `LockScreen {}` in `config/quickshell/shell.qml`, added `!lock` (`Lock Screen`) in `config/quickshell/launcher/Launcher.qml`, enabled `misc.allow_session_lock_restore = true` in `config/hypr/conf/looks.lua`, guarded `config/hypr/scripts/restart-shell.sh` while locked (`qs ipc call lock isLocked`), and updated `config/hypr/hypridle.conf`.
+  - Verified zero Hyprland/QML errors, `NoNewPrivs: 0` on `quickshell` and `hypridle`, IPC endpoints (`lock`, `lockForSleep`, `wakeFromSleep`, `isLocked`), and visual layout via preview screenshot.
 
 ---
 

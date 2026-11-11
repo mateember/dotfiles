@@ -51,6 +51,7 @@ hl.config({
         force_default_wallpaper = 0, -- Set to 0 to disable the anime mascot wallpapers
         vrr = 2,
         focus_on_activate = true,    -- Focus app window when clicking a notification / XDG activation
+        allow_session_lock_restore = true, -- Allow Quickshell WlSessionLock to recover cleanly after a restart
     },
 
     xwayland = {

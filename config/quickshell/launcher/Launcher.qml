@@ -61,6 +61,7 @@ Scope {
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
+            else if (id === "qs:lock") Quickshell.execDetached(["qs", "ipc", "call", "lock", "lock"]);
             else if (id.startsWith("qs:popup:")) Popups.openWindow(id.slice(9) + "@" + scr);
         }
     }
@@ -138,6 +139,7 @@ Scope {
                 { id: "qs:colorpicker",         name: "Color Picker",          comment: "Pick a pixel color on screen (#RRGGBB to clipboard)",        icon: "colorize",            keywords: ["hyprpicker", "hex", "eyedropper"] },
                 { id: "qs:emoji",               name: "Emoji Picker",          comment: "Search and insert emojis",                                   icon: "sentiment_satisfied", keywords: ["emoticon", "unicode"], keepOpen: true },
                 { id: "qs:wallpaper",           name: "Next Wallpaper",        comment: "Switch to a new random wallpaper now",                       icon: "wallpaper",           keywords: ["background", "bing"] },
+                { id: "qs:lock",                name: "Lock Screen",           comment: "Lock the session immediately (SUPER+CTRL+L)",                icon: "lock",                keywords: ["lock", "screen", "howdy", "security"] },
                 { id: "qs:popup:power",         name: "Power Menu",            comment: "Lock, suspend, log out, restart or shut down",               icon: "power_settings_new",  keywords: ["lock", "suspend", "logout", "reboot", "shutdown"] }
             ]
 

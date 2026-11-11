@@ -31,8 +31,8 @@ All user configuration lives in `~/dotfiles`:
        │  │ (SUPER Space) │  │ (SUPER Tab)      │  │ (SUPER Comma)  │  │
        │  └───────────────┘  └──────────────────┘  └────────────────┘  │
        │  ┌───────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-       │  │ Notifications │  │ Screen Capture   │  │ Wallpaper      │  │
-       │  │ & OSD Toasts  │  │ Studio (Print)   │  │ Slideshow      │  │
+       │  │ Notifications │  │ Screen Capture   │  │ Lock Screen    │  │
+       │  │ & OSD Toasts  │  │ Studio (Print)   │  │ (SUPER+CTRL+L) │  │
        │  └───────────────┘  └──────────────────┘  └────────────────┘  │
        └───────────────────────────────────────────────────────────────┘
 ```
@@ -55,7 +55,7 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
 | **View Shell Logs** | `qs log` | Displays live console output and runtime QML errors. |
 | **Check Hyprland Config Errors** | `hyprctl configerrors` | Validates Hyprland Lua syntax. |
 | **Hot Reloading** | Edit any file in `config/quickshell/` | Quickshell automatically hot-reloads modified QML files. |
-| **Regenerate Lock Screen** | `python3 ~/.config/hypr/hyprlock-gen.py` | Regenerates `hyprlock.conf` based on active monitor resolutions and scales. |
+| **Lock Session via CLI** | `qs ipc call lock lock` | Locks the Wayland session immediately (Howdy face unlock + password). |
 
 ### Development & Customization Workflow
 
@@ -75,6 +75,7 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
     - Toggle overview: `qs ipc call overview toggle`
     - Toggle night light: `qs ipc call nightlight toggle` (or `on` / `off` / `auto`)
     - Cycle power profiles: `qs ipc call powerprofile cycle`
+    - Lock screen: `qs ipc call lock lock` (also `lockForSleep`, `wakeFromSleep`, `isLocked`)
 
 ---
 
@@ -95,7 +96,7 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
 | `SUPER + SHIFT + P` | **Color Picker** | Eyedropper tool; copies `#RRGGBB` hex to clipboard with an on-screen preview. |
 | `SUPER + Print` | **Capture Studio** | Interactive screenshot and screen recording overlay (region, window, display, audio, annotation). |
 | `SUPER + L` | **Power Menu** | Session controls: Lock, Suspend, Log out, Restart, Shut down. |
-| `SUPER + CTRL + L` | **Lock Screen** | Locks the screen with COSMIC-themed `hyprlock`. |
+| `SUPER + CTRL + L` | **Lock Screen** | Locks the screen with the native Quickshell lock screen (Howdy face scan + password). |
 | `SUPER + C` | Terminal | Launches `kitty`. |
 | `SUPER + E` | File Manager | Launches `nautilus` / `thunar`. |
 | `SUPER + B` | Web Browser | Launches `brave-origin`. |
@@ -220,7 +221,7 @@ A unified search and command palette:
 - **Terminal Commands**: Prefix with `>` (e.g. `>top` or `>ping 1.1.1.1`). Pressing `Shift + Enter` executes the command inside a terminal window.
 - **Emoji Search**: Prefix with `:` (or press `SUPER + Period`) to search emojis (e.g. `:fire`, `:smile`).
 - **Quickshell Apps**: Prefix with `!` (or `/`, `@`) to launch shell panels and tools:
-  `!bar`, `!opacity`, `!overview`, `!capture`, `!record`, `!wallpaper` (Next Wallpaper), `!colorpicker`, `!power`, `!calendar`, `!weather`, `!network`, `!storage`, `!privacy`, etc.
+  `!bar`, `!opacity`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper` (Next Wallpaper), `!colorpicker`, `!power`, `!calendar`, `!weather`, `!network`, `!storage`, `!privacy`, etc.
 
 ### Wallpaper Slideshow
 - Rotates through images stored in `~/Pictures/BingWallpaper` every 5 minutes.
@@ -242,7 +243,8 @@ A unified search and command palette:
 | `config/hypr/conf/autostart.lua` | Services started on compositor launch (`qs`, `hypridle`, `hyprsunset`, cliphist). |
 | `config/hypr/conf/looks.lua` | Window borders, gaps, rounding, inactive opacity, and animations. |
 | `config/hypr/conf/environment.lua` | Wayland environment variables, default browser, icon theme, and timezone directory. |
-| `config/hypr/hypridle.conf` | Idle management (screen blanking, locking with hyprlock, system suspend). |
-| `config/hypr/hyprlock-gen.py` | Generator script creating `hyprlock.conf` with monitor-specific scaling and geometry. |
+| `config/hypr/hypridle.conf` | Idle & sleep hooks calling Quickshell lock IPC (`lock`, `lockForSleep`, `wakeFromSleep`), DPMS, and suspend. |
+| `config/quickshell/lock/LockScreen.qml` | Native Wayland session lock (`WlSessionLock`) & PAM/Howdy state machine (`PamContext`). |
+| `config/quickshell/lock/LockSurface.qml` | Per-monitor COSMIC Dark lock screen UI (blurred wallpaper, clock, greeting, password pill, MPRIS, battery). |
 | `config/quickshell/Config.qml` | User-tunable shell variables (wallpaper directory, weather coordinates, clock format). |
 | `config/quickshell/Theme.qml` | Single source of truth for COSMIC dark colors, radii, spacing, and fonts. |

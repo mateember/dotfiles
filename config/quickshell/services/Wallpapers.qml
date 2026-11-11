@@ -13,9 +13,34 @@ Singleton {
     id: root
 
     readonly property int count: folder.count
+    readonly property string current: persist.current
+    readonly property var screenUrls: persist.screenUrls
     signal tick()   // time to change wallpaper
 
+    PersistentProperties {
+        id: persist
+        reloadableId: "hcs-wallpapers"
+        property string current: ""
+        property var screenUrls: ({})
+    }
+
     function next(): void { root.tick(); }
+
+    function setScreenUrl(screenName: string, url: string): void {
+        if (!url) return;
+        persist.current = url;
+        if (screenName) {
+            const nextMap = Object.assign({}, persist.screenUrls);
+            nextMap[screenName] = url;
+            persist.screenUrls = nextMap;
+        }
+    }
+
+    function urlForScreen(screenName: string): string {
+        if (screenName && persist.screenUrls[screenName]) return persist.screenUrls[screenName];
+        if (persist.current) return persist.current;
+        return root.randomUrl("");
+    }
 
     function randomUrl(exclude: string): string {
         if (folder.count === 0) return "";

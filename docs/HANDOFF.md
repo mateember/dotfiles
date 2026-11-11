@@ -29,9 +29,8 @@ The project is a custom Wayland desktop environment running on NixOS:
 │   │   │   ├── looks.lua           # Borders, gaps, blur, inactive opacity
 │   │   │   └── environment.lua     # Wayland environment variables (TZDIR, BROWSER, QS_ICON_THEME)
 │   │   ├── scripts/
-│   │   │   └── restart-shell.sh    # Script to restart Quickshell cleanly (SUPER+SHIFT+R)
-│   │   ├── hypridle.conf           # Idle timeouts for lock and screen power
-│   │   └── hyprlock-gen.py         # Monitor-aware generator for hyprlock.conf
+│   │   │   └── restart-shell.sh    # Script to restart Quickshell cleanly (SUPER+SHIFT+R, skips while locked)
+│   │   └── hypridle.conf           # Idle timeouts & sleep hooks calling `qs ipc call lock ...`
 │   └── quickshell/
 │       ├── shell.qml               # Quickshell root, variants over screens, global IPC
 │       ├── Theme.qml               # Single source of truth for colors, typography, spacing (COSMIC Dark)
@@ -41,6 +40,8 @@ The project is a custom Wayland desktop environment running on NixOS:
 │       ├── services/               # Singletons (Net, Bt, Notifs, Wallpapers, SystemStats, etc.)
 │       ├── components/             # Reusable UI primitives (Popup, ListItem, Toggle, StyledText, Icon)
 │       ├── launcher/               # Unified App & Shell Launcher (SUPER+Space)
+│       ├── lock/                   # Native Wayland lock screen (LockScreen.qml, LockSurface.qml)
+│       ├── polkit/                 # Polkit authentication prompt (PolkitPrompt.qml)
 │       ├── quicksettings/          # Quick Settings dropdown panel (SUPER+Comma)
 │       └── wallpaper/              # Background wallpaper layer surface
 ```
@@ -91,7 +92,13 @@ The project is a custom Wayland desktop environment running on NixOS:
 
 ### Wallpaper Slideshow (`config/quickshell/services/Wallpapers.qml`)
 - Slideshow sources images from `~/Pictures/BingWallpaper` every 5 minutes.
-- `Wallpapers` exposes `next()` on its root singleton to allow manual rotation from both the launcher app (`qs:wallpaper`) and IPC (`qs ipc call wallpaper next`).
+- `Wallpapers` tracks per-screen active wallpaper URLs (`urlForScreen(screenName)` and `current`) via `PersistentProperties`, and exposes `next()` on its root singleton for both the launcher app (`qs:wallpaper`) and IPC (`qs ipc call wallpaper next`).
+
+### Native Lock Screen (`config/quickshell/lock/LockScreen.qml` & `LockSurface.qml`)
+- Uses Wayland `ext-session-lock-v1` (`WlSessionLock` / `WlSessionLockSurface`) for automatic per-monitor logical DPI scaling and `PamContext` (`config: "hyprlock"`) for Howdy IR facial recognition + `pam_unix` password fallback.
+- **Pre-suspend Howdy race prevention**: `hypridle.conf`'s `before_sleep_cmd` calls `qs ipc call lock lockForSleep`, which locks all screens *without* starting PAM (aborting any active scan) so Howdy never unlocks the laptop while closing the lid. `after_sleep_cmd` calls `qs ipc call lock wakeFromSleep`, starting PAM after a 250ms camera resume settle delay.
+- **Password buffering & face retry**: Typing and submitting a password while Howdy is still scanning buffers `pendingPassword` and forwards it immediately once `pam.responseRequired` becomes `true`. Pressing `Enter` on an empty field or clicking the `face` icon restarts Howdy face scanning cleanly.
+- **Hands-free idle reset**: Unlocking restarts `hypridle` via `hyprctl dispatch` (when not `PreparingForSleep`) so a hands-free Howdy face unlock resets the 245s/600s idle timers.
 
 ---
 
@@ -138,6 +145,7 @@ qs ipc call barsettings toggle      # Toggle Bar Settings window
 qs ipc call opacity toggle          # Toggle Opacity & Transparency window
 qs ipc call nightlight toggle       # Toggle night light
 qs ipc call powerprofile cycle      # Cycle power mode (Power Saver -> Balanced -> Performance)
+qs ipc call lock lock               # Lock Wayland session (also lockForSleep, wakeFromSleep, isLocked)
 ```
 
 ### Adding a New Bar Widget

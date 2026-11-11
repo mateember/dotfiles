@@ -9,6 +9,10 @@
 # The new shell is started by Hyprland (hyprctl dispatch), so it doesn't inherit this
 # script's environment or restrictions.
 set -u
+if [ "${1:-}" != "--force" ] && [ "$(timeout 2 qs ipc call lock isLocked 2>/dev/null)" = "true" ]; then
+    exit 0
+fi
+
 pids() { pgrep -f '^/nix/store/[^ ]*/bin/quickshell( -p [^ ]*)?$'; }
 
 timeout 3 qs kill >/dev/null 2>&1

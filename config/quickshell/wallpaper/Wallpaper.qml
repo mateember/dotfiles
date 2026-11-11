@@ -38,6 +38,7 @@ PanelWindow {
         root.front = img;
         img.z = 1;
         root.back.z = 0;
+        Wallpapers.setScreenUrl(root.screen?.name ?? "", String(img.source));
         // First image and fullscreen: switch instantly. Otherwise crossfade.
         if (root.fullscreenActive || !root.shownOnce) {
             fade.stop();

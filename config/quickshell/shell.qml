@@ -11,6 +11,7 @@ import qs.wallpaper
 import qs.notifications
 import qs.osd
 import qs.polkit
+import qs.lock
 import qs.quicksettings
 import qs.services
 
@@ -42,6 +43,7 @@ ShellRoot {
     OsdWindow {}
     OsdTriggers {}
     PolkitPrompt {}
+    LockScreen {}
     QuickSettings {}
 
     // Open bar popups from keybinds/scripts, on the focused monitor:
