@@ -46,9 +46,7 @@ ColumnLayout {
         }
         if (Wallpapers.mode === "animated") {
             const kind = Wallpapers.animatedKind === "scene" ? "Live Shader" : "Loop";
-            const state = Wallpapers.batterySaverPause ? "Paused (Power Saver)"
-                        : Wallpapers.animatedPaused ? "Paused"
-                        : "Playing";
+            const state = Wallpapers.animatedPaused ? "Paused" : "Playing";
             return kind + " • " + state;
         }
         return Wallpapers.solidVignette ? "Solid • Subtle Vignette" : "Solid Backdrop";
@@ -134,7 +132,7 @@ ColumnLayout {
             imageUrl: root.activeUrl
             transitionMs: Math.min(280, Wallpapers.transitionMs)
             instantTransitions: !root.popupOpen
-            paused: !root.popupOpen || (Wallpapers.mode === "animated" && Wallpapers.effectivelyAnimatedPaused)
+            paused: !root.popupOpen || (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
             decodeWidth: 640
             decodeHeight: 360
         }
@@ -209,14 +207,14 @@ ColumnLayout {
                     IconButton {
                         icon: Wallpapers.mode === "folder"
                             ? (Wallpapers.slideshowPaused ? "play_arrow" : "pause")
-                            : (Wallpapers.effectivelyAnimatedPaused ? "play_arrow" : "pause")
+                            : (Wallpapers.animatedPaused ? "play_arrow" : "pause")
                         filled: true
                         implicitWidth: 26
                         implicitHeight: 26
                         iconSize: 17
                         highlighted: Wallpapers.mode === "folder"
                             ? Wallpapers.slideshowPaused
-                            : Wallpapers.effectivelyAnimatedPaused
+                            : Wallpapers.animatedPaused
                         onClicked: Wallpapers.toggleCurrentPause()
                     }
 

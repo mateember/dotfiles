@@ -54,7 +54,7 @@ PanelWindow {
         id: scene
         anchors.fill: parent
         imageUrl: root.currentUrl
-        paused: (Wallpapers.mode === "animated" && Wallpapers.effectivelyAnimatedPaused)
+        paused: (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
              || (Wallpapers.pauseOnFullscreen && root.fullscreenActive)
         instantTransitions: root.fullscreenActive
         decodeWidth: root.width * root.dpr

@@ -24,6 +24,8 @@ Singleton {
 
     // ---- Mode & Display Options ----
     property string mode: "folder"                // "folder" | "image" | "animated" | "solid"
+    property string lastStaticMode: "folder"      // "folder" | "image" | "solid" fallback when leaving Performance
+    property bool resumeAnimatedOnPerf: false     // true when Animated auto-disabled on non-Performance mode
     property string fitMode: "crop"               // "crop" | "fit" | "stretch" | "center"
     property int transitionMs: 1200               // 0 | 400 | 1200 | 2000
     property bool kenBurns: false                 // subtle slow pan & zoom on still images
@@ -58,7 +60,6 @@ Singleton {
     property string resolvedAnimatedFileUrl: ""
     property bool animatedPaused: false
     property bool pauseOnFullscreen: true
-    property bool pauseOnBatterySaver: true
 
     // ---- Solid ----
     property string solidColor: "#1B1B1B"
@@ -80,9 +81,8 @@ Singleton {
         catch (e) { return {}; }
     }
 
-    // Effective animation pause state (respecting battery saver when enabled).
-    readonly property bool batterySaverPause: root.pauseOnBatterySaver && PowerProfile.mode === "low-power"
-    readonly property bool effectivelyAnimatedPaused: root.animatedPaused || root.batterySaverPause
+    // Animated wallpapers are only enabled when PowerProfile is in Performance mode.
+    readonly property bool animatedAllowed: PowerProfile.mode === "performance"
 
     // Signals sent to Wallpaper.qml instances
     signal tick()                                 // advance folder slideshow
@@ -360,6 +360,8 @@ Singleton {
 
     function selectFolderImage(url: string, screenName: string): void {
         if (!url) return;
+        root.lastStaticMode = "folder";
+        root.resumeAnimatedOnPerf = false;
         if (root.mode !== "folder") {
             root.mode = "folder";
             scheduleSave();
@@ -376,12 +378,51 @@ Singleton {
         if (slideshowTimer.running) slideshowTimer.restart();
     }
 
-    // ---- Configuration Mutators ----
+    // ---- Configuration Mutators & Power-Mode Sync ----
+    function resolveStaticFallback(): string {
+        if (root.lastStaticMode === "solid") return "solid";
+        if (root.lastStaticMode === "image" && (root.resolvedSingleImageUrl !== "" || root.singleImagePath !== ""))
+            return "image";
+        if (root.folderFiles.length > 0 || root.scanningFolder || root.folderPath !== "")
+            return "folder";
+        return "solid";
+    }
+
+    function syncPowerMode(): void {
+        if (root.passiveMode || !root.ready || !PowerProfile.ready) return;
+        if (PowerProfile.mode !== "performance") {
+            if (root.mode === "animated") {
+                root.resumeAnimatedOnPerf = true;
+                root.mode = resolveStaticFallback();
+                scheduleSave();
+            }
+        } else {
+            if (root.resumeAnimatedOnPerf) {
+                root.resumeAnimatedOnPerf = false;
+                root.mode = "animated";
+                scheduleSave();
+            }
+        }
+    }
+
+    Connections {
+        target: PowerProfile
+        function onModeChanged() { root.syncPowerMode(); }
+        function onReadyChanged() { root.syncPowerMode(); }
+    }
+
     function setMode(m: string): void {
         if (["folder", "image", "animated", "solid"].indexOf(m) < 0) return;
-        if (m === "image" && !root.singleImagePath) {
-            const fallback = urlToPath(persist.current || (root.folderFiles[0]?.url ?? ""));
-            if (fallback) setSingleImage(fallback, false);
+        if (m === "animated") {
+            if (!root.animatedAllowed) return;
+            root.resumeAnimatedOnPerf = false;
+        } else {
+            root.lastStaticMode = m;
+            root.resumeAnimatedOnPerf = false;
+            if (m === "image" && !root.singleImagePath) {
+                const fallback = urlToPath(persist.current || (root.folderFiles[0]?.url ?? ""));
+                if (fallback) setSingleImage(fallback, false);
+            }
         }
         root.mode = m;
         scheduleSave();
@@ -408,6 +449,8 @@ Singleton {
         root.folderPath = clean;
         root.browseDir = clean;
         addRecentFolder(clean);
+        root.lastStaticMode = "folder";
+        root.resumeAnimatedOnPerf = false;
         root.mode = "folder";
         scheduleSave();
         if (changed) {
@@ -476,7 +519,11 @@ Singleton {
         const doSwitch = switchMode !== false;
         root.singleImagePath = clean;
         addRecentImage(clean);
-        if (doSwitch) root.mode = "image";
+        if (doSwitch) {
+            root.lastStaticMode = "image";
+            root.resumeAnimatedOnPerf = false;
+            root.mode = "image";
+        }
         resolveSingleMedia(clean);
         scheduleSave();
     }
@@ -484,7 +531,10 @@ Singleton {
     function setAnimatedKind(kind: string): void {
         if (kind !== "scene" && kind !== "file") return;
         root.animatedKind = kind;
-        if (root.mode !== "animated") root.mode = "animated";
+        if (root.animatedAllowed) {
+            root.resumeAnimatedOnPerf = false;
+            if (root.mode !== "animated") root.mode = "animated";
+        }
         scheduleSave();
     }
 
@@ -492,7 +542,10 @@ Singleton {
         if (!root.scenes.some(s => s.id === id)) return;
         root.sceneId = id;
         root.animatedKind = "scene";
-        root.mode = "animated";
+        if (root.animatedAllowed) {
+            root.resumeAnimatedOnPerf = false;
+            root.mode = "animated";
+        }
         scheduleSave();
     }
 
@@ -525,7 +578,10 @@ Singleton {
         if (!clean) return;
         root.animatedFilePath = clean;
         root.animatedKind = "file";
-        root.mode = "animated";
+        if (root.animatedAllowed) {
+            root.resumeAnimatedOnPerf = false;
+            root.mode = "animated";
+        }
         resolveAnimatedMedia(clean);
         scheduleSave();
     }
@@ -545,13 +601,10 @@ Singleton {
         scheduleSave();
     }
 
-    function setPauseOnBatterySaver(on: bool): void {
-        root.pauseOnBatterySaver = on;
-        scheduleSave();
-    }
-
     function setSolidColor(hex: string): void {
         root.solidColor = normalizeHex(hex, root.solidColor);
+        root.lastStaticMode = "solid";
+        root.resumeAnimatedOnPerf = false;
         root.mode = "solid";
         scheduleSave();
     }
@@ -589,6 +642,8 @@ Singleton {
 
     function reset(): void {
         root.mode = "folder";
+        root.lastStaticMode = "folder";
+        root.resumeAnimatedOnPerf = false;
         root.fitMode = "crop";
         root.transitionMs = 1200;
         root.kenBurns = false;
@@ -616,7 +671,6 @@ Singleton {
         root.resolvedAnimatedFileUrl = "";
         root.animatedPaused = false;
         root.pauseOnFullscreen = true;
-        root.pauseOnBatterySaver = true;
         root.solidColor = "#1B1B1B";
         root.solidVignette = true;
         saveNow();
@@ -899,6 +953,8 @@ Singleton {
         saveTimer.stop();
         const payload = {
             mode: root.mode,
+            lastStaticMode: root.lastStaticMode,
+            resumeAnimatedOnPerf: root.resumeAnimatedOnPerf,
             fitMode: root.fitMode,
             transitionMs: root.transitionMs,
             kenBurns: root.kenBurns,
@@ -925,7 +981,6 @@ Singleton {
             animatedFilePath: root.animatedFilePath,
             animatedPaused: root.animatedPaused,
             pauseOnFullscreen: root.pauseOnFullscreen,
-            pauseOnBatterySaver: root.pauseOnBatterySaver,
             solidColor: root.solidColor,
             solidVignette: root.solidVignette
         };
@@ -943,6 +998,9 @@ Singleton {
             const d = JSON.parse(raw);
             if (!d || typeof d !== "object") return;
             if (["folder", "image", "animated", "solid"].indexOf(d.mode) >= 0) root.mode = d.mode;
+            if (["folder", "image", "solid"].indexOf(d.lastStaticMode) >= 0) root.lastStaticMode = d.lastStaticMode;
+            else if (d.mode !== "animated" && ["folder", "image", "solid"].indexOf(d.mode) >= 0) root.lastStaticMode = d.mode;
+            if (typeof d.resumeAnimatedOnPerf === "boolean") root.resumeAnimatedOnPerf = d.resumeAnimatedOnPerf;
             if (["crop", "fit", "stretch", "center"].indexOf(d.fitMode) >= 0) root.fitMode = d.fitMode;
             if (typeof d.transitionMs === "number") root.transitionMs = Math.max(0, Math.min(3000, d.transitionMs));
             if (typeof d.kenBurns === "boolean") root.kenBurns = d.kenBurns;
@@ -977,7 +1035,6 @@ Singleton {
             if (typeof d.animatedFilePath === "string") root.animatedFilePath = normalizePath(d.animatedFilePath);
             if (typeof d.animatedPaused === "boolean") root.animatedPaused = d.animatedPaused;
             if (typeof d.pauseOnFullscreen === "boolean") root.pauseOnFullscreen = d.pauseOnFullscreen;
-            if (typeof d.pauseOnBatterySaver === "boolean") root.pauseOnBatterySaver = d.pauseOnBatterySaver;
 
             if (typeof d.solidColor === "string") root.solidColor = normalizeHex(d.solidColor, root.solidColor);
             if (typeof d.solidVignette === "boolean") root.solidVignette = d.solidVignette;
@@ -1002,8 +1059,12 @@ Singleton {
             if (root.animatedFilePath) root.resolveAnimatedMedia(root.animatedFilePath);
             if (root.includeSubfolders) root.refreshFolderFiles();
             root.ready = true;
+            root.syncPowerMode();
         }
-        onLoadFailed: root.ready = true
+        onLoadFailed: {
+            root.ready = true;
+            root.syncPowerMode();
+        }
     }
 
     // qs ipc call wallpaper <method>; screenUrls is read by lock.qml

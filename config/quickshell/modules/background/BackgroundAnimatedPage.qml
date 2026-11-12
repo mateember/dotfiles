@@ -619,13 +619,12 @@ ColumnLayout {
                 }
             }
 
-            RowLayout {
+            StyledText {
                 Layout.fillWidth: true
-                StyledText { Layout.fillWidth: true; text: "Pause on Power Saver profile"; font.pixelSize: Theme.fontSizeSmall }
-                Toggle {
-                    checked: Wallpapers.pauseOnBatterySaver
-                    onToggled: Wallpapers.setPauseOnBatterySaver(!Wallpapers.pauseOnBatterySaver)
-                }
+                text: "Animated mode turns off outside Performance power mode and restores automatically when switching back."
+                font.pixelSize: 11
+                color: Theme.textDim
+                wrapMode: Text.WordWrap
             }
         }
     }

@@ -12,6 +12,7 @@ Singleton {
     id: root
 
     property string mode: "balanced"
+    property bool ready: false
     readonly property string script: (Quickshell.env("HOME") ?? "") + "/dotfiles/scripts/tlpmodes.sh"
 
     readonly property string label: {
@@ -52,13 +53,35 @@ Singleton {
         onLoaded: {
             const v = text().trim();
             if (v) root.mode = v;
+            root.ready = true;
+        }
+        onLoadFailed: root.ready = true
+    }
+
+    // Re-check immediately (and after a short settle delay) when AC charger changes
+    // since TLP applies platform_profile asynchronously via udev.
+    Timer {
+        id: acSettleTimer
+        interval: 900
+        property int remaining: 0
+        repeat: true
+        running: remaining > 0
+        onTriggered: {
+            prof.reload();
+            remaining = Math.max(0, remaining - 1);
         }
     }
 
-    // Re-check immediately when AC charger is plugged/unplugged (TLP auto-switches profile)
     Connections {
         target: Battery
-        function onChargingChanged() { prof.reload(); }
+        function onChargingChanged() {
+            prof.reload();
+            acSettleTimer.remaining = 3;
+        }
+        function onOnBatteryChanged() {
+            prof.reload();
+            acSettleTimer.remaining = 3;
+        }
     }
 
     Process {

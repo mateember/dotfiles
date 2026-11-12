@@ -17,7 +17,7 @@ BarButton {
 
     readonly property bool pausedHighlight:
         (Wallpapers.mode === "folder" && Wallpapers.slideshowPaused)
-        || (Wallpapers.mode === "animated" && Wallpapers.effectivelyAnimatedPaused)
+        || (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
 
     readonly property string barIconName: {
         if (Wallpapers.mode === "image") return "image";
@@ -110,10 +110,10 @@ BarButton {
 
                 IconButton {
                     visible: !pop.showEffects && (Wallpapers.mode === "folder" || Wallpapers.mode === "animated")
-                    icon: (Wallpapers.mode === "folder" ? Wallpapers.slideshowPaused : Wallpapers.effectivelyAnimatedPaused)
+                    icon: (Wallpapers.mode === "folder" ? Wallpapers.slideshowPaused : Wallpapers.animatedPaused)
                         ? "play_arrow" : "pause"
                     filled: true
-                    highlighted: Wallpapers.mode === "folder" ? Wallpapers.slideshowPaused : Wallpapers.effectivelyAnimatedPaused
+                    highlighted: Wallpapers.mode === "folder" ? Wallpapers.slideshowPaused : Wallpapers.animatedPaused
                     onClicked: Wallpapers.toggleCurrentPause()
                 }
 
@@ -165,12 +165,14 @@ BarButton {
                         delegate: Rectangle {
                             required property var modelData
                             readonly property bool selected: Wallpapers.mode === modelData.id
+                            readonly property bool tabEnabled: modelData.id !== "animated" || Wallpapers.animatedAllowed
 
                             Layout.fillWidth: true
                             implicitHeight: 32
                             radius: Theme.radiusS
+                            opacity: tabEnabled ? 1.0 : 0.45
                             color: selected ? Theme.accent
-                                 : tabMouse.containsMouse ? Theme.componentHover
+                                 : (tabEnabled && tabMouse.containsMouse) ? Theme.componentHover
                                  : Theme.component
                             border.width: 1
                             border.color: selected ? Theme.accent : Theme.componentDivider
@@ -199,9 +201,71 @@ BarButton {
                             MouseArea {
                                 id: tabMouse
                                 anchors.fill: parent
+                                enabled: tabEnabled
+                                hoverEnabled: true
+                                cursorShape: tabEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: Wallpapers.setMode(modelData.id)
+                            }
+                        }
+                    }
+                }
+
+                // Performance-mode requirement hint when Animated is unavailable
+                Rectangle {
+                    visible: !Wallpapers.animatedAllowed
+                    Layout.fillWidth: true
+                    implicitHeight: perfHintRow.implicitHeight + 10
+                    radius: Theme.radiusXs
+                    color: Theme.surface1
+                    border.width: 1
+                    border.color: Theme.componentDivider
+
+                    RowLayout {
+                        id: perfHintRow
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.spaceXxs
+                        anchors.rightMargin: Theme.spaceXxs
+                        spacing: Theme.spaceXxs
+
+                        Icon {
+                            icon: "bolt"
+                            size: 14
+                            color: Wallpapers.resumeAnimatedOnPerf ? Theme.accent : Theme.textDim
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Wallpapers.resumeAnimatedOnPerf
+                                ? "Animated paused (" + PowerProfile.label + ") — resumes on Performance"
+                                : "Animated requires Performance power mode"
+                            font.pixelSize: 11
+                            color: Theme.textDim
+                            elide: Text.ElideRight
+                        }
+
+                        Rectangle {
+                            implicitHeight: 20
+                            implicitWidth: perfBtnLbl.implicitWidth + 12
+                            radius: Theme.radiusXl
+                            color: perfBtnMouse.containsMouse ? Theme.accentHover : Theme.component
+                            border.width: 1
+                            border.color: Theme.componentDivider
+
+                            StyledText {
+                                id: perfBtnLbl
+                                anchors.centerIn: parent
+                                text: "Performance"
+                                font.pixelSize: 10
+                                font.weight: Font.Medium
+                                color: Theme.text
+                            }
+
+                            MouseArea {
+                                id: perfBtnMouse
+                                anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: Wallpapers.setMode(modelData.id)
+                                onClicked: PowerProfile.setMode("performance")
                             }
                         }
                     }
