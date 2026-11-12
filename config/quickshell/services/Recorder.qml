@@ -33,24 +33,46 @@ Singleton {
     function openOverlay(initialTab: string) {
         if (initialTab === "shot" || initialTab === "record")
             root.tab = initialTab;
+        WidgetHistory.clear();
         root.fromQuickSettings = false;
-        Popups.close();
-        QuickSettingsState.close();
+        Popups.hide();
+        QuickSettingsState.hide();
         root.overlayOpen = true;
     }
 
-    function openOverlayFromQuickSettings(initialTab: string) {
+    function openOverlayFromQuickSettings(initialTab: string, qsScreen: string, qsAsWindow: bool) {
         if (initialTab === "shot" || initialTab === "record")
             root.tab = initialTab;
-        root.fromQuickSettings = true;
-        Popups.close();
-        QuickSettingsState.close();
+        WidgetHistory.push({ kind: "quicksettings", screen: qsScreen || "", asWindow: Boolean(qsAsWindow) });
+        root.fromQuickSettings = !qsAsWindow;
+        Popups.hide();
+        QuickSettingsState.hide();
         root.overlayOpen = true;
+    }
+
+    function openOverlayFromPopup(initialTab: string, popupEntry: var) {
+        if (initialTab === "shot" || initialTab === "record")
+            root.tab = initialTab;
+        if (popupEntry)
+            WidgetHistory.push(popupEntry);
+        root.fromQuickSettings = Boolean(popupEntry?.fromQuickSettings);
+        Popups.hide();
+        QuickSettingsState.hide();
+        root.overlayOpen = true;
+    }
+
+    function hideOverlay() {
+        root.overlayOpen = false;
+        root.fromQuickSettings = false;
+    }
+
+    function backOverlay() {
+        WidgetHistory.backFromCapture();
     }
 
     function closeOverlay() {
-        root.overlayOpen = false;
-        root.fromQuickSettings = false;
+        WidgetHistory.clear();
+        root.hideOverlay();
     }
 
     function toggleOverlay(initialTab: string) {
@@ -62,7 +84,8 @@ Singleton {
         const m = mode || "region";
         const act = root.shotAction;
         const dly = String(root.shotDelay);
-        root.overlayOpen = false;
+        WidgetHistory.clear();
+        root.hideOverlay();
         Quickshell.execDetached(["bash", root.scriptPath, "shot", m, act, dly]);
     }
 
@@ -72,7 +95,8 @@ Singleton {
         const a = audio || root.recordAudio || "none";
         root.recordMode = m;
         root.recordAudio = a;
-        root.overlayOpen = false;
+        WidgetHistory.clear();
+        root.hideOverlay();
         root.starting = true;
         root.elapsedSeconds = 0;
         if (recProc.running) recProc.running = false;

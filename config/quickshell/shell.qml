@@ -17,7 +17,7 @@ import qs.services
 ShellRoot {
     // Singletons are created lazily; touch the ones that own IPC targets or system hooks
     // so they exist from startup (picker, wallpaper, notifications server).
-    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, Hypr, Recorder, Privacy, Storage]
+    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, Hypr, Recorder, Privacy, Storage, WidgetHistory]
 
     // Wallpaper slideshow, one surface per screen (background layer).
     Variants {
@@ -59,6 +59,7 @@ ShellRoot {
             const screen = Hyprland.focusedMonitor?.name ?? Quickshell.screens[0]?.name ?? "";
             Popups.openWindow(name + "@" + screen);
         }
+        function back(): void { WidgetHistory.backFromPopup(); }
         function close(): void { Popups.close(); }
     }
 

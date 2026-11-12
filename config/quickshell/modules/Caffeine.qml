@@ -50,6 +50,15 @@ BarButton {
             Layout.fillWidth: true
             spacing: Theme.spaceXs
 
+            IconButton {
+                visible: pop.canGoBack
+                icon: "arrow_back"
+                implicitWidth: 28
+                implicitHeight: 28
+                iconSize: 18
+                onClicked: pop.back()
+            }
+
             Icon {
                 icon: "coffee"
                 filled: Idle.caffeine

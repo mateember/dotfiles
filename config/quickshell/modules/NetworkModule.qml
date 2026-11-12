@@ -40,6 +40,15 @@ BarButton {
         property var pending: null      // Wi-Fi network waiting for a password
         property string error: ""
 
+        backHandler: () => {
+            if (pop.pending !== null || Net.vpnSecretUuid !== "") {
+                pop.pending = null;
+                Net.vpnSecretUuid = "";
+                return true;
+            }
+            return false;
+        }
+
         onOpenChanged: {
             Net.scanning = open;
             if (open) {
@@ -189,6 +198,7 @@ BarButton {
                             echoMode: TextInput.Password
                             onVisibleChanged: if (visible) { text = ""; focusInput(); }
                             onAccepted: vpnConnectBtn.clicked()
+                            input.Keys.onEscapePressed: pop.back()
                         }
                         IconButton {
                             id: vpnConnectBtn
@@ -288,6 +298,7 @@ BarButton {
                         placeholder: "Password"
                         echoMode: TextInput.Password
                         onAccepted: connectBtn.clicked()
+                        input.Keys.onEscapePressed: pop.back()
                     }
                     IconButton {
                         id: connectBtn

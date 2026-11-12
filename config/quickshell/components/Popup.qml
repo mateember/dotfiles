@@ -19,20 +19,45 @@ PanelWindow {
     default property alias content: body.data
     property int padding: Theme.spaceS
     property int contentWidth: Theme.popupWidth - 2 * padding
-    // Take keyboard focus as soon as the dropdown opens (e.g. when opened from a keybind),
-    // instead of only after it's clicked. Clicking outside still closes it via the focus grab.
-    property bool grabKeyboard: false
+    // Take keyboard focus as soon as the dropdown opens so Escape and keyboard navigation
+    // work immediately without clicking inside first. Clicking outside still closes via the focus grab.
+    property bool grabKeyboard: true
     // Optional key handler (event) => void, called before the built-in Escape handling.
     property var keyHandler: null
+    // Optional () => bool handler for intra-widget subpages/prompts; return true to consume Escape/Back.
+    property var backHandler: null
 
     readonly property var barWindow: anchorItem.QsWindow.window
     readonly property string popupId: name + "@" + (barWindow?.screen?.name ?? "")
     readonly property bool open: Popups.current === popupId
     readonly property bool openDropdown: open && !Popups.asWindow
     readonly property bool openAsWindow: open && Popups.asWindow
+    readonly property bool canGoBack: open && WidgetHistory.canGoBack
 
     function toggle() { Popups.toggle(popupId); }
+    function back() {
+        if (root.backHandler && root.backHandler()) {
+            Qt.callLater(() => root.ensureFocus());
+            return;
+        }
+        if (root.open) WidgetHistory.backFromPopup();
+    }
     function close() { if (root.open) Popups.close(); }
+
+    function hasFocusedDescendant(item: Item): bool {
+        if (!item) return false;
+        const kids = item.children;
+        for (let i = 0; i < kids.length; i++) {
+            const c = kids[i];
+            if (c.activeFocus || hasFocusedDescendant(c)) return true;
+        }
+        return false;
+    }
+
+    function ensureFocus() {
+        if (root.open && !bg.activeFocus && !hasFocusedDescendant(bg))
+            bg.forceActiveFocus();
+    }
 
     // Horizontal position: centered under the button (or screen-centered if hidden), kept on screen.
     // Computed reactively from the RowLayout + Loader + BarButton x/width in Bar.qml so it is
@@ -50,7 +75,7 @@ PanelWindow {
              + anchorItem.width / 2;
     }
     // Deferred so it runs after `bg` has been reparented into the floating window (window mode).
-    onOpenChanged: if (open) Qt.callLater(() => bg.forceActiveFocus())
+    onOpenChanged: if (open) Qt.callLater(() => root.ensureFocus())
 
     screen: barWindow?.screen ?? null
     visible: openDropdown || (!Popups.asWindow && bg.opacity > 0)
@@ -94,7 +119,7 @@ PanelWindow {
         minimumSize: Qt.size(targetW, targetH)
         maximumSize: Qt.size(targetW, targetH)
         color: "transparent"
-        onVisibleChanged: if (visible) Qt.callLater(() => bg.forceActiveFocus())
+        onVisibleChanged: if (visible) Qt.callLater(() => root.ensureFocus())
         onClosed: root.close()
     }
 
@@ -109,13 +134,14 @@ PanelWindow {
         clip: true
         focus: true
         Keys.onPressed: e => { if (root.keyHandler) root.keyHandler(e); }
-        Keys.onEscapePressed: root.close()
+        Keys.onEscapePressed: root.back()
 
         opacity: root.open ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
 
         ColumnLayout {
             id: body
+            readonly property var popupRoot: root
             x: root.padding
             y: root.padding
             width: root.contentWidth

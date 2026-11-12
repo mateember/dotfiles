@@ -51,7 +51,7 @@ Scope {
             const scr = root.pendingScreen;
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
-            else if (id === "qs:opacity-settings") OpacityConfig.settingsOpen = true;
+            else if (id === "qs:opacity-settings") { WidgetHistory.opacityFromBarSettings = false; OpacityConfig.settingsOpen = true; }
             else if (id === "qs:overview") Hypr.openOverview();
             else if (id === "qs:capture") Recorder.openOverlay("shot");
             else if (id === "qs:record") Recorder.openOverlay("record");
@@ -109,6 +109,7 @@ Scope {
                                          : /^[\d\s.,()+\-*/^%]+$/.test(query) && /\d\s*[+\-*/^%]\s*[\d(]/.test(query) ? "calc"
                                          : "apps"
             property string calcResult: ""
+            property string previousQuery: ""
 
             readonly property var shellApps: [
                 { id: "qs:overview",            name: "Overview",              comment: "KDE Plasma-style workspaces & live window previews (SUPER+Tab)", icon: "grid_view",        keywords: ["workspaces", "desktops", "expose", "windows", "plasma"] },
@@ -205,6 +206,7 @@ Scope {
                 } else if (r.kind === "shell") {
                     root.bump(r.id);
                     if (r.keepOpen) {
+                        win.previousQuery = search.text;
                         search.text = ":";
                         search.focusInput();
                         return;
@@ -230,6 +232,7 @@ Scope {
 
             onQueryChanged: {
                 list.currentIndex = 0;
+                if (query === "") win.previousQuery = "";
                 if (mode === "calc") calcTimer.restart();
             }
 
@@ -283,7 +286,16 @@ Scope {
 
                         input.Keys.onPressed: e => {
                             const ctrl = e.modifiers & Qt.ControlModifier;
-                            if (e.key === Qt.Key_Escape) { root.open = false; e.accepted = true; }
+                            if (e.key === Qt.Key_Escape) {
+                                if (win.previousQuery !== "") {
+                                    const prev = win.previousQuery;
+                                    win.previousQuery = "";
+                                    search.text = prev;
+                                } else {
+                                    root.open = false;
+                                }
+                                e.accepted = true;
+                            }
                             else if (e.key === Qt.Key_Down || (e.key === Qt.Key_Tab && !(e.modifiers & Qt.ShiftModifier)) || (ctrl && e.key === Qt.Key_J)) { win.move(1); e.accepted = true; }
                             else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || (ctrl && e.key === Qt.Key_K)) { win.move(-1); e.accepted = true; }
                             else if (e.key === Qt.Key_PageDown) { win.move(5); e.accepted = true; }

@@ -56,7 +56,7 @@ BarButton {
             onAccepted: pop.copyAt(list.currentIndex)
             input.Keys.onDownPressed: list.currentIndex = Math.min(list.count - 1, list.currentIndex + 1)
             input.Keys.onUpPressed: list.currentIndex = Math.max(0, list.currentIndex - 1)
-            input.Keys.onEscapePressed: pop.close()
+            input.Keys.onEscapePressed: pop.back()
         }
 
         StyledText {

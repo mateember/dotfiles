@@ -24,7 +24,7 @@ Scope {
             maximumSize: Qt.size(520, 500)
             color: "transparent"
 
-            onClosed: OpacityConfig.settingsOpen = false
+            onClosed: WidgetHistory.closeOpacitySettings()
 
             function previewNotification() {
                 Quickshell.execDetached([
@@ -48,7 +48,7 @@ Scope {
                 color: Theme.popupBg
                 focus: true
                 Component.onCompleted: card.forceActiveFocus()
-                Keys.onEscapePressed: OpacityConfig.settingsOpen = false
+                Keys.onEscapePressed: WidgetHistory.backFromOpacitySettings()
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -59,6 +59,12 @@ Scope {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Theme.spaceXs
+
+                        IconButton {
+                            visible: WidgetHistory.opacityFromBarSettings
+                            icon: "arrow_back"
+                            onClicked: WidgetHistory.backFromOpacitySettings()
+                        }
 
                         Icon {
                             icon: "opacity"
@@ -103,7 +109,7 @@ Scope {
                         }
                         IconButton {
                             icon: "close"
-                            onClicked: OpacityConfig.settingsOpen = false
+                            onClicked: WidgetHistory.closeOpacitySettings()
                         }
                     }
 

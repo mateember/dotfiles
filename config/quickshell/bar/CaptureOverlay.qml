@@ -30,7 +30,7 @@ Scope {
 
             Shortcut {
                 sequences: ["Escape"]
-                onActivated: Recorder.closeOverlay()
+                onActivated: Recorder.backOverlay()
             }
 
             Rectangle {
@@ -68,6 +68,12 @@ Scope {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Theme.spaceXs
+
+                        IconButton {
+                            visible: WidgetHistory.canGoBack
+                            icon: "arrow_back"
+                            onClicked: Recorder.backOverlay()
+                        }
 
                         Rectangle {
                             Layout.fillWidth: true

@@ -15,35 +15,34 @@ Scope {
 
     // Open state is shared with the bar button (services/QuickSettingsState.qml).
     readonly property bool open: QuickSettingsState.open
-    function setOpen(v: bool) { QuickSettingsState.open = v; }
+    function dismiss() { QuickSettingsState.close(); }
     function toggle() { QuickSettingsState.toggle(); }
 
     property real cardOpacity: open ? 1 : 0
     Behavior on cardOpacity { NumberAnimation { duration: Theme.animFast } }
 
-    // Opening Quick Settings closes any open bar popup, and vice versa.
+    // Opening Quick Settings hides any open bar popup, and vice versa.
     Connections {
         target: QuickSettingsState
-        function onOpenChanged() { if (QuickSettingsState.open && Popups.current !== "") Popups.close(); }
+        function onOpenChanged() { if (QuickSettingsState.open && Popups.current !== "") Popups.hide(); }
     }
 
-    // Close the panel and open a bar popup (e.g. "network") in the Quick Settings position.
+    // Drill down into a bar popup (e.g. "network"), pushing Quick Settings onto WidgetHistory.
     function openPopup(name: string, screenName: string) {
-        root.setOpen(false);
-        Popups.openFromQuickSettings(name + "@" + screenName);
+        Popups.openChildFromQuickSettings(name + "@" + screenName, screenName, QuickSettingsState.asWindow);
     }
 
     IpcHandler {
         target: "quicksettings"
         function toggle(): void { root.toggle(); }
-        function open(): void { root.setOpen(true); }
-        function close(): void { root.setOpen(false); }
+        function open(): void { QuickSettingsState.openFresh(); }
+        function close(): void { root.dismiss(); }
     }
 
-    // A bar popup opening closes the panel (only one dropdown at a time).
+    // A bar popup opening hides the panel (only one dropdown at a time).
     Connections {
         target: Popups
-        function onCurrentChanged() { if (Popups.current !== "") root.setOpen(false); }
+        function onCurrentChanged() { if (Popups.current !== "") QuickSettingsState.hide(); }
     }
 
     LazyLoader {
@@ -52,7 +51,8 @@ Scope {
         PanelWindow {
             id: win
 
-            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+            readonly property string preferredScreen: QuickSettingsState.targetScreen || (Hyprland.focusedMonitor?.name ?? "")
+            screen: Quickshell.screens.find(s => s.name === preferredScreen) ?? Quickshell.screens[0]
             visible: !QuickSettingsState.asWindow && (root.open || root.cardOpacity > 0)
             color: "transparent"
             anchors.top: true
@@ -66,27 +66,37 @@ Scope {
 
             WlrLayershell.namespace: "hcs-quicksettings"
             WlrLayershell.layer: WlrLayer.Top
-            WlrLayershell.keyboardFocus: (root.open && !QuickSettingsState.asWindow) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (root.open && !QuickSettingsState.asWindow) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             readonly property string screenName: screen?.name ?? ""
+
+            Connections {
+                target: QuickSettingsState
+                function onOpenChanged() {
+                    if (QuickSettingsState.open)
+                        Qt.callLater(() => card.forceActiveFocus());
+                }
+            }
+            Component.onCompleted: if (root.open) Qt.callLater(() => card.forceActiveFocus())
 
             HyprlandFocusGrab {
                 active: root.open && !QuickSettingsState.asWindow
                 windows: [win]
-                onCleared: if (!QuickSettingsState.asWindow) root.setOpen(false)
+                onCleared: if (!QuickSettingsState.asWindow) root.dismiss()
             }
 
             FloatingWindow {
                 id: floatWin
                 title: "HCS — Quick Settings"
-                visible: QuickSettingsState.asWindow
+                visible: root.open && QuickSettingsState.asWindow
                 readonly property int targetH: Math.max(200, Math.min(Math.ceil(card.implicitHeight), 740))
                 implicitWidth: 400
                 implicitHeight: targetH
                 minimumSize: Qt.size(400, targetH)
                 maximumSize: Qt.size(400, targetH)
                 color: "transparent"
-                onClosed: root.setOpen(false)
+                onVisibleChanged: if (visible) Qt.callLater(() => card.forceActiveFocus())
+                onClosed: if (root.open) root.dismiss()
             }
 
             Rectangle {
@@ -100,7 +110,7 @@ Scope {
                 border.width: QuickSettingsState.asWindow ? 0 : 1
                 clip: true
                 focus: true
-                Keys.onEscapePressed: root.setOpen(false)
+                Keys.onEscapePressed: root.dismiss()
 
                 opacity: QuickSettingsState.asWindow ? 1 : root.cardOpacity
 
@@ -304,7 +314,7 @@ Scope {
                                         visible: modelData.mounted
                                         icon: "folder_open"
                                         onClicked: {
-                                            root.setOpen(false);
+                                            root.dismiss();
                                             Storage.openInFiles(modelData.mountpoint);
                                         }
                                     }
@@ -344,26 +354,26 @@ Scope {
 
                         IconButton {
                             icon: "photo_camera"
-                            onClicked: {
-                                root.setOpen(false);
-                                Recorder.openOverlayFromQuickSettings("shot");
-                            }
+                            onClicked: Recorder.openOverlayFromQuickSettings("shot", win.screenName, QuickSettingsState.asWindow)
                         }
                         IconButton {
                             icon: Recorder.recording ? "stop_circle" : "videocam"
                             onClicked: {
-                                root.setOpen(false);
-                                if (Recorder.recording) Recorder.stopRecording();
-                                else Recorder.openOverlayFromQuickSettings("record");
+                                if (Recorder.recording) {
+                                    root.dismiss();
+                                    Recorder.stopRecording();
+                                } else {
+                                    Recorder.openOverlayFromQuickSettings("record", win.screenName, QuickSettingsState.asWindow);
+                                }
                             }
                         }
                         IconButton {
                             icon: "settings"
-                            onClicked: { root.setOpen(false); Quickshell.execDetached(["cosmic-settings"]); }
+                            onClicked: { root.dismiss(); Quickshell.execDetached(["cosmic-settings"]); }
                         }
                         IconButton {
                             icon: "lock"
-                            onClicked: { root.setOpen(false); Quickshell.execDetached(["loginctl", "lock-session"]); }
+                            onClicked: { root.dismiss(); Quickshell.execDetached(["loginctl", "lock-session"]); }
                         }
                         IconButton {
                             icon: "power_settings_new"
