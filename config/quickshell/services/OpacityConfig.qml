@@ -119,9 +119,9 @@ Singleton {
 
     IpcHandler {
         target: "opacity"
-        function toggle(): void { root.settingsOpen = !root.settingsOpen; }
-        function open(): void { root.settingsOpen = true; }
-        function close(): void { root.settingsOpen = false; }
+        function toggle(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = !root.settingsOpen; }
+        function open(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = true; }
+        function close(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = false; }
         function reset(): void { root.reset(); }
     }
 }

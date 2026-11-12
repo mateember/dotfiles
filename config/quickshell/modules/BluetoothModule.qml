@@ -31,6 +31,14 @@ BarButton {
         property string confirmForgetAddr: ""
         readonly property bool shouldScan: pop.open && Bt.enabled && pop.discoveredOpen
 
+        backHandler: () => {
+            if (pop.confirmForgetAddr !== "") {
+                pop.clearConfirmForget();
+                return true;
+            }
+            return false;
+        }
+
         function armConfirmForget(addr: string) {
             pop.confirmForgetAddr = addr;
             forgetResetTimer.restart();

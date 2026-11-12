@@ -27,6 +27,14 @@ BarButton {
         property int selected: 0
         onOpenChanged: { confirm = ""; selected = 0; }
 
+        backHandler: () => {
+            if (pop.confirm !== "") {
+                pop.confirm = "";
+                return true;
+            }
+            return false;
+        }
+
         readonly property var actions: [
             { id: "lock", icon: "lock", text: "Lock", command: ["loginctl", "lock-session"], confirm: false },
             { id: "suspend", icon: "bedtime", text: "Suspend", command: ["systemctl", "suspend"], confirm: false },
@@ -66,9 +74,16 @@ BarButton {
                 pop.selected = pop.actions.length - 1; pop.confirm = ""; e.accepted = true; break;
             case Qt.Key_Return: case Qt.Key_Enter: case Qt.Key_Space: case Qt.Key_L: case Qt.Key_Right:
                 pop.run(pop.actions[pop.selected]); e.accepted = true; break;
-            case Qt.Key_Q: case Qt.Key_H: case Qt.Key_Left:
+            case Qt.Key_H: case Qt.Key_Left:
+                pop.back(); e.accepted = true; break;
+            case Qt.Key_Q:
                 pop.close(); e.accepted = true; break;
             }
+        }
+
+        PopupHeader {
+            visible: pop.canGoBack
+            title: "Power"
         }
 
         Repeater {

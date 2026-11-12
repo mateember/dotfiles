@@ -280,6 +280,14 @@ BarButton {
 
         property string page: "" // "" = main menu, "general", or sensor id ("cpu", "temp", "mem", "net", "disk", "gpu")
 
+        backHandler: () => {
+            if (pop.page !== "") {
+                pop.page = "";
+                return true;
+            }
+            return false;
+        }
+
         onOpenChanged: {
             if (!open) page = "";
         }

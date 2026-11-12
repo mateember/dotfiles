@@ -114,10 +114,7 @@ Scope {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.settingsOpen = false;
-                                    OpacityConfig.settingsOpen = true;
-                                }
+                                onClicked: WidgetHistory.openOpacityFromBarSettings()
                             }
                         }
                         Rectangle {

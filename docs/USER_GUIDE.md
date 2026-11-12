@@ -62,7 +62,7 @@ The shell is built with **Qt 6 / QML** via Quickshell and styled after **COSMIC 
 
 Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method> [args]`:
 
-- **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
+- **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar back` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
 - **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>`
 - **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
 - **System & appearance**: `wallpaper next|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
@@ -194,6 +194,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 
 ## 5. Built-In Shell Apps & Features
 
+- **Widget Back Navigation (`Escape` & `←`)**: Drilling down from **Quick Settings** into a bar widget or **Capture Studio**, from **Display** into **Capture Studio**, from **Bar Settings** into **Opacity & Transparency**, or into sub-pages/prompts (such as **System Stats** sensor views, inline **Network** password prompts, or **Power** confirmations) pushes onto the shell navigation history (`WidgetHistory.qml`). Pressing `Escape` or clicking the header `←` button steps back to the previous view/widget before closing; clicking outside or completing an action dismisses everything immediately.
 - **Bar Settings** (`!bar` or `qs ipc call barsettings toggle`): Toggle any of the 21 widgets, reorder within sections (`↑` / `↓`), move between Left/Center/Right, or reset defaults (`bar-config.json`).
 - **Opacity & Transparency** (`!opacity` or `qs ipc call opacity toggle`): Independent opacity sliders for Widgets (`96%`), Bar (`66%`), Notifications (`96%`), and OSD Toast (`96%`), with **Default**, **Frosted Glass**, **Clear**, and **Solid** presets (`opacity-config.json`).
 - **App Launcher** (`SUPER + Space`):
