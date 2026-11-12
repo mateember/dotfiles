@@ -79,7 +79,7 @@ tooltip_blur_radius=6
 window.color=#1b1b1b
 base.color=#242424
 alt.base.color=#2a2a2a
-button.color=#383838
+button.color=#454545
 light.color=#4a4a4a
 mid.light.color=#3f3f3f
 dark.color=#141414
@@ -146,7 +146,7 @@ text.margin.top=2
 text.margin.bottom=3
 text.margin.left=2
 text.margin.right=2
-frame.expansion=0
+frame.expansion=34
 
 [PanelButtonTool]
 inherits=PanelButtonCommand
