@@ -128,81 +128,95 @@ Singleton {
         }
     }
 
-    function _runWithPreservedFocus(innerLua: string, movedAddrToOtherWs: string) {
-        if (overviewActionProc.running) overviewActionProc.running = false;
-        const restore = movedAddrToOtherWs
-            ? ("if prev and prev_ws and prev.address:lower() ~= " + luaValue(movedAddrToOtherWs) + " and hl.get_window('address:' .. prev.address) then "
-               + "hl.dispatch(hl.dsp.window.focus({ window = 'address:' .. prev.address })) "
-               + "elseif prev_ws then hl.dispatch(hl.dsp.focus({ workspace = prev_ws.id })) end")
-            : ("if prev and hl.get_window('address:' .. prev.address) then "
-               + "hl.dispatch(hl.dsp.window.focus({ window = 'address:' .. prev.address })) "
-               + "elseif prev_ws then hl.dispatch(hl.dsp.focus({ workspace = prev_ws.id })) end");
+    // Lua that focuses a window by "address:0x..." selector (hl.dsp.window.focus does not exist).
+    function _luaFocus(selectorLit: string): string {
+        return "hl.dispatch(hl.dsp.focus({ window = " + selectorLit + " }))";
+    }
+
+    // Runs Lua via hyprctl eval, then restores the previously focused window/workspace.
+    // When a window left the previous workspace, restore that workspace instead of following it.
+    function _runWithPreservedFocus(innerLua: string, movedAddr: string, onDone) {
+        const restore =
+            "if prev and prev_ws and hl.get_window('address:' .. prev.address) "
+            + (movedAddr ? ("and prev.address:lower() ~= " + luaValue(movedAddr) + " ") : "")
+            + "then " + root._luaFocus("'address:' .. prev.address") + " "
+            + "elseif prev_ws then hl.dispatch(hl.dsp.focus({ workspace = prev_ws.id })) end";
         const script =
             "local prev = hl.get_active_window(); "
             + "local prev_ws = hl.get_active_workspace(); "
             + innerLua + "; "
             + restore;
-        overviewActionProc.command = ["hyprctl", "eval", script];
+        root._actionQueue.push({ script: script, onDone: onDone ?? null });
+        root._pumpActions();
+    }
+
+    property var _actionQueue: []
+    property var _currentAction: null
+
+    function _pumpActions() {
+        if (overviewActionProc.running || root._actionQueue.length === 0) return;
+        root._currentAction = root._actionQueue.shift();
+        overviewActionProc.command = ["hyprctl", "eval", root._currentAction.script];
         overviewActionProc.running = true;
     }
 
-    readonly property string _luaColHelper:
-        "local function norm(a) a = tostring(a or ''); return a:sub(1,2) == '0x' and a:lower() or ('0x' .. a:lower()) end; "
-        + "local function col_index_of(ws_id, target) "
-        + "  local wins = hl.get_workspace_windows(ws_id) or {}; "
-        + "  local tiled = {}; "
-        + "  for _, win in ipairs(wins) do "
-        + "    if not win.floating then tiled[#tiled + 1] = win end "
-        + "  end; "
-        + "  table.sort(tiled, function(a, b) "
-        + "    if math.abs(a.at.x - b.at.x) > 24 then return a.at.x < b.at.x end; "
-        + "    return a.at.y < b.at.y "
-        + "  end); "
-        + "  local col_x = nil; local col_idx = -1; local found = nil; "
-        + "  for _, win in ipairs(tiled) do "
-        + "    if col_x == nil or math.abs(win.at.x - col_x) > 24 then col_x = win.at.x; col_idx = col_idx + 1 end; "
-        + "    if norm(win.address) == target then found = col_idx end "
-        + "  end; "
-        + "  return found, col_idx + 1 "
-        + "end; "
+    // Column index of a window among tiled columns of a workspace, from `hyprctl clients -j`.
+    function _columnIndexFromClients(clients, wsId: int, addr: string): int {
+        const tiled = clients.filter(c => c.workspace?.id === wsId && !c.floating && c.mapped !== false);
+        tiled.sort((a, b) => Math.abs(a.at[0] - b.at[0]) > 24 ? a.at[0] - b.at[0] : a.at[1] - b.at[1]);
+        let colX = null;
+        let col = -1;
+        for (const c of tiled) {
+            if (colX === null || Math.abs(c.at[0] - colX) > 24) { colX = c.at[0]; col++; }
+            if (String(c.address).toLowerCase() === addr) return col;
+        }
+        return -1;
+    }
+
+    property var _pendingPlacement: null
 
     // Moves a window in Overview across workspaces and/or into a scrolling column index.
+    // Phase 1 moves it to the workspace / expels it from its stack; phase 2 re-reads real
+    // positions and issues the exact number of swapcol steps.
     function placeWindowInOverview(addr: string, srcWsId: int, dstWsId: int, targetCol: int, expelDir: string) {
         const normAddr = normalizeAddress(addr).toLowerCase();
-        if (!root.lua) {
+        if (!root.lua || targetCol < 0 || root.layout !== "scrolling") {
             if (srcWsId !== dstWsId) root.moveWindowToWorkspace(normAddr, dstWsId, false);
             overviewRefreshTimer.restart();
             return;
         }
-        const addrLit = luaValue(normAddr);
         const wLit = luaValue("address:" + normAddr);
-        if (srcWsId !== dstWsId && (targetCol < 0 || root.layout !== "scrolling")) {
-            root.moveWindowToWorkspace(normAddr, dstWsId, false);
-            Hyprland.refreshWorkspaces();
-            Hyprland.refreshToplevels();
-            overviewRefreshTimer.restart();
-            return;
+        let phase1 = "";
+        if (srcWsId !== dstWsId)
+            phase1 += "hl.dispatch(hl.dsp.window.move({ window = " + wLit + ", workspace = " + dstWsId + ", follow = false })); ";
+        if (expelDir)
+            phase1 += root._luaFocus(wLit) + "; hl.dispatch(hl.dsp.layout(" + luaValue("consume_or_expel " + expelDir) + ")); ";
+        const placement = { addr: normAddr, wsId: dstWsId, want: targetCol, moved: srcWsId !== dstWsId };
+        if (phase1) {
+            root._runWithPreservedFocus(phase1 + "local _ = 0", placement.moved ? normAddr : "", () => root._queryPlacement(placement));
+        } else {
+            root._queryPlacement(placement);
         }
-        const expelStep = expelDir ? ("hl.dispatch(hl.dsp.layout(" + luaValue("consume_or_expel " + expelDir) + ")); ") : "";
-        const moveWsStep = (srcWsId !== dstWsId)
-            ? ("hl.dispatch(hl.dsp.window.move({ window = " + wLit + ", workspace = " + dstWsId + ", follow = false })); ")
-            : "";
+    }
+
+    function _queryPlacement(placement) {
+        root._pendingPlacement = placement;
+        clientsProc.running = false;
+        clientsProc.running = true;
+    }
+
+    function _finishPlacement(clients) {
+        const p = root._pendingPlacement;
+        root._pendingPlacement = null;
+        if (!p) return;
+        const cur = root._columnIndexFromClients(clients, p.wsId, p.addr);
+        if (cur < 0 || cur === p.want) { overviewRefreshTimer.restart(); return; }
+        const steps = Math.abs(p.want - cur);
+        const dir = p.want > cur ? "swapcol r" : "swapcol l";
         const inner =
-            "local target = " + addrLit + "; "
-            + root._luaColHelper
-            + moveWsStep
-            + "hl.dispatch(hl.dsp.window.focus({ window = " + wLit + " })); "
-            + expelStep
-            + "local dst_ws = " + dstWsId + "; "
-            + "local want = " + targetCol + "; "
-            + "for _ = 1, 24 do "
-            + "  local cur = col_index_of(dst_ws, target); "
-            + "  if not cur or cur == want then break end; "
-            + "  hl.dispatch(hl.dsp.layout(cur < want and 'swapcol r' or 'swapcol l')); "
-            + "  local nxt = col_index_of(dst_ws, target); "
-            + "  if nxt == cur then break end "
-            + "end";
-        root._runWithPreservedFocus(inner, srcWsId !== dstWsId ? normAddr : "");
+            root._luaFocus(luaValue("address:" + p.addr)) + "; "
+            + "for _ = 1, " + steps + " do hl.dispatch(hl.dsp.layout(" + luaValue(dir) + ")) end";
+        root._runWithPreservedFocus(inner, p.moved ? p.addr : "", null);
     }
 
     // Reorders a window vertically within its stacked scrolling column.
@@ -212,20 +226,20 @@ Singleton {
         const dir = delta < 0 ? "u" : "d";
         const steps = Math.abs(delta);
         if (!root.lua) {
+            Hyprland.dispatch("focuswindow address:" + normAddr);
             for (let i = 0; i < steps; i++) Hyprland.dispatch("movewindow " + dir);
             overviewRefreshTimer.restart();
             return;
         }
-        const wLit = luaValue("address:" + normAddr);
         const inner =
-            "hl.dispatch(hl.dsp.window.focus({ window = " + wLit + " })); "
+            root._luaFocus(luaValue("address:" + normAddr)) + "; "
             + "for _ = 1, " + steps + " do "
             + "  hl.dispatch(hl.dsp.window.move({ direction = " + luaValue(dir) + " })) "
             + "end";
-        root._runWithPreservedFocus(inner, "");
+        root._runWithPreservedFocus(inner, "", null);
     }
 
-    // Swaps two windows (used in dwindle/master layouts or floating swaps).
+    // Swaps two windows (used in dwindle/master layouts).
     function swapWindows(srcAddr: string, dstAddr: string) {
         const s = normalizeAddress(srcAddr).toLowerCase();
         const d = normalizeAddress(dstAddr).toLowerCase();
@@ -237,18 +251,40 @@ Singleton {
             return;
         }
         const inner =
-            "hl.dispatch(hl.dsp.window.focus({ window = " + luaValue("address:" + s) + " })); "
+            root._luaFocus(luaValue("address:" + s)) + "; "
             + "hl.dispatch(hl.dsp.window.swap({ target = " + luaValue("address:" + d) + " }))";
-        root._runWithPreservedFocus(inner, "");
+        root._runWithPreservedFocus(inner, "", null);
     }
 
     Process {
         id: overviewActionProc
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim()) console.warn("Hypr overview action:", text.trim())
+        }
+        stdout: StdioCollector {
+            onStreamFinished: if (text.trim() && text.trim() !== "ok") console.warn("Hypr overview action:", text.trim())
+        }
         onExited: {
+            const done = root._currentAction?.onDone ?? null;
+            root._currentAction = null;
             Hyprland.refreshMonitors();
             Hyprland.refreshWorkspaces();
             Hyprland.refreshToplevels();
             overviewRefreshTimer.restart();
+            if (done) done();
+            root._pumpActions();
+        }
+    }
+
+    Process {
+        id: clientsProc
+        command: ["hyprctl", "clients", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let clients = [];
+                try { clients = JSON.parse(text); } catch (e) {}
+                root._finishPlacement(clients);
+            }
         }
     }
 
