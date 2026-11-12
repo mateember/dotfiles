@@ -46,6 +46,12 @@ Singleton {
     property real fetchedLat: NaN
     property real fetchedLon: NaN
 
+    // Data source / station metadata (populated when HungaroMet hybrid applies)
+    property string activeSource: "openmeteo"   // "hybrid" | "openmeteo"
+    property string stationName: ""
+    property real stationDistanceKm: -1
+    property string stationTimeIso: ""
+
     // Forecasts
     property var hourly: []            // [{ isoTime, code, isDay, tempC, rainChance, precipMm }]
     property var daily: []             // [{ date, code, maxC, minC, rainMm, rainChance, uvMax, windMaxKmh, sunriseStr, sunsetStr }]
@@ -61,12 +67,20 @@ Singleton {
     property string _pendingLocName: ""
     property string _pendingLocRegion: ""
     property bool _pendingAuto: false
+    property bool _pendingForecastDone: false
+    property bool _pendingObsDone: false
+    property bool _pendingForecastOk: false
+    property var _pendingForecastJson: null
+    property var _pendingObs: null
+    property var _lastForecastJson: null
+    property var _lastForecastMeta: null
     property string _queuedSearch: ""
     property string _activeSearch: ""
 
     readonly property string icon: info(code, isDay).icon
     readonly property string description: info(code, isDay).text
     readonly property string cacheFile: Quickshell.cachePath("weather.json")
+    readonly property string hungarometScript: Quickshell.shellPath("scripts/hungaromet.py")
 
     readonly property string displayLocation: {
         if (WeatherConfig.autoLocate)
@@ -402,6 +416,53 @@ Singleton {
             root.hourly = [];
         }
 
+        root._lastForecastJson = j;
+        root._lastForecastMeta = meta;
+
+        const obs = (WeatherConfig.dataSource === "hybrid" && meta && meta.hungaromet && meta.hungaromet.available === true)
+            ? meta.hungaromet
+            : null;
+        if (obs) {
+            root.activeSource = "hybrid";
+            root.stationName = String(obs.stationName || "");
+            root.stationDistanceKm = Number(obs.distanceKm ?? -1);
+            root.stationTimeIso = String(obs.obsTimeIso || "");
+
+            if (obs.tempC !== null && obs.tempC !== undefined) root.tempC = Number(obs.tempC);
+            if (obs.humidity !== null && obs.humidity !== undefined) root.humidity = Number(obs.humidity);
+            if (obs.windKmh !== null && obs.windKmh !== undefined) root.windKmh = Number(obs.windKmh);
+            if (obs.gustsKmh !== null && obs.gustsKmh !== undefined) root.gustsKmh = Number(obs.gustsKmh);
+            if (obs.windDir !== null && obs.windDir !== undefined) root.windDir = Number(obs.windDir);
+            if (obs.pressureHpa !== null && obs.pressureHpa !== undefined) root.pressureHpa = Number(obs.pressureHpa);
+            if (obs.visibilityM !== null && obs.visibilityM !== undefined) root.visibilityM = Number(obs.visibilityM);
+            if (obs.precip10mMm !== null && obs.precip10mMm !== undefined) {
+                root.precipCurrentMm = Number(obs.precip10mMm);
+                if (obs.precip10mMm >= 0.4 && root.code < 51)
+                    root.code = root.tempC <= 1.0 ? 73 : 61;
+                else if (obs.precip10mMm > 0 && root.code < 51)
+                    root.code = root.tempC <= 1.0 ? 71 : 51;
+            }
+
+            // Recompute dew point (Magnus) & apparent temp (Steadman) from measured station values.
+            const rh = Math.max(1, Math.min(100, root.humidity));
+            const gamma = (17.625 * root.tempC) / (243.04 + root.tempC) + Math.log(rh / 100.0);
+            root.dewPointC = (243.04 * gamma) / (17.625 - gamma);
+
+            const e = (Math.max(0, Math.min(100, root.humidity)) / 100.0) * 6.105
+                * Math.exp((17.27 * root.tempC) / (237.7 + root.tempC));
+            root.feelsLikeC = root.tempC + 0.33 * e - 0.70 * (root.windKmh / 3.6) - 4.00;
+
+            if (root.hourly.length > 0) {
+                const h0 = Object.assign({}, root.hourly[0], { tempC: root.tempC });
+                root.hourly = [h0].concat(root.hourly.slice(1));
+            }
+        } else {
+            root.activeSource = "openmeteo";
+            root.stationName = "";
+            root.stationDistanceKm = -1;
+            root.stationTimeIso = "";
+        }
+
         root.ready = true;
         return true;
     }
@@ -447,12 +508,21 @@ Singleton {
         }
     }
 
+    function inHungaryRegion(lat: real, lon: real): bool {
+        return lat >= 45.2 && lat <= 49.1 && lon >= 15.5 && lon <= 23.5;
+    }
+
     function startForecastFetch(lat: real, lon: real, locName: string, locRegion: string, auto: bool) {
         root._pendingLat = lat;
         root._pendingLon = lon;
         root._pendingLocName = locName;
         root._pendingLocRegion = locRegion;
         root._pendingAuto = auto;
+        root._pendingForecastDone = false;
+        root._pendingForecastOk = false;
+        root._pendingForecastJson = null;
+        root._pendingObs = null;
+
         const url = "https://api.open-meteo.com/v1/forecast"
             + `?latitude=${lat}&longitude=${lon}`
             + "&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,dew_point_2m,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,uv_index,visibility"
@@ -460,6 +530,35 @@ Singleton {
             + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,wind_speed_10m_max,sunrise,sunset"
             + "&timezone=auto&forecast_days=10";
         forecastFetch.runCommand(["curl", "-sf", "-m", "15", url]);
+
+        if (WeatherConfig.dataSource === "hybrid" && inHungaryRegion(lat, lon)) {
+            root._pendingObsDone = false;
+            hungarometFetch.runCommand(["python3", root.hungarometScript, String(lat), String(lon), "50"]);
+        } else {
+            root._pendingObsDone = true;
+        }
+    }
+
+    function maybeFinalizeFetch() {
+        if (!root._pendingForecastDone || !root._pendingObsDone) return;
+        if (root._pendingForecastOk && root._pendingForecastJson) {
+            const meta = {
+                fetchedAt: Date.now(),
+                locationLabel: root._pendingLocName,
+                locationRegion: root._pendingLocRegion,
+                autoLocated: root._pendingAuto,
+                lat: root._pendingLat,
+                lon: root._pendingLon,
+                dataSource: WeatherConfig.dataSource,
+                hungaromet: root._pendingObs
+            };
+            if (root.applyPayload(root._pendingForecastJson, meta)) {
+                cache.setText(JSON.stringify(Object.assign({}, meta, { data: root._pendingForecastJson })));
+                root.finishFetch(true, "");
+                return;
+            }
+        }
+        root.finishFetch(false, "Could not fetch forecast from Open-Meteo");
     }
 
     function finishFetch(ok: bool, errMsg: string) {
@@ -505,6 +604,11 @@ Singleton {
     Connections {
         target: WeatherConfig
         function onLocationConfigChanged() {
+            root.refresh();
+        }
+        function onSourceConfigChanged() {
+            if (root._lastForecastJson)
+                root.applyPayload(root._lastForecastJson, root._lastForecastMeta);
             root.refresh();
         }
     }
@@ -584,24 +688,33 @@ Singleton {
             if (code === 0 && output.trim() !== "") {
                 try {
                     const j = JSON.parse(output);
-                    const meta = {
-                        fetchedAt: Date.now(),
-                        locationLabel: root._pendingLocName,
-                        locationRegion: root._pendingLocRegion,
-                        autoLocated: root._pendingAuto,
-                        lat: root._pendingLat,
-                        lon: root._pendingLon
-                    };
-                    if (root.applyPayload(j, meta)) {
-                        cache.setText(JSON.stringify(Object.assign({}, meta, { data: j })));
-                        root.finishFetch(true, "");
-                        return;
+                    if (j && j.current && j.daily && Array.isArray(j.daily.time)) {
+                        root._pendingForecastJson = j;
+                        root._pendingForecastOk = true;
                     }
                 } catch (e) {
                     console.warn("Weather: could not parse forecast response:", e);
                 }
             }
-            root.finishFetch(false, "Could not fetch forecast from Open-Meteo");
+            root._pendingForecastDone = true;
+            root.maybeFinalizeFetch();
+        }
+    }
+
+    HttpProcess {
+        id: hungarometFetch
+        onFinished: (code, output) => {
+            if (code === 0 && output.trim() !== "") {
+                try {
+                    const obs = JSON.parse(output);
+                    if (obs && obs.available === true)
+                        root._pendingObs = obs;
+                } catch (e) {
+                    console.warn("Weather: could not parse HungaroMet output:", e);
+                }
+            }
+            root._pendingObsDone = true;
+            root.maybeFinalizeFetch();
         }
     }
 

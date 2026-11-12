@@ -15,6 +15,10 @@ Singleton {
     readonly property string stateFile: Quickshell.statePath("weather-config.json")
 
     signal locationConfigChanged()
+    signal sourceConfigChanged()
+
+    // ---- Data Source ----
+    property string dataSource: "hybrid"   // "hybrid" (HungaroMet 10m + Open-Meteo) | "openmeteo"
 
     // ---- Location ----
     property bool autoLocate: Config.weatherAutoLocate
@@ -180,6 +184,13 @@ Singleton {
     function setTimeFormat(f: string) { root.timeFormat = f; save(); }
     function setRefreshMinutes(m: int) { root.refreshMinutes = Math.max(5, m); save(); }
 
+    function setDataSource(src: string) {
+        if ((src !== "hybrid" && src !== "openmeteo") || root.dataSource === src) return;
+        root.dataSource = src;
+        save();
+        root.sourceConfigChanged();
+    }
+
     function applyUnitSystem(sys: string) {
         if (sys === "imperial") {
             root.tempUnit = "F";
@@ -256,6 +267,8 @@ Singleton {
         const locChanged = root.autoLocate !== Config.weatherAutoLocate
             || !coordsMatch(root.latitude, root.longitude, Config.weatherLat, Config.weatherLon)
             || root.locationName !== Config.weatherLocation;
+        const srcChanged = root.dataSource !== "hybrid";
+        root.dataSource = "hybrid";
         root.autoLocate = Config.weatherAutoLocate;
         root.locationName = Config.weatherLocation;
         root.locationRegion = "";
@@ -279,10 +292,12 @@ Singleton {
         root.detailTiles = cloneList(defaultDetailTiles);
         save();
         if (locChanged) root.locationConfigChanged();
+        else if (srcChanged) root.sourceConfigChanged();
     }
 
     function save() {
         const payload = {
+            dataSource: root.dataSource,
             autoLocate: root.autoLocate,
             locationName: root.locationName,
             locationRegion: root.locationRegion,
@@ -312,6 +327,7 @@ Singleton {
         try {
             const d = JSON.parse(raw);
             if (!d || typeof d !== "object") return;
+            if (d.dataSource === "hybrid" || d.dataSource === "openmeteo") root.dataSource = d.dataSource;
             if (typeof d.autoLocate === "boolean") root.autoLocate = d.autoLocate;
             if (typeof d.locationName === "string" && d.locationName.trim() !== "") root.locationName = d.locationName;
             if (typeof d.locationRegion === "string") root.locationRegion = d.locationRegion;

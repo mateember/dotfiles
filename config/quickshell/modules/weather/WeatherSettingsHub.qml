@@ -94,6 +94,97 @@ ColumnLayout {
         }
     }
 
+    // ---- Data Source Switcher ----
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: srcCol.implicitHeight + 2 * Theme.spaceXs
+        radius: Theme.radiusM
+        color: Qt.rgba(1, 1, 1, 0.04)
+        border.width: 1
+        border.color: Theme.divider
+
+        ColumnLayout {
+            id: srcCol
+            anchors.fill: parent
+            anchors.margins: Theme.spaceXs
+            spacing: Theme.spaceXs
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spaceXs
+
+                Icon {
+                    icon: WeatherConfig.dataSource === "hybrid" ? "sensors" : "public"
+                    size: 18
+                    color: Theme.accent
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+                    StyledText {
+                        text: "Data source"
+                        font.weight: Font.DemiBold
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.textDim
+                        text: WeatherConfig.dataSource === "openmeteo"
+                            ? "Open-Meteo exclusively (global NWP forecast)"
+                            : (Weather.activeSource === "hybrid" && Weather.stationName !== ""
+                                ? (`HungaroMet · ${Weather.stationName} (${Weather.stationDistanceKm.toFixed(1)} km)`)
+                                : (Weather.ready
+                                    ? "Hybrid enabled · outside Hungary (using Open-Meteo)"
+                                    : "HungaroMet 10m stations (HU) + Open-Meteo"))
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Theme.spaceXxs
+
+                Repeater {
+                    model: [
+                        { id: "hybrid",    label: "HungaroMet + Open-Meteo" },
+                        { id: "openmeteo", label: "Open-Meteo only" }
+                    ]
+                    delegate: Rectangle {
+                        id: srcBtn
+                        required property var modelData
+                        readonly property bool active: WeatherConfig.dataSource === modelData.id
+                        Layout.fillWidth: true
+                        implicitHeight: 28
+                        radius: Theme.radiusS
+                        color: active ? Theme.accent
+                             : srcMouse.containsMouse ? Theme.componentHover
+                             : Theme.component
+                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                        StyledText {
+                            anchors.centerIn: parent
+                            text: srcBtn.modelData.label
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: srcBtn.active ? Font.DemiBold : Font.Normal
+                            color: srcBtn.active ? Theme.fgOnAccent : Theme.text
+                        }
+                        MouseArea {
+                            id: srcMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.resetConfirmation();
+                                WeatherConfig.setDataSource(srcBtn.modelData.id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     ListItem {
         icon: "restart_alt"
         iconColor: root.confirmReset ? Theme.destructive : Theme.text

@@ -193,7 +193,10 @@ BarButton {
                         text: {
                             const tStr = Weather.formatClockHHMM(Time.locale.toString(Weather.fetchedAt, "HH:mm"));
                             const prefix = Weather.stale ? "Offline, cached from " : "Updated ";
-                            return prefix + tStr + " · Open-Meteo" + (Weather.stale && Weather.error !== "" ? (" · " + Weather.error) : "");
+                            const srcLabel = Weather.activeSource === "hybrid" && Weather.stationName !== ""
+                                ? (`HungaroMet (${Weather.stationName}) + Open-Meteo`)
+                                : "Open-Meteo";
+                            return prefix + tStr + " · " + srcLabel + (Weather.stale && Weather.error !== "" ? (" · " + Weather.error) : "");
                         }
                     }
                 }

@@ -46,7 +46,7 @@ dotfiles/
 │   │   ├── polkit/                 # Polkit authentication prompt (PolkitPrompt.qml)
 │   │   ├── quicksettings/          # Quick Settings panel (QuickSettings.qml)
 │   │   ├── wallpaper/              # Per-screen wallpaper slideshow layer (Wallpaper.qml)
-│   │   └── scripts/                # capture.sh, calendar-events.py, hardware-status.py
+│   │   └── scripts/                # capture.sh, calendar-events.py, hardware-status.py, hungaromet.py
 │   ├── fish/                       # Fish shell config, aliases, functions, completions
 │   ├── kitty/                      # Kitty terminal configuration
 │   ├── nvim/                       # Neovim (Lazy.nvim) configuration
