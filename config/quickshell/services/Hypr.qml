@@ -152,12 +152,30 @@ Singleton {
 
     property var _actionQueue: []
     property var _currentAction: null
+    // True while an Overview drag action runs. The Overview drops its exclusive keyboard grab
+    // meanwhile, because Hyprland won't move window focus to another workspace under it and
+    // layout messages (swapcol, consume_or_expel) only act on the focused window.
+    property bool overviewActionBusy: false
 
     function _pumpActions() {
-        if (overviewActionProc.running || root._actionQueue.length === 0) return;
-        root._currentAction = root._actionQueue.shift();
-        overviewActionProc.command = ["hyprctl", "eval", root._currentAction.script];
-        overviewActionProc.running = true;
+        if (overviewActionProc.running || actionStartTimer.running) return;
+        if (root._actionQueue.length === 0) {
+            root.overviewActionBusy = root._pendingPlacement !== null;
+            return;
+        }
+        root.overviewActionBusy = true;
+        actionStartTimer.restart();
+    }
+
+    Timer {
+        id: actionStartTimer
+        interval: 60 // let the layer surface commit keyboardFocus: None first
+        onTriggered: {
+            if (root._actionQueue.length === 0) { root.overviewActionBusy = false; return; }
+            root._currentAction = root._actionQueue.shift();
+            overviewActionProc.command = ["hyprctl", "eval", root._currentAction.script];
+            overviewActionProc.running = true;
+        }
     }
 
     // Column index of a window among tiled columns of a workspace, from `hyprctl clients -j`.
@@ -210,7 +228,7 @@ Singleton {
         root._pendingPlacement = null;
         if (!p) return;
         const cur = root._columnIndexFromClients(clients, p.wsId, p.addr);
-        if (cur < 0 || cur === p.want) { overviewRefreshTimer.restart(); return; }
+        if (cur < 0 || cur === p.want) { overviewRefreshTimer.restart(); root._pumpActions(); return; }
         const steps = Math.abs(p.want - cur);
         const dir = p.want > cur ? "swapcol r" : "swapcol l";
         const inner =

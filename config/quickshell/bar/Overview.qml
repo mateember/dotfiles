@@ -39,7 +39,7 @@ Scope {
 
             WlrLayershell.namespace: "hcs-overview"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: (Hypr.overviewOpen || Hypr.overviewSwiping) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (Hypr.overviewOpen || Hypr.overviewSwiping) && !Hypr.overviewActionBusy ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             WlrLayershell.exclusiveZone: -1
             mask: (Hypr.overviewOpen || Hypr.overviewSwiping) ? fullMask : emptyMask
 
@@ -623,6 +623,9 @@ Scope {
                 target: Hypr
                 function onOverviewOpenChanged() {
                     if (Hypr.overviewOpen) win.resetForOpen();
+                }
+                function onOverviewActionBusyChanged() {
+                    if (!Hypr.overviewActionBusy && Hypr.overviewOpen) focusTimer.restart();
                 }
             }
 
