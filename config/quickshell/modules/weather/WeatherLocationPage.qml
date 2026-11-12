@@ -23,13 +23,15 @@ ColumnLayout {
     }
 
     function applyManualCoordinates() {
-        const lat = Number(latField.text.trim().replace(",", "."));
-        const lon = Number(lonField.text.trim().replace(",", "."));
-        if (isNaN(lat) || lat < -90 || lat > 90) {
+        const latStr = latField.text.trim().replace(",", ".");
+        const lonStr = lonField.text.trim().replace(",", ".");
+        const lat = Number(latStr);
+        const lon = Number(lonStr);
+        if (latStr === "" || isNaN(lat) || lat < -90 || lat > 90) {
             manualError = "Latitude must be between -90 and 90";
             return;
         }
-        if (isNaN(lon) || lon < -180 || lon > 180) {
+        if (lonStr === "" || isNaN(lon) || lon < -180 || lon > 180) {
             manualError = "Longitude must be between -180 and 180";
             return;
         }
@@ -163,7 +165,10 @@ ColumnLayout {
     // ---- Search Results ----
     StyledText {
         visible: Weather.searching || Weather.searchError !== ""
-            || (searchInput.text.trim().length >= 2 && Weather.searchResults.length === 0)
+            || (!searchDebounce.running
+                && searchInput.text.trim().length >= 2
+                && Weather._activeSearch === searchInput.text.trim()
+                && Weather.searchResults.length === 0)
         Layout.fillWidth: true
         font.pixelSize: Theme.fontSizeSmall
         color: Weather.searchError !== "" ? Theme.destructive : Theme.textDim
@@ -206,10 +211,12 @@ ColumnLayout {
                 implicitWidth: 28
                 implicitHeight: 28
                 iconSize: 18
-                onClicked: {
-                    if (!resRow.isSaved)
-                        WeatherConfig.saveLocation(resRow.modelData.name, resRow.modelData.region, resRow.modelData.lat, resRow.modelData.lon);
-                }
+                onClicked: WeatherConfig.toggleSavedLocation(
+                    resRow.modelData.name,
+                    resRow.modelData.region,
+                    resRow.modelData.lat,
+                    resRow.modelData.lon
+                )
             }
         }
     }

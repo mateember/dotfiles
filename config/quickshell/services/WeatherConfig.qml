@@ -246,6 +246,12 @@ Singleton {
         save();
     }
 
+    function toggleSavedLocation(name: string, region: string, lat: real, lon: real) {
+        const idx = root.savedLocations.findIndex(loc => coordsMatch(loc.lat, loc.lon, lat, lon));
+        if (idx >= 0) removeSavedLocation(idx);
+        else saveLocation(name, region, lat, lon);
+    }
+
     function reset() {
         const locChanged = root.autoLocate !== Config.weatherAutoLocate
             || !coordsMatch(root.latitude, root.longitude, Config.weatherLat, Config.weatherLon)
