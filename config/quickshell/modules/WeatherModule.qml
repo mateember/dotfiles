@@ -1,174 +1,279 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs
 import qs.components
 import qs.services
+import "weather"
 
-// Weather icon + bold temperature. Click for today's details (rain, humidity, wind, UV, pressure, sun)
-// and the 5-day forecast. Hidden until data exists.
+// Modular weather widget: customizable bar display + popup with summary, hourly strip,
+// modular detail tiles, multi-day forecast, location search/auto-locate, and unit settings.
 BarButton {
     id: root
 
-    visible: Weather.ready
     active: pop.open
-    onClicked: pop.toggle()
-
-    Row {
-        spacing: Theme.spaceXxs
-        Icon {
-            icon: Weather.icon
-            filled: true
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        StyledText {
-            text: Math.round(Weather.temp) + "°C"
-            font.pixelSize: Theme.barFontSize
-            font.weight: Font.Bold
-            anchors.verticalCenter: parent.verticalCenter
+    onClicked: button => {
+        if (button === Qt.MiddleButton) {
+            Weather.refresh();
+        } else if (button === Qt.RightButton) {
+            if (pop.open) {
+                if (pop.page !== "settings") pop.goTo("settings");
+                else pop.close();
+            } else {
+                pop.pendingInitialPage = "settings";
+                pop.toggle();
+            }
+        } else {
+            pop.toggle();
         }
     }
+
+    WeatherBarContent {}
 
     Popup {
         id: pop
         name: "weather"
         anchorItem: root
-        contentWidth: 340
+        contentWidth: 360
 
-        onOpenChanged: if (open) Weather.refresh()
+        property string page: ""
+        property var pageStack: []
+        property string pendingInitialPage: ""
 
-        PopupHeader { title: Config.weatherAutoLocate ? "Weather" : Config.weatherLocation }
+        function goTo(p: string) {
+            if (page === p) return;
+            pageStack = pageStack.concat([page]);
+            page = p;
+        }
 
-        RowLayout {
-            spacing: Theme.spaceS
-            Icon { icon: Weather.icon; filled: true; size: 44; color: Theme.accent }
-            ColumnLayout {
-                spacing: 0
-                StyledText { text: Math.round(Weather.temp) + "°C"; font.pixelSize: Theme.fontSizeTitle; font.weight: Font.Bold }
-                StyledText { text: Weather.description + " · feels like " + Math.round(Weather.feelsLike) + "°"; color: Theme.textDim }
+        function goBack(): bool {
+            if (pageStack.length > 0) {
+                const prev = pageStack[pageStack.length - 1];
+                pageStack = pageStack.slice(0, pageStack.length - 1);
+                page = prev;
+                return true;
+            }
+            if (page !== "") {
+                page = "";
+                return true;
+            }
+            return false;
+        }
+
+        backHandler: () => pop.goBack()
+
+        Connections {
+            target: Weather
+            function onOpenPageRequested(screenName: string, pageName: string) {
+                const myScreen = pop.barWindow?.screen?.name ?? "";
+                if (screenName !== "" && myScreen !== screenName) return;
+                pop.pendingInitialPage = pageName;
+                if (pop.open) {
+                    if (pageName !== "" && pop.page !== pageName) pop.goTo(pageName);
+                    else { pop.page = pageName; pop.pageStack = []; }
+                    pop.pendingInitialPage = "";
+                } else {
+                    Popups.open(pop.popupId);
+                }
             }
         }
 
-        // Today's details: 3×2 tiles
-        GridLayout {
+        onOpenChanged: {
+            if (open) {
+                if (pendingInitialPage !== "") {
+                    page = pendingInitialPage;
+                    pageStack = [];
+                    pendingInitialPage = "";
+                }
+                Weather.refresh();
+            } else {
+                page = "";
+                pageStack = [];
+                pendingInitialPage = "";
+                locationPage.resetTransient();
+                settingsHub.resetConfirmation();
+            }
+        }
+
+        // ---- Main Page: Header + Modular Forecast ----
+        ColumnLayout {
+            visible: pop.page === ""
             Layout.fillWidth: true
-            Layout.topMargin: Theme.spaceXxs
-            columns: 3
-            columnSpacing: Theme.spaceXxs
-            rowSpacing: Theme.spaceXxs
+            spacing: Theme.spaceXs
 
-            component Tile: Rectangle {
-                id: tile
-                property string icon: ""
-                property string label: ""
-                property string value: ""
-                property string sub: ""
-                property real iconRotation: 0
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.fillHeight: true
-                implicitHeight: tileCol.implicitHeight + 2 * Theme.spaceXxs
-                radius: Theme.radiusS
-                color: Theme.component
-                ColumnLayout {
-                    id: tileCol
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: Theme.spaceXxs
-                    spacing: 2
-                    RowLayout {
-                        spacing: Theme.spaceXxxs
-                        Icon { icon: tile.icon; size: Theme.fontSize; color: Theme.textDim; rotation: tile.iconRotation }
-                        StyledText { text: tile.label; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-                    }
-                    StyledText { text: tile.value; font.weight: Font.DemiBold; font.features: { "tnum": 1 } }
-                    StyledText {
-                        visible: text !== ""
-                        Layout.fillWidth: true
-                        text: tile.sub
-                        color: Theme.textDim
-                        font.pixelSize: Theme.fontSizeSmall
-                        elide: Text.ElideRight
-                    }
+            PopupHeader {
+                title: Weather.displayLocation
+                showBack: pop.canGoBack
+                backAction: () => pop.back()
+
+                IconButton {
+                    icon: "refresh"
+                    enabled: !Weather.loading
+                    opacity: Weather.loading ? 0.45 : 1
+                    onClicked: Weather.refresh()
+                }
+                IconButton {
+                    icon: WeatherConfig.autoLocate ? "my_location" : "location_on"
+                    onClicked: pop.goTo("location")
+                }
+                IconButton {
+                    icon: "settings"
+                    onClicked: pop.goTo("settings")
                 }
             }
 
-            Tile {
-                icon: "rainy"; label: "Rain"
-                value: Weather.rainChance + "%"
-                sub: Weather.rainToday.toFixed(1) + " mm today"
-            }
-            Tile {
-                icon: "humidity_percentage"; label: "Humidity"
-                value: Math.round(Weather.humidity) + "%"
-            }
-            Tile {
-                // arrow points where the wind blows to
-                icon: "navigation"; label: "Wind"; iconRotation: Weather.windDir + 180
-                value: Math.round(Weather.wind) + " km/h"
-                sub: Weather.compass(Weather.windDir) + " · gusts " + Math.round(Weather.gusts)
-            }
-            Tile {
-                icon: "light_mode"; label: "UV"
-                value: Weather.uvMax.toFixed(0)
-                sub: Weather.uvMax < 3 ? "low" : Weather.uvMax < 6 ? "moderate" : Weather.uvMax < 8 ? "high" : "very high"
-            }
-            Tile {
-                icon: "compress"; label: "Pressure"
-                value: Math.round(Weather.pressure) + " hPa"
-            }
-            Tile {
-                icon: "wb_twilight"; label: "Sun"
-                value: Time.locale.toString(Weather.sunrise, "HH:mm")
-                sub: "sets " + Time.locale.toString(Weather.sunset, "HH:mm")
-            }
-        }
-
-        Separator {}
-
-        Repeater {
-            model: Weather.daily
-            delegate: RowLayout {
-                required property var modelData
-                required property int index
+            // Empty / first-fetch error state
+            ColumnLayout {
+                visible: !Weather.ready
                 Layout.fillWidth: true
+                Layout.topMargin: Theme.spaceXs
+                Layout.bottomMargin: Theme.spaceXs
                 spacing: Theme.spaceXs
-                StyledText {
-                    Layout.preferredWidth: 90
-                    text: index === 0 ? "Today" : Time.locale.toString(modelData.date, "dddd")
+
+                Icon {
+                    Layout.alignment: Qt.AlignHCenter
+                    icon: Weather.loading ? "cloud_sync" : "cloud_off"
+                    size: 36
+                    color: Weather.loading ? Theme.accent : Theme.textDim
                 }
-                Icon { icon: Weather.info(modelData.code, true).icon; filled: true }
                 StyledText {
                     Layout.fillWidth: true
-                    text: Weather.info(modelData.code, true).text
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
                     color: Theme.textDim
-                    elide: Text.ElideRight
+                    text: Weather.loading
+                        ? ("Fetching weather for " + Weather.displayLocation + "…")
+                        : (Weather.error !== "" ? Weather.error : "No weather data loaded yet")
                 }
-                Row {
-                    visible: modelData.rainChance > 0
-                    spacing: 2
-                    Icon { icon: "water_drop"; size: Theme.fontSizeSmall; color: Theme.textDim; anchors.verticalCenter: parent.verticalCenter }
-                    StyledText {
-                        text: modelData.rainChance + "%"
-                        color: Theme.textDim
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.features: { "tnum": 1 }
-                        anchors.verticalCenter: parent.verticalCenter
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: Theme.spaceXs
+                    visible: !Weather.loading
+                    Rectangle {
+                        implicitWidth: retryLbl.implicitWidth + 2 * Theme.spaceXs
+                        implicitHeight: 30
+                        radius: 15
+                        color: retryMouse.containsMouse ? Theme.componentHover : Theme.component
+                        StyledText { id: retryLbl; anchors.centerIn: parent; text: "Retry"; font.pixelSize: Theme.fontSizeSmall }
+                        MouseArea { id: retryMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Weather.refresh() }
+                    }
+                    Rectangle {
+                        implicitWidth: locBtnLbl.implicitWidth + 2 * Theme.spaceXs
+                        implicitHeight: 30
+                        radius: 15
+                        color: locBtnMouse.containsMouse ? Theme.accentHover : Theme.accent
+                        StyledText { id: locBtnLbl; anchors.centerIn: parent; text: "Change location"; font.pixelSize: Theme.fontSizeSmall; color: Theme.fgOnAccent; font.weight: Font.DemiBold }
+                        MouseArea { id: locBtnMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: pop.goTo("location") }
                     }
                 }
-                StyledText {
-                    text: Math.round(modelData.max) + "° / " + Math.round(modelData.min) + "°"
-                    font.features: { "tnum": 1 }
+            }
+
+            // Scrollable modular sections (only scrolls when many sections/days exceed cap)
+            Flickable {
+                id: mainFlick
+                visible: Weather.ready
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(contentHeight, 590)
+                contentWidth: width
+                contentHeight: mainSectionsCol.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Component { id: secHero; WeatherHeroSection {} }
+                Component { id: secHourly; WeatherHourlySection {} }
+                Component { id: secDetails; WeatherDetailsSection {} }
+                Component { id: secDaily; WeatherDailySection {} }
+                Component {
+                    id: secFooter
+                    StyledText {
+                        Layout.fillWidth: true
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Weather.stale ? Theme.warning : Theme.textDim
+                        elide: Text.ElideRight
+                        text: {
+                            const tStr = Weather.formatClockHHMM(Time.locale.toString(Weather.fetchedAt, "HH:mm"));
+                            const prefix = Weather.stale ? "Offline, cached from " : "Updated ";
+                            return prefix + tStr + " · Open-Meteo" + (Weather.stale && Weather.error !== "" ? (" · " + Weather.error) : "");
+                        }
+                    }
+                }
+
+                function sectionComponent(id: string): Component {
+                    switch (id) {
+                        case "hero":    return secHero;
+                        case "hourly":  return secHourly;
+                        case "details": return secDetails;
+                        case "daily":   return secDaily;
+                        case "footer":  return secFooter;
+                        default:        return null;
+                    }
+                }
+
+                ColumnLayout {
+                    id: mainSectionsCol
+                    width: mainFlick.width
+                    spacing: Theme.spaceXs
+
+                    Repeater {
+                        model: WeatherConfig.enabledPopupSections
+
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            required property int index
+                            Layout.fillWidth: true
+                            spacing: Theme.spaceXs
+
+                            Separator {
+                                visible: modelData.id === "daily" && index > 0
+                            }
+
+                            Loader {
+                                Layout.fillWidth: true
+                                sourceComponent: mainFlick.sectionComponent(modelData.id)
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        visible: WeatherConfig.enabledPopupSections.length === 0
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        color: Theme.textDim
+                        text: "All popup sections are hidden — open Settings to enable modules."
+                        wrapMode: Text.WordWrap
+                    }
                 }
             }
         }
 
-        StyledText {
-            Layout.fillWidth: true
-            font.pixelSize: Theme.fontSizeSmall
-            color: Weather.stale ? Theme.warning : Theme.textDim
-            text: (Weather.stale ? "Offline, showing data from " : "Updated ")
-                  + Time.locale.toString(Weather.updated, "HH:mm") + " · Open-Meteo"
+        // ---- Settings Subpages ----
+        WeatherSettingsHub {
+            id: settingsHub
+            visible: pop.page === "settings"
+            onNavigate: p => pop.goTo(p)
+            onGoBack: pop.goBack()
+        }
+
+        WeatherLocationPage {
+            id: locationPage
+            visible: pop.page === "location"
+            popupRoot: pop
+            onGoBack: pop.goBack()
+        }
+
+        WeatherBarSettingsPage {
+            visible: pop.page === "bar"
+            onGoBack: pop.goBack()
+        }
+
+        WeatherPopupSettingsPage {
+            visible: pop.page === "popup"
+            onGoBack: pop.goBack()
+        }
+
+        WeatherUnitsSettingsPage {
+            visible: pop.page === "units"
+            onGoBack: pop.goBack()
         }
     }
 }

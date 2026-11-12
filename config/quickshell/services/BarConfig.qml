@@ -23,7 +23,7 @@ Singleton {
         { id: "caffeine",      name: "Caffeine",             subtitle: "Keep screen awake",                        icon: "coffee",              section: "left",   enabled: true },
         { id: "stats",         name: "System Stats",         subtitle: "CPU load, temperature and RAM usage",      icon: "memory",              section: "left",   enabled: true },
         // Center
-        { id: "weather",       name: "Weather",              subtitle: "Current conditions and 5-day forecast",    icon: "partly_cloudy_day",   section: "center", enabled: true },
+        { id: "weather",       name: "Weather",              subtitle: "Modular weather display, forecast and settings", icon: "partly_cloudy_day", section: "center", enabled: true },
         { id: "clock",         name: "Clock & Calendar",     subtitle: "Date, time and calendar events",           icon: "calendar_month",      section: "center", enabled: true },
         // Right
         { id: "recorder",      name: "Screen Recorder",      subtitle: "Active recording timer & stop pill",       icon: "videocam",            section: "right",  enabled: true },

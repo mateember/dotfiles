@@ -34,10 +34,10 @@ dotfiles/
 │   │   ├── shell.qml               # Main shell root (bar, wallpaper, overlays, global IPC)
 │   │   ├── lock.qml                # Separate lock screen entry point (started by lock.sh)
 │   │   ├── Theme.qml               # COSMIC Dark palette, spacing, radii, typography, opacities
-│   │   ├── Config.qml              # User-tunable shell settings (clock, calendar, weather, wallpaper)
+│   │   ├── Config.qml              # Initial shell defaults (clock, calendar, weather fallback, wallpaper)
 │   │   ├── bar/                    # Top panel (Bar.qml), Overview, CaptureOverlay, settings windows
-│   │   ├── modules/                # 21 modular bar widgets
-│   │   ├── services/               # Singletons (Hypr, Net, Bt, Notifs, Wallpapers, SystemStats, etc.)
+│   │   ├── modules/                # 21 modular bar widgets (including modules/weather/ subcomponents)
+│   │   ├── services/               # Singletons (Hypr, Net, Bt, Notifs, Wallpapers, SystemStats, WeatherConfig, etc.)
 │   │   ├── components/             # UI primitives (Popup, ListItem, Toggle, StyledText, Icon, etc.)
 │   │   ├── launcher/               # Unified launcher (apps, calc, shell commands, emoji, !applets)
 │   │   ├── lock/                   # Wayland session lock (LockScreen.qml, LockSurface.qml)
