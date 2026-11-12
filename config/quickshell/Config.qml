@@ -19,6 +19,7 @@ Singleton {
     readonly property bool calendarShowTasks: true
     readonly property int calendarRefreshMinutes: 15
 
+    // Default weather settings (used on first run / reset; live changes are saved in weather-config.json)
     readonly property real weatherLat: 47.42733
     readonly property real weatherLon: 19.40133
     readonly property string weatherLocation: "Gyömrő"

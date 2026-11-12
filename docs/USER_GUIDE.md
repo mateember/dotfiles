@@ -67,6 +67,7 @@ Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method
 - **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
 - **System & appearance**: `wallpaper next|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
 - **Settings windows**: `barsettings toggle|open|close|reset`, `opacity toggle|open|close|reset`
+- **Weather**: `weather refresh`, `weather open [settings|location|bar|popup|units]`
 
 Lock screen IPC (runs on the separate `lock.qml` instance):
 
@@ -173,7 +174,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | **Night Light** | Open Night Light menu | Right/Middle: Toggle on/off | Warmth slider (`2500–6000 K`) and automatic schedule (`20:00–08:30`) via `hyprsunset`. |
 | **Caffeine** | Toggle keep-awake on/off | Right/Middle: Preset timer menu | Wayland `IdleInhibitor` with `Indefinitely`, `15m`, `30m`, `1h`, `2h`, `4h` timers and countdown. |
 | **System Stats (Minimon)** | Open sensor popup | Right/Middle: Open system monitor | Live sparklines/rings/values for CPU, CPU Temp, Memory, Network, Disk, and Intel Arc GPU. |
-| **Weather** | Open 5-day forecast | — | Current temp, rain, humidity, wind, UV, pressure, sunrise/sunset, and 5-day forecast (Open-Meteo). |
+| **Weather** | Open modular forecast | Right: Weather settings. Middle: Refresh forecast | Current summary, 12h/24h hourly timeline, configurable detail tiles, 3–10 day forecast, location search/IP auto-locate, and unit settings (Open-Meteo). |
 | **Clock & Calendar** | Open calendar & agenda | — | Month calendar synced with Evolution Data Server (GNOME Calendar / Nextcloud / Google / Neptun) + tasks. |
 | **Screen Recorder** | Stop & save recording | Right/Middle: Open Capture Studio | Shown only while recording (`REC MM:SS`); saves to `~/Videos/Recordings/`. |
 | **Privacy Indicator** | Open active capture list | — | Appears when mic, webcam, or screen capture is active, with quick mute/stop actions. |
@@ -194,8 +195,9 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 
 ## 5. Built-In Shell Apps & Features
 
-- **Widget Back Navigation (`Escape` & `←`)**: Drilling down from **Quick Settings** into a bar widget or **Capture Studio**, from **Display** into **Capture Studio**, from **Bar Settings** into **Opacity & Transparency**, or into sub-pages/prompts (such as **System Stats** sensor views, inline **Network** password prompts, or **Power** confirmations) pushes onto the shell navigation history (`WidgetHistory.qml`). Pressing `Escape` or clicking the header `←` button steps back to the previous view/widget before closing; clicking outside or completing an action dismisses everything immediately.
+- **Widget Back Navigation (`Escape` & `←`)**: Drilling down from **Quick Settings** into a bar widget or **Capture Studio**, from **Display** into **Capture Studio**, from **Bar Settings** into **Opacity & Transparency**, or into sub-pages/prompts (such as **System Stats** sensor views, **Weather** settings, inline **Network** password prompts, or **Power** confirmations) pushes onto the shell navigation history (`WidgetHistory.qml`). Pressing `Escape` or clicking the header `←` button steps back to the previous view/widget before closing; clicking outside or completing an action dismisses everything immediately.
 - **Bar Settings** (`!bar` or `qs ipc call barsettings toggle`): Toggle any of the 21 widgets, reorder within sections (`↑` / `↓`), move between Left/Center/Right, or reset defaults (`bar-config.json`).
+- **Weather Settings** (Gear icon, right-click bar widget, or `qs ipc call weather open settings`): Toggle and reorder bar pills (`icon`, `temp`, `condition`, `feelsLike`, `rain`, `wind`, `humidity`, `highLow`, `location`), popup sections, and 10 detail tiles; configure IP auto-locate, Open-Meteo city search, saved locations, custom coordinates, units, and refresh interval (`weather-config.json`).
 - **Opacity & Transparency** (`!opacity` or `qs ipc call opacity toggle`): Independent opacity sliders for Widgets (`96%`), Bar (`66%`), Notifications (`96%`), and OSD Toast (`96%`), with **Default**, **Frosted Glass**, **Clear**, and **Solid** presets (`opacity-config.json`).
 - **App Launcher** (`SUPER + Space`):
   - Default: fuzzy app search weighted by launch frequency (`launcher-usage.json`).
@@ -241,5 +243,5 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | [`config/hypr/scripts/reassert-cursor.sh`](file:///home/mate/dotfiles/config/hypr/scripts/reassert-cursor.sh) | Re-applies cursor theme on DPMS/sleep wake so hardware cursors reappear immediately. |
 | [`config/quickshell/shell.qml`](file:///home/mate/dotfiles/config/quickshell/shell.qml) | Main Quickshell entry point (bar, wallpaper, launcher, overview, OSDs, notifications, polkit). |
 | [`config/quickshell/lock.qml`](file:///home/mate/dotfiles/config/quickshell/lock.qml) | Lock screen Quickshell entry point. |
-| [`config/quickshell/Config.qml`](file:///home/mate/dotfiles/config/quickshell/Config.qml) | User-tunable shell settings (clock format, calendar options, weather coordinates, wallpaper directory). |
+| [`config/quickshell/Config.qml`](file:///home/mate/dotfiles/config/quickshell/Config.qml) | User-tunable initial shell defaults (clock format, calendar options, default weather location, wallpaper directory). |
 | [`config/quickshell/Theme.qml`](file:///home/mate/dotfiles/config/quickshell/Theme.qml) | Single source of truth for COSMIC Dark colors, spacing, radii, fonts, and default opacities. |

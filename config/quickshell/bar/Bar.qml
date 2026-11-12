@@ -96,7 +96,6 @@ PanelWindow {
 
     function moduleAvailable(id: string): bool {
         if (id === "nightlight") return NightLight.available;
-        if (id === "weather") return Weather.ready;
         if (id === "tray") return SystemTray.items.values.length > 0;
         if (id === "bluetooth") return Bt.available;
         if (id === "battery") return Battery.available;
