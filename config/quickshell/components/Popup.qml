@@ -27,12 +27,20 @@ PanelWindow {
     // Optional () => bool handler for intra-widget subpages/prompts; return true to consume Escape/Back.
     property var backHandler: null
 
+    // Latched presentation state so closing popups fade out in place instead of jumping
+    // horizontally or flashing between window/dropdown modes while `bg.opacity > 0`.
+    property bool latchedAsWindow: false
+    property bool latchedFromQs: false
+    property bool latchedCanGoBack: false
+    property int latchedLeft: Theme.panelMargin
+
     readonly property var barWindow: anchorItem.QsWindow.window
     readonly property string popupId: name + "@" + (barWindow?.screen?.name ?? "")
     readonly property bool open: Popups.current === popupId
+    readonly property bool effectiveAsWindow: open ? Popups.asWindow : latchedAsWindow
     readonly property bool openDropdown: open && !Popups.asWindow
     readonly property bool openAsWindow: open && Popups.asWindow
-    readonly property bool canGoBack: open && WidgetHistory.canGoBack
+    readonly property bool canGoBack: open ? WidgetHistory.canGoBack : (bg.opacity > 0 && latchedCanGoBack)
 
     function toggle() { Popups.toggle(popupId); }
     function back() {
@@ -74,19 +82,47 @@ PanelWindow {
              + anchorItem.x
              + anchorItem.width / 2;
     }
+    readonly property int liveLeft: (open ? Popups.fromQuickSettings : latchedFromQs)
+        ? Math.max(Theme.panelMargin, (screen?.width ?? 0) - popupWidth - Theme.panelMargin)
+        : Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - popupWidth - Theme.panelMargin, Math.round(anchorCenter - popupWidth / 2)))
+
+    onLiveLeftChanged: if (open) latchedLeft = liveLeft
+
     // Deferred so it runs after `bg` has been reparented into the floating window (window mode).
-    onOpenChanged: if (open) Qt.callLater(() => root.ensureFocus())
+    onOpenChanged: {
+        if (open) {
+            latchedAsWindow = Popups.asWindow;
+            latchedFromQs = Popups.fromQuickSettings;
+            latchedCanGoBack = WidgetHistory.canGoBack;
+            latchedLeft = liveLeft;
+            Qt.callLater(() => root.ensureFocus());
+        }
+    }
+
+    Connections {
+        target: Popups
+        function onAsWindowChanged() { if (root.open) root.latchedAsWindow = Popups.asWindow; }
+        function onFromQuickSettingsChanged() {
+            if (root.open) {
+                root.latchedFromQs = Popups.fromQuickSettings;
+                root.latchedLeft = root.liveLeft;
+            }
+        }
+    }
+
+    Connections {
+        target: WidgetHistory
+        function onCanGoBackChanged() { if (root.open) root.latchedCanGoBack = WidgetHistory.canGoBack; }
+    }
 
     screen: barWindow?.screen ?? null
-    visible: openDropdown || (!Popups.asWindow && bg.opacity > 0)
+    visible: openDropdown || (!effectiveAsWindow && bg.opacity > 0)
     color: "transparent"
 
     anchors.top: true
     anchors.left: true
     margins.top: Theme.panelMargin + Theme.barHeight + Theme.popupGap
-    margins.left: Popups.fromQuickSettings
-        ? Math.max(Theme.panelMargin, (screen?.width ?? 0) - popupWidth - Theme.panelMargin)
-        : Math.max(Theme.panelMargin, Math.min((screen?.width ?? 0) - popupWidth - Theme.panelMargin, anchorCenter - popupWidth / 2))
+    margins.left: root.open ? root.liveLeft : root.latchedLeft
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
@@ -125,12 +161,12 @@ PanelWindow {
 
     Rectangle {
         id: bg
-        parent: root.openAsWindow ? floatWin.contentItem : root.contentItem
+        parent: root.effectiveAsWindow ? floatWin.contentItem : root.contentItem
         anchors.fill: parent
-        radius: root.openAsWindow ? 0 : Theme.radiusM
+        radius: root.effectiveAsWindow ? 0 : Theme.radiusM
         color: root.name === "notifications" ? Theme.notificationsBg : Theme.widgetsBg
         border.color: Theme.popupBorder
-        border.width: root.openAsWindow ? 0 : 1
+        border.width: root.effectiveAsWindow ? 0 : 1
         clip: true
         focus: true
         Keys.onPressed: e => { if (root.keyHandler) root.keyHandler(e); }

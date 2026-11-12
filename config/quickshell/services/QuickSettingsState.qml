@@ -13,7 +13,7 @@ Singleton {
     property string targetScreen: ""
     property double closedAt: 0
 
-    onOpenChanged: if (!open) { closedAt = Date.now(); asWindow = false; }
+    onOpenChanged: if (!open) closedAt = Date.now()
 
     // A click on the bar button first closes the panel (click outside), then toggles:
     // ignore that toggle so the button closes the panel instead of reopening it.

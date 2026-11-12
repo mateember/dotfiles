@@ -26,45 +26,53 @@ Singleton {
         return BarConfig.isEnabled(barIdFor(popupId));
     }
 
+    function applyOpen(id: string, winMode: bool, fromQs: bool) {
+        if (root.current !== "" && root.current !== id)
+            root.current = "";
+        root.asWindow = winMode;
+        root.fromQuickSettings = fromQs;
+        root.current = id;
+    }
+
     function toggle(id: string) {
         const winMode = !isBarVisible(id);
         if (root.current === id && root.asWindow === winMode && !root.fromQuickSettings) {
             root.close();
         } else {
+            if (root.current !== "" && root.current !== id)
+                root.current = "";
             WidgetHistory.clear();
-            root.asWindow = winMode;
-            root.fromQuickSettings = false;
-            root.current = id;
+            applyOpen(id, winMode, false);
         }
     }
     function open(id: string) {
+        if (root.current !== "" && root.current !== id)
+            root.current = "";
         WidgetHistory.clear();
-        root.asWindow = !isBarVisible(id);
-        root.fromQuickSettings = false;
-        root.current = id;
+        applyOpen(id, !isBarVisible(id), false);
     }
     function openChildFromQuickSettings(id: string, qsScreen: string, qsAsWindow: bool) {
+        if (root.current !== "" && root.current !== id)
+            root.current = "";
         WidgetHistory.push({ kind: "quicksettings", screen: qsScreen, asWindow: qsAsWindow });
         QuickSettingsState.hide();
-        root.asWindow = qsAsWindow;
-        root.fromQuickSettings = !qsAsWindow;
-        root.current = id;
+        applyOpen(id, qsAsWindow, !qsAsWindow);
     }
     function openFromQuickSettings(id: string) {
         const scr = id.split("@")[1] || "";
         openChildFromQuickSettings(id, scr, QuickSettingsState.asWindow);
     }
     function openWindow(id: string) {
+        if (root.current !== "" && root.current !== id)
+            root.current = "";
         WidgetHistory.clear();
-        root.asWindow = true;
-        root.fromQuickSettings = false;
-        root.current = id;
+        applyOpen(id, true, false);
     }
     function restore(id: string, winMode: bool, fromQs: bool) {
+        if (root.current !== "" && root.current !== id)
+            root.current = "";
         QuickSettingsState.hide();
-        root.asWindow = winMode;
-        root.fromQuickSettings = fromQs;
-        root.current = id;
+        applyOpen(id, winMode, fromQs);
     }
     function hide() {
         root.current = "";
@@ -72,7 +80,7 @@ Singleton {
         root.fromQuickSettings = false;
     }
     function close() {
-        WidgetHistory.clear();
         root.hide();
+        WidgetHistory.clear();
     }
 }
