@@ -6,13 +6,11 @@ hl.on("hyprland.start", function()
     -- Desktop shell (bar, wallpaper, notifications, OSDs, launcher, polkit agent)
     hl.exec_cmd("qs")
 
-    -- Idle daemon
-    hl.exec_cmd("hypridle")
+    -- Idle daemon: hypridle runs as a systemd user service (services.hypridle in ~/Nix).
 
     -- Clipboard & tray applets
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
-    hl.exec_cmd("xembedsniproxy")
     hl.exec_cmd("kdeconnect-indicator")
 end)
 

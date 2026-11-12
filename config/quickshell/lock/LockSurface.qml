@@ -21,7 +21,9 @@ Item {
         if (focused !== "") return screenName === focused;
         return screenName === (Quickshell.screens[0]?.name ?? "");
     }
-    readonly property string wallpaperUrl: Wallpapers.urlForScreen(screenName)
+    // Same image as the desktop (from the bar instance); a random one if the bar didn't answer.
+    readonly property string wallpaperUrl: !controller.wallpaperReady ? ""
+        : (controller.wallpaperFor(screenName) || Wallpapers.urlForScreen(screenName))
     property bool showPassword: false
 
     opacity: 0
@@ -62,7 +64,7 @@ Item {
         }
     }
 
-    // ---- Blurred Bing Wallpaper Background ----
+    // ---- Background Wallpaper ----
     Rectangle {
         anchors.fill: parent
         color: Theme.bg
@@ -94,13 +96,11 @@ Item {
         saturation: -0.05
     }
 
-    // Subtle dark scrim for crisp contrast on bright wallpapers
     Rectangle {
         anchors.fill: parent
         color: Qt.rgba(0, 0, 0, 0.22)
     }
 
-    // Clicking anywhere on the surface focuses its password input
     MouseArea {
         anchors.fill: parent
         onPressed: mouse => {
@@ -110,7 +110,7 @@ Item {
         }
     }
 
-    // ---- Upper Block: Clock & Date ----
+    // ---- Clock & Date ----
     Item {
         id: clockGroup
         anchors.horizontalCenter: parent.horizontalCenter
@@ -176,14 +176,13 @@ Item {
         }
     }
 
-    // ---- Center/Lower Block: Avatar, Greeting & Password Pill ----
+    // ---- Avatar, Greeting & Password Pill ----
     ColumnLayout {
         id: authCol
         anchors.horizontalCenter: parent.horizontalCenter
         y: Math.max(clockGroup.y + clockGroup.height + Theme.spaceL, parent.height * 0.50)
         spacing: Theme.spaceS
 
-        // Circular amber user initial avatar
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
             width: 64
@@ -208,7 +207,6 @@ Item {
             }
         }
 
-        // Time-of-day greeting ("Good evening, Mate")
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: stage.controller.greetingText
@@ -217,7 +215,6 @@ Item {
             color: Theme.text
         }
 
-        // Password Pill Container (shakes on failed authentication)
         Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: Theme.spaceXxxs
@@ -252,7 +249,6 @@ Item {
                     anchors.rightMargin: Theme.spaceXxs
                     spacing: Theme.spaceXxs
 
-                    // Left state icon (Face scan pulse / Spinner / Lock)
                     Icon {
                         id: stateIcon
                         icon: stage.controller.submittingPassword ? "hourglass_top"
@@ -325,7 +321,6 @@ Item {
                         }
                     }
 
-                    // Show / hide typed password toggle
                     IconButton {
                         visible: passwordInput.text.length > 0 && !stage.controller.submittingPassword
                         implicitWidth: 32
@@ -338,7 +333,6 @@ Item {
                         }
                     }
 
-                    // Submit arrow when password typed, or Retry Face Unlock button when Howdy is available
                     IconButton {
                         visible: passwordInput.text.length > 0 || (stage.controller.howdyAvailable && !stage.controller.faceScanning)
                         enabled: !stage.controller.submittingPassword
@@ -360,7 +354,6 @@ Item {
             }
         }
 
-        // Error / Status subtitle under the pill
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredHeight: 20
@@ -374,7 +367,7 @@ Item {
         }
     }
 
-    // ---- Bottom Status Bar: MPRIS Now Playing (left) & Battery (right) ----
+    // ---- Bottom Bar: MPRIS & Battery ----
     RowLayout {
         anchors {
             left: parent.left
@@ -386,7 +379,7 @@ Item {
         }
         spacing: Theme.spaceM
 
-        // Bottom-left: Active MPRIS track (pause/stop only — media cannot be started while locked)
+        // Active MPRIS track (pause/stop only while locked)
         Rectangle {
             id: mediaPill
             readonly property var player: Media.active
@@ -438,7 +431,6 @@ Item {
 
         Item { Layout.fillWidth: true }
 
-        // Bottom-right: Battery status & Suspend action pill
         RowLayout {
             spacing: Theme.spaceXxs
 

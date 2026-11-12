@@ -4,19 +4,15 @@ function myip
 end
 
 function vencord
-    # Curl fetches the script content silently (-sS)
-    # The output is piped (|) directly to the system shell (sh) for execution.
     sh -c "$(curl -sS https://vencord.dev/install.sh)"
 
 end
 
 function bat
     if type -q batcat
-        # Execute 'batcat' and pass all arguments to it
         batcat $argv
     else
-        # Fallback: Execute the system's original 'cat' command
-        # Using 'command cat' prevents infinite recursion with this function name
+        # `command` avoids recursion with this wrapper function
         command bat $argv
     end
 end
@@ -36,14 +32,11 @@ end
 function tb --description 'Upload text, file, or piped input to termbin.com'
     if test (count $argv) -gt 0
         if test -f "$argv[1]"
-            # If the argument is an existing file
             cat "$argv[1]" | nc termbin.com 9999
         else
-            # If the argument is a string of text
             echo "$argv[1]" | nc termbin.com 9999
         end
     else
-        # If no arguments provided, handle piped input (e.g. `cmd | tb`)
         cat | nc termbin.com 9999
     end
 end
@@ -60,8 +53,6 @@ function tkg_update
     sleep 2
     cd $HOME/.cache/linux-tkg
     makepkg -si
-    #chmod +x install.sh
-    #./install.sh install
     cd ..
     sudo rm -r linux-tkg
     cd
@@ -76,16 +67,13 @@ function prompt_shell
     set -l current_date (date +%s)
     set -l last_prompt_date 0
 
-    # If the file exists, read the last prompt date from it
     if test -f $last_prompt_file
         set last_prompt_date (cat $last_prompt_file)
     end
 
-    # Calculate the difference between the current date and the last prompt date
     set -l diff (math $current_date - $last_prompt_date)
-    set -l two_weeks (math 7 * 24 * 3600) # 7 days in seconds
+    set -l two_weeks (math 7 * 24 * 3600)
 
-    # If it's been more than 7 days since the last prompt, prompt the shell
     if test $diff -ge $two_weeks
         echo $current_date >$last_prompt_file
         read -P "You wanna update the TKG kernel? It's been more than a week (y/n): " response
@@ -127,10 +115,7 @@ function screenoff
 end
 
 function nixify --description "Sets NIX_LD variables for the current shell session"
-    # Set the path to the loader itself
     set -gx NIX_LD (type -p nix-ld)
-
-    # Set the library path where the system-wide libs live
     set -gx NIX_LD_LIBRARY_PATH /run/current-system/sw/share/nix-ld/lib
 
     echo "✅ NIX_LD and NIX_LD_LIBRARY_PATH set for this session."

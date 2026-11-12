@@ -46,7 +46,6 @@ BarButton {
             { minutes: 240, label: "4 hours",      icon: "schedule" }
         ]
 
-        // Header row with status and master toggle
         RowLayout {
             Layout.fillWidth: true
             spacing: Theme.spaceXs
@@ -74,7 +73,6 @@ BarButton {
                 }
             }
 
-            // Master switch
             Rectangle {
                 implicitWidth: 42
                 implicitHeight: 24

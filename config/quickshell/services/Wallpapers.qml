@@ -71,9 +71,12 @@ Singleton {
         onTriggered: root.tick()
     }
 
-    // qs -p <root>/shell ipc call wallpaper next
+    // qs ipc call wallpaper next; screenUrls is read by lock.qml
     IpcHandler {
         target: "wallpaper"
         function next(): void { root.next(); }
+        function screenUrls(): string {
+            return JSON.stringify({ current: persist.current, screens: root.screenUrls });
+        }
     }
 }

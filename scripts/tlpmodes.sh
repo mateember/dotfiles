@@ -21,7 +21,6 @@ set_performance() {
     notify-send -i preferences-system-power "Power Mode" "Switched to Performance (AC Mode)"
 }
 
-# Normalize input argument to lowercase
 target_mode=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 case "$target_mode" in

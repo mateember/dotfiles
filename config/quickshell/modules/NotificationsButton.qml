@@ -50,7 +50,7 @@ BarButton {
             wrapMode: Text.WordWrap
             font.pixelSize: Theme.fontSizeSmall
             color: Theme.warning
-            text: "The notification server is off (started with --no-notify)."
+            text: "The notification server is off (HCS_NO_NOTIFY=1)."
         }
 
         MediaCard {}

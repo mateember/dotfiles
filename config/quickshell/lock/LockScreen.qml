@@ -7,13 +7,16 @@ import qs
 import qs.services
 
 // Native COSMIC Dark Wayland session lock screen (ext-session-lock-v1 + dual PAM).
+// Runs in its own Quickshell instance (../lock.qml, started by ~/.config/hypr/scripts/lock.sh)
+// and exits after unlocking.
 // Runs two independent PAM conversations in parallel:
-//   1. `passwordPam` (pure pam_unix, e.g. /etc/pam.d/vlock): ready at 0ms so typing and
+//   1. `passwordPam` (/etc/pam.d/qs-lock, pure pam_unix): ready at 0ms so typing and
 //      pressing Enter unlocks IMMEDIATELY even while Howdy is still scanning.
-//   2. `facePam` (/etc/pam.d/hyprlock): runs Howdy IR face recognition when Howdy is
-//      installed, enabled, camera is present, and $USER has >= 1 enrolled face model.
+//   2. `facePam` (/etc/pam.d/qs-lock-face, pam_howdy): runs Howdy IR face recognition when Howdy
+//      is installed, enabled, camera is present, and $USER has >= 1 enrolled face model.
+// Both PAM services are defined in ~/Nix/hosts/matevono/desktop.nix (security.pam.services).
 //
-// IPC (`qs ipc call lock ...`):
+// IPC (`qs -p ~/.config/quickshell/lock.qml ipc call lock ...`, normally via lock.sh):
 //   lock           — lock immediately and start passwordPam + facePam (if howdyAvailable)
 //   lockForSleep   — lock before suspend WITHOUT starting facePam (prevents Howdy pre-sleep race)
 //   wakeFromSleep  — start facePam on wake so Howdy scans when opening the laptop
@@ -24,10 +27,19 @@ Scope {
     readonly property bool locked: persist.locked
     readonly property bool sleeping: persist.sleeping
     property bool howdyAvailable: false
-    property string facePamConfig: "hyprlock"
-    property string passwordPamConfig: "vlock"
-    property string passwordPamDir: "/etc/pam.d"
+    property string facePamConfig: "qs-lock-face"
+    property string passwordPamConfig: "qs-lock"
     property bool probeDone: false
+
+    // Per-screen wallpaper URLs from the bar instance, so the lock shows the desktop's image.
+    property var wallpaperMap: ({})
+    property string wallpaperCurrent: ""
+    property bool wallpaperReady: false
+
+    function wallpaperFor(screenName: string): string {
+        if (screenName && root.wallpaperMap[screenName]) return root.wallpaperMap[screenName];
+        return root.wallpaperCurrent;
+    }
 
     property bool submittingPassword: false
     property string pendingPassword: ""
@@ -74,10 +86,9 @@ Scope {
         }
     }
 
+    // The bar's popups live in the other Quickshell instance (shell.qml); close them over IPC.
     function dismissShellOverlays(): void {
-        Popups.close();
-        QuickSettingsState.close();
-        if (Hypr.overviewOpen) Hypr.closeOverview();
+        if (!overlayCloseProc.running) overlayCloseProc.running = true;
     }
 
     function startPasswordPam(): bool {
@@ -92,16 +103,15 @@ Scope {
             }
             return true;
         }
-        const targetDir = root.passwordPamDir || "/etc/pam.d";
         if (passwordPam.config !== root.passwordPamConfig) passwordPam.config = root.passwordPamConfig;
-        if (passwordPam.configDirectory !== targetDir) passwordPam.configDirectory = targetDir;
         root.abortingPasswordPam = false;
         const ok = passwordPam.start();
+        if (ok && root.errorText.startsWith("Failed to start PAM")) root.errorText = "";
         if (!ok) {
             submitWatchdog.stop();
             root.submittingPassword = false;
             root.pendingPassword = "";
-            root.errorText = "Failed to start PAM (" + targetDir + "/" + root.passwordPamConfig + ")";
+            root.errorText = "Failed to start PAM (/etc/pam.d/" + root.passwordPamConfig + ")";
         }
         return ok;
     }
@@ -247,7 +257,21 @@ Scope {
 
         // Reset hypridle timers on unlock (unless entering sleep) so a hands-free Howdy
         // face unlock doesn't leave the Wayland idle timer counting toward suspend.
+        // This instance exits once that is done (or after quitTimer if it hangs).
         idleResetProc.running = true;
+        quitTimer.restart();
+    }
+
+    // Exit after unlock. Exit code 0, so systemd (Restart=on-failure) doesn't start it again.
+    function quitIfUnlocked(): void {
+        if (!persist.locked) Qt.quit();
+    }
+
+    Timer {
+        id: quitTimer
+        interval: 15000
+        repeat: false
+        onTriggered: root.quitIfUnlocked()
     }
 
     Timer {
@@ -303,16 +327,15 @@ Scope {
         }
     }
 
-    // Probes PAM configs & Howdy availability (installed + enabled + camera exists + user has >=1 face model).
+    // Probes Howdy availability (PAM service has pam_howdy + Howdy enabled + camera exists +
+    // user has >=1 face model). PAM service files come from /etc/pam.d only (root-owned, from Nix).
     Process {
         id: pamProbeProc
         command: [
             "sh", "-c",
             "user=\"${USER:-$(id -un)}\"; " +
-            "face_cfg=\"\"; " +
-            "for c in hyprlock swaylock login su; do " +
-            "  if [ -f \"/etc/pam.d/$c\" ] && grep -q \"pam_howdy\" \"/etc/pam.d/$c\" 2>/dev/null; then face_cfg=\"$c\"; break; fi; " +
-            "done; " +
+            "pw_cfg=qs-lock; " +
+            "face_cfg=\"\"; grep -q pam_howdy /etc/pam.d/qs-lock-face 2>/dev/null && face_cfg=qs-lock-face; " +
             "howdy_ok=0; " +
             "if [ -n \"$face_cfg\" ]; then " +
             "  disabled=0; dev_ok=1; " +
@@ -332,18 +355,8 @@ Scope {
             "  [ \"$models_ok\" -eq 0 ] && [ \"$unreadable_dir\" -eq 1 ] && models_ok=1; " +
             "  [ \"$disabled\" -eq 0 ] && [ \"$dev_ok\" -eq 1 ] && [ \"$models_ok\" -eq 1 ] && howdy_ok=1; " +
             "fi; " +
-            "pw_dir=\"/etc/pam.d\"; pw_cfg=\"\"; " +
-            "for c in vlock xlock hyprlock swaylock login; do " +
-            "  if [ -f \"/etc/pam.d/$c\" ] && ! grep -q \"pam_howdy\" \"/etc/pam.d/$c\" 2>/dev/null; then pw_cfg=\"$c\"; break; fi; " +
-            "done; " +
-            "if [ -z \"$pw_cfg\" ]; then " +
-            "  pw_dir=\"${XDG_RUNTIME_DIR:-/tmp}/hcs-pam\"; mkdir -p -m 700 \"$pw_dir\"; " +
-            "  src=\"/etc/pam.d/${face_cfg:-login}\"; " +
-            "  if [ -f \"$src\" ]; then grep -v \"pam_howdy\" \"$src\" > \"$pw_dir/password\"; chmod 600 \"$pw_dir/password\"; pw_cfg=\"password\"; " +
-            "  else pw_dir=\"/etc/pam.d\"; pw_cfg=\"login\"; fi; " +
-            "fi; " +
-            "printf '{\"howdyAvailable\":%s,\"faceConfig\":\"%s\",\"passwordConfig\":\"%s\",\"passwordDir\":\"%s\"}\\n' " +
-            "  \"$([ \"$howdy_ok\" -eq 1 ] && echo true || echo false)\" \"$face_cfg\" \"$pw_cfg\" \"$pw_dir\""
+            "printf '{\"howdyAvailable\":%s,\"faceConfig\":\"%s\",\"passwordConfig\":\"%s\"}\\n' " +
+            "  \"$([ \"$howdy_ok\" -eq 1 ] && echo true || echo false)\" \"$face_cfg\" \"$pw_cfg\""
         ]
         stdout: SplitParser {
             onRead: line => {
@@ -352,7 +365,6 @@ Scope {
                     root.howdyAvailable = Boolean(info.howdyAvailable);
                     if (info.faceConfig) root.facePamConfig = String(info.faceConfig);
                     if (info.passwordConfig) root.passwordPamConfig = String(info.passwordConfig);
-                    root.passwordPamDir = String(info.passwordDir || "/etc/pam.d");
                     root.probeDone = true;
 
                     if (persist.locked) {
@@ -376,16 +388,43 @@ Scope {
             "[ \"$prep\" = \"b true\" ] && exit 0; " +
             "timeout 3 hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })' >/dev/null 2>&1; " +
             "~/.config/hypr/scripts/reassert-cursor.sh >/dev/null 2>&1; " +
-            "pkill -x hypridle; " +
-            "for _ in $(seq 20); do pgrep -x hypridle >/dev/null || break; sleep 0.1; done; " +
-            "timeout 3 hyprctl dispatch 'hl.dsp.exec_cmd(\"hypridle\")' >/dev/null 2>&1"
+            // A fresh hypridle registers new idle timers. systemd guarantees it comes back up;
+            // the lock instance is in its own unit (hcs-lock.service), so this can't kill it.
+            "timeout 5 systemctl --user restart hypridle.service"
         ]
+        onExited: root.quitIfUnlocked()
+    }
+
+    // Close bar popups, Quick Settings and the overview in the bar instance (default qs config).
+    Process {
+        id: overlayCloseProc
+        command: [
+            "sh", "-c",
+            "for t in bar quicksettings overview; do timeout 2 qs ipc call \"$t\" close >/dev/null 2>&1; done"
+        ]
+    }
+
+    // Ask the bar instance which wallpaper each screen shows (Wallpapers.qml `screenUrls`).
+    // If the bar isn't running, LockSurface falls back to a random image from the folder.
+    Process {
+        id: wallpaperProc
+        command: ["timeout", "2", "qs", "ipc", "call", "wallpaper", "screenUrls"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const info = JSON.parse(this.text.trim());
+                    root.wallpaperMap = info.screens ?? {};
+                    root.wallpaperCurrent = String(info.current ?? "");
+                } catch (e) {}
+            }
+        }
+        onExited: root.wallpaperReady = true
     }
 
     // Pure password PAM conversation (instant prompt, zero Howdy wait).
     PamContext {
         id: passwordPam
-        config: "vlock"
+        config: "qs-lock"
     }
 
     Connections {
@@ -446,14 +485,14 @@ Scope {
     // Parallel biometric (Howdy) PAM conversation.
     PamContext {
         id: facePam
-        config: "hyprlock"
+        config: "qs-lock-face"
     }
 
     Connections {
         target: facePam
 
         function onResponseRequiredChanged(): void {
-            // Once /etc/pam.d/hyprlock falls through from pam_howdy.so to pam_unix.so,
+            // Once /etc/pam.d/qs-lock-face falls through from pam_howdy.so to pam_unix.so,
             // Howdy has finished scanning without a match; abort facePam cleanly since
             // passwordPam is already handling password entry in parallel.
             if (facePam.responseRequired) {
@@ -488,7 +527,6 @@ Scope {
                 howdyAvailable: root.howdyAvailable,
                 faceConfig: root.facePamConfig,
                 passwordConfig: root.passwordPamConfig,
-                passwordDir: root.passwordPamDir,
                 passwordPamActive: passwordPam.active,
                 passwordPromptReady: passwordPam.responseRequired,
                 facePamActive: facePam.active
@@ -498,11 +536,17 @@ Scope {
 
     Component.onCompleted: {
         root.refreshPamProbe();
+        wallpaperProc.running = true;
         if (persist.locked) {
+            // Hot reload while locked: keep the lock, restart the PAM conversations.
             Qt.callLater(() => {
                 root.startPasswordPam();
                 if (!persist.sleeping && root.howdyAvailable) root.startFacePam();
             });
+        } else if (Quickshell.env("HCS_LOCK_MODE") === "sleep") {
+            root.lockForSleep();
+        } else {
+            root.lock();
         }
     }
 

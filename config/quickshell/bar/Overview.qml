@@ -8,13 +8,8 @@ import qs
 import qs.components
 import qs.services
 
-// KDE Plasma-style Overview (SUPER+Tab / SUPER+W / 4-finger swipe up/down / `qs ipc call overview toggle`):
-//   - Top row: horizontal strip of virtual desktops (workspaces) with live miniature window previews
-//     and a "+ New Desktop" card. Click a desktop to inspect its windows, click again (or double-click)
-//     to switch to it.
-//   - Middle: search bar to filter open windows across all workspaces by title or app class.
-//   - Main area: exposed grid of live window thumbnails (ScreencopyView) with app icon, title,
-//     move-to-workspace buttons (← / →), and close button (×).
+// Niri-style vertical workspace Overview (SUPER+Tab / SUPER+W / 4-finger swipe / `qs ipc call overview toggle`).
+// Workspaces are stacked vertically with live window columns arranged horizontally inside each strip.
 Scope {
     id: root
 
@@ -46,702 +41,703 @@ Scope {
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: (Hypr.overviewOpen || Hypr.overviewSwiping) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             WlrLayershell.exclusiveZone: -1
+            mask: (Hypr.overviewOpen || Hypr.overviewSwiping) ? fullMask : emptyMask
 
-        readonly property HyprlandMonitor monitor: Hyprland.monitorFor(win.screen)
-        property int selectedWsId: Hyprland.focusedWorkspace?.id ?? monitor?.activeWorkspace?.id ?? 1
-        property bool showAllWorkspaces: false
-        property string query: ""
-        property int selectedIndex: 0
+            Region { id: emptyMask }
+            Region { id: fullMask; item: slideContainer }
 
-        // Sorted workspace IDs on this monitor (always includes the active & selected workspace).
-        readonly property var workspaceIds: {
-            const set = {};
-            const activeId = monitor?.activeWorkspace?.id ?? Hyprland.focusedWorkspace?.id ?? 1;
-            set[activeId] = true;
-            if (selectedWsId > 0) set[selectedWsId] = true;
-            for (const w of Hyprland.workspaces.values) {
-                if (w.id > 0 && (!w.monitor || !monitor || w.monitor.id === monitor.id))
-                    set[w.id] = true;
+            readonly property HyprlandMonitor monitor: Hyprland.monitorFor(win.screen)
+            readonly property real monLogicalW: (monitor && monitor.width > 0 && monitor.scale > 0) ? (monitor.width / monitor.scale) : 1440
+            readonly property real monLogicalH: (monitor && monitor.height > 0 && monitor.scale > 0) ? (monitor.height / monitor.scale) : 900
+
+            property int selectedWsId: Hyprland.focusedWorkspace?.id ?? monitor?.activeWorkspace?.id ?? 1
+            property int selectedWinIdx: 0
+            property string query: ""
+
+            // Sorted positive workspace IDs on this monitor.
+            readonly property var workspaceIds: {
+                const set = {};
+                const activeId = monitor?.activeWorkspace?.id ?? Hyprland.focusedWorkspace?.id ?? 1;
+                if (activeId > 0) set[activeId] = true;
+                for (const w of Hyprland.workspaces.values) {
+                    if (w.id > 0 && (!w.monitor || !monitor || w.monitor.id === monitor.id))
+                        set[w.id] = true;
+                }
+                const list = Object.keys(set).map(k => Number(k)).sort((a, b) => a - b);
+                return list.length > 0 ? list : [1];
             }
-            const list = Object.keys(set).map(k => Number(k)).sort((a, b) => a - b);
-            return list.length > 0 ? list : [1];
-        }
 
-        readonly property int nextNewWsId: {
-            let max = 0;
-            for (const w of Hyprland.workspaces.values)
-                if (w.id > max) max = w.id;
-            for (const id of workspaceIds)
-                if (id > max) max = id;
-            return max + 1;
-        }
-
-        // All mapped toplevels on this monitor (excluding special workspaces unless active).
-        readonly property var monitorToplevels: {
-            const out = [];
-            for (const t of Hyprland.toplevels.values) {
-                const wsId = t.workspace?.id ?? 0;
-                if (wsId <= 0) continue;
-                if (t.monitor && monitor && t.monitor.id !== monitor.id) continue;
-                out.push(t);
+            readonly property int nextNewWsId: {
+                let max = 0;
+                for (const w of Hyprland.workspaces.values)
+                    if (w.id > max) max = w.id;
+                for (const id of workspaceIds)
+                    if (id > max) max = id;
+                return max + 1;
             }
-            return out;
-        }
 
-        function toplevelsForWorkspace(wsId: int): var {
-            return monitorToplevels.filter(t => (t.workspace?.id ?? 0) === wsId);
-        }
+            // All mapped non-special toplevels on this monitor.
+            readonly property var monitorToplevels: {
+                const out = [];
+                for (const t of Hyprland.toplevels.values) {
+                    const wsId = t.workspace?.id ?? 0;
+                    if (wsId <= 0) continue;
+                    if (t.monitor && monitor && t.monitor.id !== monitor.id) continue;
+                    out.push(t);
+                }
+                return out;
+            }
 
-        function appNameFor(t): string {
-            return t?.wayland?.appId || t?.lastIpcObject?.class || t?.lastIpcObject?.initialClass || "Window";
-        }
+            function appNameFor(t): string {
+                return t?.wayland?.appId || t?.lastIpcObject?.class || t?.lastIpcObject?.initialClass || "Window";
+            }
 
-        function iconFor(t): string {
-            const appId = t?.wayland?.appId || t?.lastIpcObject?.class || "";
-            if (!appId) return "";
-            const entry = DesktopEntries.byId(appId) ?? DesktopEntries.heuristicLookup(appId);
-            const iconName = entry?.icon || appId;
-            return Quickshell.iconPath(iconName, true) || Quickshell.iconPath(appId.toLowerCase(), true) || "";
-        }
+            function iconFor(t): string {
+                const appId = t?.wayland?.appId || t?.lastIpcObject?.class || "";
+                if (!appId) return "";
+                const entry = DesktopEntries.byId(appId) ?? DesktopEntries.heuristicLookup(appId);
+                const iconName = entry?.icon || appId;
+                return Quickshell.iconPath(iconName, true) || Quickshell.iconPath(appId.toLowerCase(), true) || "";
+            }
 
-        // Windows shown in the main Present Windows grid.
-        readonly property var filteredToplevels: {
-            const q = query.trim().toLowerCase();
-            const showAll = showAllWorkspaces || q.length > 0;
-            return monitorToplevels.filter(t => {
-                if (!showAll && (t.workspace?.id ?? 0) !== selectedWsId)
-                    return false;
+            function matchesQuery(t, q: string): bool {
                 if (!q) return true;
-                const title = (t.title ?? "").toLowerCase();
+                const title = (t?.title ?? "").toLowerCase();
                 const app = appNameFor(t).toLowerCase();
                 return title.includes(q) || app.includes(q);
-            });
-        }
+            }
 
-        onFilteredToplevelsChanged: {
-            if (selectedIndex >= filteredToplevels.length)
-                selectedIndex = Math.max(0, filteredToplevels.length - 1);
-        }
+            // Group workspace toplevels into scrolling-strip columns (preserving column order & stacked windows).
+            function buildWorkspaceColumns(wsId: int, q: string): var {
+                const items = [];
+                let fallbackIdx = 0;
+                for (const t of monitorToplevels) {
+                    if ((t.workspace?.id ?? 0) !== wsId) continue;
+                    if (!matchesQuery(t, q)) continue;
+                    const ipc = t.lastIpcObject;
+                    const x = (ipc && ipc.at && ipc.at.length >= 2) ? Number(ipc.at[0]) : (fallbackIdx * 1000);
+                    const y = (ipc && ipc.at && ipc.at.length >= 2) ? Number(ipc.at[1]) : 0;
+                    const w = (ipc && ipc.size && ipc.size.length >= 2) ? Number(ipc.size[0]) : win.monLogicalW * 0.5;
+                    const floating = Boolean(ipc && ipc.floating);
+                    items.push({ toplevel: t, x: x, y: y, w: w, floating: floating, seq: fallbackIdx++ });
+                }
 
-        function close() {
-            Hypr.closeOverview();
-        }
+                items.sort((a, b) => {
+                    if (a.floating !== b.floating) return a.floating ? 1 : -1;
+                    if (Math.abs(a.x - b.x) > 24) return a.x - b.x;
+                    if (a.y !== b.y) return a.y - b.y;
+                    return a.seq - b.seq;
+                });
 
-        function activateToplevel(t) {
-            if (!t) return;
-            const wsId = t.workspace?.id ?? 0;
-            if (wsId > 0) Hypr.focusWorkspace(wsId);
-            if (t.wayland) t.wayland.activate();
-            if (t.address) Hypr.focusWindow(t.address);
-            win.close();
-        }
+                const columns = [];
+                for (const item of items) {
+                    const ratio = Math.max(0.32, Math.min(1.0, item.w / win.monLogicalW));
+                    if (!item.floating && columns.length > 0 && !columns[columns.length - 1].floating && Math.abs(item.x - columns[columns.length - 1].x) <= 24) {
+                        const col = columns[columns.length - 1];
+                        col.windows.push({ toplevel: item.toplevel, flatIndex: 0 });
+                        col.colWidthRatio = Math.max(col.colWidthRatio, ratio);
+                    } else {
+                        columns.push({
+                            x: item.x,
+                            floating: item.floating,
+                            colWidthRatio: ratio,
+                            windows: [{ toplevel: item.toplevel, flatIndex: 0 }]
+                        });
+                    }
+                }
 
-        function switchToWorkspace(wsId: int) {
-            Hypr.focusWorkspace(wsId);
-            win.close();
-        }
+                const flatWindows = [];
+                for (const col of columns) {
+                    for (const wItem of col.windows) {
+                        wItem.flatIndex = flatWindows.length;
+                        flatWindows.push(wItem.toplevel);
+                    }
+                }
+                return { columns: columns, flatWindows: flatWindows };
+            }
 
-        Shortcut {
-            sequences: ["Escape"]
-            onActivated: win.close()
-        }
+            // Vertical list of workspace strips (includes a trailing empty workspace when not searching).
+            readonly property var workspaceModels: {
+                const q = query.trim().toLowerCase();
+                const out = [];
+                for (const id of workspaceIds) {
+                    const built = buildWorkspaceColumns(id, q);
+                    if (q.length > 0 && built.flatWindows.length === 0) continue;
+                    out.push({
+                        wsId: id,
+                        isNew: false,
+                        columns: built.columns,
+                        flatWindows: built.flatWindows
+                    });
+                }
+                if (q.length === 0) {
+                    out.push({
+                        wsId: nextNewWsId,
+                        isNew: true,
+                        columns: [],
+                        flatWindows: []
+                    });
+                }
+                return out;
+            }
 
-        Connections {
-            target: Hypr
-            function onOverviewOpenChanged() {
-                if (Hypr.overviewOpen) {
-                    focusTimer.restart();
+            readonly property int selectedWsRowIdx: {
+                for (let i = 0; i < workspaceModels.length; i++) {
+                    if (workspaceModels[i].wsId === selectedWsId) return i;
+                }
+                return 0;
+            }
+
+            onWorkspaceModelsChanged: {
+                if (workspaceModels.length === 0) {
+                    selectedWinIdx = 0;
+                    return;
+                }
+                let found = null;
+                for (const m of workspaceModels) {
+                    if (m.wsId === selectedWsId) { found = m; break; }
+                }
+                if (!found) {
+                    found = workspaceModels[0];
+                    selectedWsId = found.wsId;
+                    selectedWinIdx = 0;
+                } else if (selectedWinIdx >= found.flatWindows.length) {
+                    selectedWinIdx = Math.max(0, found.flatWindows.length - 1);
                 }
             }
-        }
 
-        Timer {
-            id: focusTimer
-            interval: 30
-            onTriggered: searchInput.forceActiveFocus()
-        }
-
-        Component.onCompleted: {
-            Popups.close();
-            QuickSettingsState.close();
-            Hyprland.refreshMonitors();
-            Hyprland.refreshWorkspaces();
-            Hyprland.refreshToplevels();
-            win.selectedWsId = Hyprland.focusedWorkspace?.id ?? win.monitor?.activeWorkspace?.id ?? 1;
-            searchInput.forceActiveFocus();
-            focusTimer.restart();
-        }
-
-        // Dimmed backdrop; clicking empty space closes the Overview.
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0.06, 0.06, 0.07, 0.78 * root.animProgress)
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: win.close()
+            function close() {
+                Hypr.closeOverview();
             }
-        }
 
-        Item {
-            id: slideContainer
-            anchors.fill: parent
-            opacity: root.animProgress
-            transform: [
-                Scale {
-                    origin.x: slideContainer.width / 2
-                    origin.y: slideContainer.height / 2
-                    xScale: 0.94 + 0.06 * root.animProgress
-                    yScale: 0.94 + 0.06 * root.animProgress
-                },
-                Translate {
-                    y: (1.0 - root.animProgress) * 180
+            function activateToplevel(t) {
+                Hypr.activateWindow(t);
+            }
+
+            function switchToWorkspace(wsId: int) {
+                Hypr.closeOverview();
+                Hypr.focusWorkspace(wsId);
+            }
+
+            function moveWorkspaceSelection(delta: int) {
+                const list = win.workspaceModels;
+                if (list.length === 0) return;
+                const nextIdx = Math.max(0, Math.min(list.length - 1, win.selectedWsRowIdx + delta));
+                win.selectedWsId = list[nextIdx].wsId;
+                win.selectedWinIdx = 0;
+                wsList.positionViewAtIndex(nextIdx, ListView.Contain);
+            }
+
+            function moveWindowSelection(delta: int) {
+                const list = win.workspaceModels;
+                if (list.length === 0) return;
+                const m = list[win.selectedWsRowIdx];
+                if (!m || m.flatWindows.length === 0) return;
+                const n = m.flatWindows.length;
+                win.selectedWinIdx = (win.selectedWinIdx + delta + n) % n;
+            }
+
+            function activateCurrentSelection() {
+                const list = win.workspaceModels;
+                if (list.length === 0) return;
+                const m = list[win.selectedWsRowIdx];
+                if (!m) return;
+                if (m.flatWindows.length > 0) {
+                    const idx = Math.max(0, Math.min(m.flatWindows.length - 1, win.selectedWinIdx));
+                    win.activateToplevel(m.flatWindows[idx]);
+                } else {
+                    win.switchToWorkspace(m.wsId);
                 }
-            ]
+            }
 
-            ColumnLayout {
+            function resetForOpen() {
+                Hyprland.refreshMonitors();
+                Hyprland.refreshWorkspaces();
+                Hyprland.refreshToplevels();
+                win.query = "";
+                searchInput.text = "";
+                win.selectedWsId = Hyprland.focusedWorkspace?.id ?? win.monitor?.activeWorkspace?.id ?? 1;
+                win.selectedWinIdx = 0;
+                focusTimer.restart();
+            }
+
+            Shortcut {
+                sequences: ["Escape"]
+                onActivated: win.close()
+            }
+
+            Connections {
+                target: Hypr
+                function onOverviewOpenChanged() {
+                    if (Hypr.overviewOpen) win.resetForOpen();
+                }
+            }
+
+            Timer {
+                id: focusTimer
+                interval: 30
+                onTriggered: {
+                    searchInput.forceActiveFocus();
+                    wsList.positionViewAtIndex(win.selectedWsRowIdx, ListView.Contain);
+                }
+            }
+
+            Component.onCompleted: {
+                Popups.close();
+                QuickSettingsState.close();
+                win.resetForOpen();
+            }
+
+            // Dimmed backdrop; clicking outside closes the Overview.
+            Rectangle {
                 anchors.fill: parent
-                anchors.topMargin: Theme.barHeight + Theme.spaceM
-                anchors.bottomMargin: Theme.spaceL
-                anchors.leftMargin: Theme.spaceXl
-                anchors.rightMargin: Theme.spaceXl
-                spacing: Theme.spaceM
+                color: Qt.rgba(0.06, 0.06, 0.07, 0.78 * root.animProgress)
 
-            // =================================================================
-            // 1. TOP STRIP: Virtual Desktops (Workspaces) like KDE Plasma
-            // =================================================================
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: Theme.spaceS
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: win.close()
+                }
+            }
 
-                Repeater {
-                    model: win.workspaceIds
+            Item {
+                id: slideContainer
+                anchors.fill: parent
+                opacity: root.animProgress
+                transform: [
+                    Scale {
+                        origin.x: slideContainer.width / 2
+                        origin.y: slideContainer.height / 2
+                        xScale: 0.94 + 0.06 * root.animProgress
+                        yScale: 0.94 + 0.06 * root.animProgress
+                    },
+                    Translate {
+                        y: (1.0 - root.animProgress) * 160
+                    }
+                ]
 
-                    delegate: Rectangle {
-                        id: wsCard
-                        required property int modelData
-                        readonly property int wsId: modelData
-                        readonly property bool isCurrentHypr: (Hyprland.focusedWorkspace?.id ?? 0) === wsId
-                        readonly property bool isSelected: !win.showAllWorkspaces && win.selectedWsId === wsId
-                        readonly property var wsWindows: win.toplevelsForWorkspace(wsId)
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.topMargin: Theme.barHeight + Theme.spaceM
+                    anchors.bottomMargin: Theme.spaceL
+                    anchors.leftMargin: Theme.spaceXl
+                    anchors.rightMargin: Theme.spaceXl
+                    spacing: Theme.spaceM
 
-                        implicitWidth: 210
-                        implicitHeight: 132
-                        radius: Theme.radiusM
-                        color: isSelected ? Qt.rgba(1, 0.68, 0, 0.14)
-                             : (wsHover.containsMouse ? Theme.componentHover : Theme.overviewBg)
-                        border.width: isSelected ? 2 : 1
-                        border.color: isSelected ? Theme.accent
-                                    : (isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.55) : Theme.panelBorder)
+                    // Search pill
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: Math.min(500, parent.width)
+                        implicitHeight: 42
+                        radius: 21
+                        color: Theme.overviewBg
+                        border.width: searchInput.activeFocus ? 2 : 1
+                        border.color: searchInput.activeFocus ? Theme.accent : Theme.panelBorder
 
-                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
-                        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
-
-                        ColumnLayout {
+                        RowLayout {
                             anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 6
+                            anchors.leftMargin: Theme.spaceS
+                            anchors.rightMargin: Theme.spaceS
+                            spacing: Theme.spaceXs
 
-                            // Desktop header
-                            RowLayout {
+                            Icon { icon: "search"; size: 20; color: Theme.textDim }
+
+                            TextInput {
+                                id: searchInput
                                 Layout.fillWidth: true
-                                spacing: 6
+                                color: Theme.text
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSize
+                                selectionColor: Theme.accent
+                                selectedTextColor: Theme.accentText
+                                clip: true
+                                onTextChanged: {
+                                    win.query = text;
+                                    win.selectedWinIdx = 0;
+                                }
 
-                                Rectangle {
-                                    width: 20
-                                    height: 20
-                                    radius: 10
-                                    color: wsCard.isCurrentHypr ? Theme.accent : Theme.component
-                                    StyledText {
-                                        anchors.centerIn: parent
-                                        text: String(wsCard.wsId)
-                                        font.pixelSize: Theme.fontSizeSmall - 1
-                                        font.weight: Font.Bold
-                                        color: wsCard.isCurrentHypr ? Theme.accentText : Theme.text
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Escape) {
+                                        win.close();
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                        win.activateCurrentSelection();
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_PageDown) {
+                                        win.moveWorkspaceSelection(1);
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Up || event.key === Qt.Key_PageUp) {
+                                        win.moveWorkspaceSelection(-1);
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) {
+                                        win.moveWindowSelection(1);
+                                        event.accepted = true;
+                                    } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab) {
+                                        win.moveWindowSelection(-1);
+                                        event.accepted = true;
                                     }
                                 }
 
                                 StyledText {
-                                    Layout.fillWidth: true
-                                    text: "Desktop " + wsCard.wsId
-                                    font.pixelSize: Theme.fontSizeSmall
-                                    font.weight: wsCard.isSelected ? Font.DemiBold : Font.Normal
-                                    color: wsCard.isSelected ? Theme.text : Theme.textDim
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    visible: !searchInput.text
+                                    text: "Search windows (Enter switch, ↑/↓ workspace, ←/→ window, Esc close)..."
+                                    color: Theme.textDim
                                     elide: Text.ElideRight
                                 }
-
-                                StyledText {
-                                    text: wsCard.wsWindows.length > 0 ? String(wsCard.wsWindows.length) : ""
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    color: Theme.textDim
-                                }
                             }
 
-                            // Miniature live preview box
-                            ClippingRectangle {
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: Theme.radiusS
-                                color: Qt.rgba(0.11, 0.11, 0.12, 0.9)
-
-                                StyledText {
-                                    anchors.centerIn: parent
-                                    visible: wsCard.wsWindows.length === 0
-                                    text: "Empty"
-                                    font.pixelSize: Theme.fontSizeSmall - 1
-                                    color: Theme.textDim
-                                }
-
-                                GridLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 4
-                                    visible: wsCard.wsWindows.length > 0
-                                    columns: wsCard.wsWindows.length <= 1 ? 1 : 2
-                                    rowSpacing: 3
-                                    columnSpacing: 3
-
-                                    Repeater {
-                                        model: wsCard.wsWindows.slice(0, 4)
-
-                                        delegate: ClippingRectangle {
-                                            required property var modelData
-                                            Layout.fillWidth: true
-                                            Layout.fillHeight: true
-                                            radius: 4
-                                            color: Theme.component
-
-                                            ScreencopyView {
-                                                anchors.fill: parent
-                                                captureSource: modelData?.wayland ?? null
-                                                live: true
-                                                paintCursor: false
-                                            }
-                                        }
-                                    }
-                                }
+                            IconButton {
+                                visible: searchInput.text !== ""
+                                icon: "close"
+                                implicitWidth: 26
+                                implicitHeight: 26
+                                iconSize: 16
+                                onClicked: searchInput.text = ""
                             }
-                        }
-
-                        MouseArea {
-                            id: wsHover
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: mouse => {
-                                if (mouse.button === Qt.MiddleButton || (win.selectedWsId === wsCard.wsId && !win.showAllWorkspaces)) {
-                                    win.switchToWorkspace(wsCard.wsId);
-                                } else {
-                                    win.showAllWorkspaces = false;
-                                    win.selectedWsId = wsCard.wsId;
-                                    win.selectedIndex = 0;
-                                    searchInput.forceActiveFocus();
-                                }
-                            }
-                            onDoubleClicked: win.switchToWorkspace(wsCard.wsId)
-                        }
-                    }
-                }
-
-                // "+ New Desktop" card
-                Rectangle {
-                    implicitWidth: 120
-                    implicitHeight: 132
-                    radius: Theme.radiusM
-                    color: newWsHover.containsMouse ? Theme.componentHover : Theme.overviewBg
-                    border.width: 1
-                    border.color: Theme.panelBorder
-
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        Icon {
-                            Layout.alignment: Qt.AlignHCenter
-                            icon: "add_circle"
-                            size: 28
-                            color: Theme.accent
-                        }
-                        StyledText {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "New Desktop"
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.textDim
                         }
                     }
 
-                    MouseArea {
-                        id: newWsHover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: win.switchToWorkspace(win.nextNewWsId)
-                    }
-                }
-            }
+                    // Empty search state
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: win.workspaceModels.length === 0
 
-            // =================================================================
-            // 2. SEARCH & FILTER BAR
-            // =================================================================
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: Theme.spaceS
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: Theme.spaceS
 
-                Rectangle {
-                    implicitWidth: 460
-                    implicitHeight: 42
-                    radius: 21
-                    color: Theme.overviewBg
-                    border.width: searchInput.activeFocus ? 2 : 1
-                    border.color: searchInput.activeFocus ? Theme.accent : Theme.panelBorder
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spaceS
-                        anchors.rightMargin: Theme.spaceS
-                        spacing: Theme.spaceXs
-
-                        Icon { icon: "search"; size: 20; color: Theme.textDim }
-
-                        TextInput {
-                            id: searchInput
-                            Layout.fillWidth: true
-                            color: Theme.text
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize
-                            selectionColor: Theme.accent
-                            selectedTextColor: Theme.accentText
-                            clip: true
-                            onTextChanged: {
-                                win.query = text;
-                                win.selectedIndex = 0;
+                            Icon {
+                                Layout.alignment: Qt.AlignHCenter
+                                icon: "search_off"
+                                size: 48
+                                color: Theme.textDim
                             }
-
-                            Keys.onPressed: event => {
-                                const count = win.filteredToplevels.length;
-                                if (event.key === Qt.Key_Escape) {
-                                    win.close();
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                    if (count > 0 && win.selectedIndex >= 0 && win.selectedIndex < count) {
-                                        win.activateToplevel(win.filteredToplevels[win.selectedIndex]);
-                                    } else {
-                                        win.switchToWorkspace(win.selectedWsId);
-                                    }
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) {
-                                    if (event.modifiers & Qt.ControlModifier) {
-                                        const idx = win.workspaceIds.indexOf(win.selectedWsId);
-                                        if (idx >= 0 && idx + 1 < win.workspaceIds.length)
-                                            win.selectedWsId = win.workspaceIds[idx + 1];
-                                    } else if (count > 0) {
-                                        win.selectedIndex = (win.selectedIndex + 1) % count;
-                                    }
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab) {
-                                    if (event.modifiers & Qt.ControlModifier) {
-                                        const idx = win.workspaceIds.indexOf(win.selectedWsId);
-                                        if (idx > 0)
-                                            win.selectedWsId = win.workspaceIds[idx - 1];
-                                    } else if (count > 0) {
-                                        win.selectedIndex = (win.selectedIndex - 1 + count) % count;
-                                    }
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_Down) {
-                                    const cols = Math.max(1, windowGrid.columns);
-                                    if (count > 0)
-                                        win.selectedIndex = Math.min(count - 1, win.selectedIndex + cols);
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_Up) {
-                                    const cols = Math.max(1, windowGrid.columns);
-                                    if (count > 0)
-                                        win.selectedIndex = Math.max(0, win.selectedIndex - cols);
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_PageDown) {
-                                    const idx = win.workspaceIds.indexOf(win.selectedWsId);
-                                    if (idx >= 0 && idx + 1 < win.workspaceIds.length)
-                                        win.selectedWsId = win.workspaceIds[idx + 1];
-                                    event.accepted = true;
-                                } else if (event.key === Qt.Key_PageUp) {
-                                    const idx = win.workspaceIds.indexOf(win.selectedWsId);
-                                    if (idx > 0)
-                                        win.selectedWsId = win.workspaceIds[idx - 1];
-                                    event.accepted = true;
-                                }
-                            }
-
                             StyledText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: !searchInput.text
-                                text: "Search windows (Enter focus, Ctrl+←/→ desktop, Esc close)..."
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "No windows matching \"" + win.query + "\""
+                                font.pixelSize: Theme.fontSizeLarge
                                 color: Theme.textDim
                             }
                         }
-
-                        IconButton {
-                            visible: searchInput.text !== ""
-                            icon: "close"
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            iconSize: 16
-                            onClicked: searchInput.text = ""
-                        }
-                    }
-                }
-
-                // Toggle "All Desktops" vs selected desktop
-                Rectangle {
-                    implicitWidth: allRow.implicitWidth + 24
-                    implicitHeight: 42
-                    radius: 21
-                    color: win.showAllWorkspaces ? Theme.accent : (allHover.containsMouse ? Theme.componentHover : Theme.overviewBg)
-                    border.width: 1
-                    border.color: win.showAllWorkspaces ? Theme.accent : Theme.panelBorder
-
-                    RowLayout {
-                        id: allRow
-                        anchors.centerIn: parent
-                        spacing: 6
-                        Icon {
-                            icon: "grid_view"
-                            size: 18
-                            color: win.showAllWorkspaces ? Theme.accentText : Theme.text
-                        }
-                        StyledText {
-                            text: "All Desktops"
-                            font.pixelSize: Theme.fontSizeSmall
-                            font.weight: win.showAllWorkspaces ? Font.DemiBold : Font.Normal
-                            color: win.showAllWorkspaces ? Theme.accentText : Theme.text
-                        }
                     }
 
-                    MouseArea {
-                        id: allHover
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            win.showAllWorkspaces = !win.showAllWorkspaces;
-                            win.selectedIndex = 0;
-                            searchInput.forceActiveFocus();
-                        }
-                    }
-                }
-            }
+                    // Vertical stack of workspace strips (Niri-style)
+                    ListView {
+                        id: wsList
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: win.workspaceModels.length > 0
+                        orientation: ListView.Vertical
+                        spacing: Theme.spaceM
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        model: win.workspaceModels
 
-            // =================================================================
-            // 3. MAIN AREA: Exposed Windows Grid (Present Windows)
-            // =================================================================
-            Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                        readonly property int rowHeight: Math.max(196, Math.min(280, Math.floor((height - 2 * Theme.spaceM) / 2.55)))
 
-                // Empty state when the selected workspace has no open windows
-                ColumnLayout {
-                    anchors.centerIn: parent
-                    visible: win.filteredToplevels.length === 0
-                    spacing: Theme.spaceS
-
-                    Icon {
-                        Layout.alignment: Qt.AlignHCenter
-                        icon: win.query.trim() !== "" ? "search_off" : "desktop_windows"
-                        size: 48
-                        color: Theme.textDim
-                    }
-
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: win.query.trim() !== ""
-                            ? "No windows matching \"" + win.query + "\""
-                            : "No open windows on Desktop " + win.selectedWsId
-                        font.pixelSize: Theme.fontSizeLarge
-                        color: Theme.textDim
-                    }
-
-                    Rectangle {
-                        Layout.alignment: Qt.AlignHCenter
-                        visible: win.query.trim() === "" && (Hyprland.focusedWorkspace?.id ?? 0) !== win.selectedWsId
-                        implicitWidth: switchLbl.implicitWidth + 28
-                        implicitHeight: 36
-                        radius: 18
-                        color: Theme.accent
-
-                        StyledText {
-                            id: switchLbl
-                            anchors.centerIn: parent
-                            text: "Switch to Desktop " + win.selectedWsId
-                            font.weight: Font.DemiBold
-                            color: Theme.accentText
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: win.switchToWorkspace(win.selectedWsId)
-                        }
-                    }
-                }
-
-                // Grid of live window thumbnails
-                GridLayout {
-                    id: windowGrid
-                    anchors.fill: parent
-                    visible: win.filteredToplevels.length > 0
-                    columns: {
-                        const n = win.filteredToplevels.length;
-                        if (n <= 1) return 1;
-                        if (n <= 4) return 2;
-                        if (n <= 9) return 3;
-                        return 4;
-                    }
-                    rowSpacing: Theme.spaceM
-                    columnSpacing: Theme.spaceM
-
-                    Repeater {
-                        model: win.filteredToplevels
-
-                        delegate: Rectangle {
-                            id: card
+                        delegate: Item {
+                            id: wsRowItem
                             required property var modelData
                             required property int index
 
-                            readonly property bool isHighlighted: index === win.selectedIndex || cardHover.containsMouse
-                            readonly property int wsId: modelData?.workspace?.id ?? 1
-                            readonly property string iconSource: win.iconFor(modelData)
+                            width: wsList.width
+                            height: wsRowItem.modelData.isNew && win.query.trim() === ""
+                                ? Math.min(116, wsList.rowHeight)
+                                : wsList.rowHeight
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.maximumWidth: win.filteredToplevels.length === 1 ? 820 : 620
-                            Layout.maximumHeight: win.filteredToplevels.length === 1 ? 520 : 400
-                            Layout.alignment: Qt.AlignCenter
+                            readonly property int wsId: modelData.wsId
+                            readonly property bool isNew: modelData.isNew
+                            readonly property bool isCurrentHypr: !isNew && (Hyprland.focusedWorkspace?.id ?? 0) === wsId
+                            readonly property bool isSelected: win.selectedWsId === wsId
 
-                            radius: Theme.radiusL
-                            color: isHighlighted ? Qt.rgba(0.2, 0.2, 0.22, 0.92) : Theme.overviewBg
-                            border.width: index === win.selectedIndex ? 2 : 1
-                            border.color: index === win.selectedIndex ? Theme.accent
-                                        : (cardHover.containsMouse ? Qt.rgba(1, 1, 1, 0.35) : Theme.panelBorder)
+                            Rectangle {
+                                id: wsCard
+                                width: Math.min(parent.width, 1360)
+                                height: parent.height
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                radius: Theme.radiusL
+                                color: wsRowItem.isSelected ? Qt.rgba(1, 0.68, 0, 0.11)
+                                     : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.05)
+                                     : (wsBgHover.containsMouse ? Theme.componentHover : Theme.overviewBg))
+                                border.width: wsRowItem.isSelected ? 2 : 1
+                                border.color: wsRowItem.isSelected ? Theme.accent
+                                            : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.48) : Theme.panelBorder)
 
-                            Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+                                Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                                Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: Theme.spaceXs
-                                spacing: Theme.spaceXs
-
-                                // Live window thumbnail
-                                ClippingRectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: Theme.radiusM
-                                    color: Qt.rgba(0.09, 0.09, 0.1, 1)
-
-                                    ScreencopyView {
-                                        id: preview
-                                        anchors.fill: parent
-                                        captureSource: card.modelData?.wayland ?? null
-                                        live: true
-                                        paintCursor: false
-                                    }
-
-                                    // Fallback if screencopy isn't ready
-                                    Icon {
-                                        anchors.centerIn: parent
-                                        visible: !preview.hasContent
-                                        icon: "web_asset"
-                                        size: 48
-                                        color: Theme.textDim
-                                    }
-
-                                    MouseArea {
-                                        id: cardHover
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onEntered: win.selectedIndex = card.index
-                                        onClicked: win.activateToplevel(card.modelData)
-                                    }
+                                MouseArea {
+                                    id: wsBgHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: win.selectedWsId = wsRowItem.wsId
+                                    onClicked: win.switchToWorkspace(wsRowItem.wsId)
                                 }
 
-                                // Window footer: app icon, title, move-to-desktop buttons, close button
                                 RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: Theme.spaceXs
+                                    anchors.fill: parent
+                                    anchors.margins: Theme.spaceS
+                                    spacing: Theme.spaceS
 
-                                    Image {
-                                        visible: card.iconSource !== ""
-                                        source: card.iconSource
-                                        Layout.preferredWidth: 22
-                                        Layout.preferredHeight: 22
-                                        sourceSize.width: 44
-                                        sourceSize.height: 44
-                                        asynchronous: true
-                                    }
-
-                                    Icon {
-                                        visible: card.iconSource === ""
-                                        icon: "web_asset"
-                                        size: 20
-                                        color: Theme.accent
-                                    }
-
+                                    // Left workspace badge rail
                                     ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 0
-                                        StyledText {
-                                            Layout.fillWidth: true
-                                            text: card.modelData?.title || win.appNameFor(card.modelData)
-                                            font.weight: Font.DemiBold
-                                            elide: Text.ElideRight
+                                        Layout.preferredWidth: 52
+                                        Layout.alignment: Qt.AlignVCenter
+                                        spacing: 6
+
+                                        Rectangle {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            width: 30
+                                            height: 30
+                                            radius: 15
+                                            color: wsRowItem.isCurrentHypr ? Theme.accent
+                                                 : (wsRowItem.isSelected ? Theme.primaryComponent : Theme.component)
+                                            border.width: wsRowItem.isSelected && !wsRowItem.isCurrentHypr ? 1 : 0
+                                            border.color: Theme.accent
+
+                                            Icon {
+                                                anchors.centerIn: parent
+                                                visible: wsRowItem.isNew
+                                                icon: "add"
+                                                size: 18
+                                                color: Theme.accent
+                                            }
+                                            StyledText {
+                                                anchors.centerIn: parent
+                                                visible: !wsRowItem.isNew
+                                                text: String(wsRowItem.wsId)
+                                                font.pixelSize: Theme.fontSizeSmall
+                                                font.weight: Font.Bold
+                                                color: wsRowItem.isCurrentHypr ? Theme.accentText : Theme.text
+                                            }
                                         }
+
                                         StyledText {
-                                            Layout.fillWidth: true
-                                            text: win.appNameFor(card.modelData) + "  ·  Desktop " + card.wsId
+                                            Layout.alignment: Qt.AlignHCenter
+                                            text: wsRowItem.isNew ? "New" : (wsRowItem.modelData.flatWindows.length + (wsRowItem.modelData.flatWindows.length === 1 ? " win" : " wins"))
                                             font.pixelSize: Theme.fontSizeSmall - 1
                                             color: Theme.textDim
-                                            elide: Text.ElideRight
                                         }
                                     }
 
-                                    // Move window to previous workspace
-                                    IconButton {
-                                        icon: "chevron_left"
-                                        implicitWidth: 28
-                                        implicitHeight: 28
-                                        iconSize: 18
-                                        enabled: card.wsId > 1
-                                        onClicked: {
-                                            if (card.modelData?.address && card.wsId > 1) {
-                                                Hypr.moveWindowToWorkspace(card.modelData.address, card.wsId - 1, false);
-                                                Hyprland.refreshWorkspaces();
-                                                Hyprland.refreshToplevels();
+                                    // Vertical separator
+                                    Rectangle {
+                                        Layout.fillHeight: true
+                                        Layout.topMargin: 4
+                                        Layout.bottomMargin: 4
+                                        width: 1
+                                        color: Theme.panelBorder
+                                    }
+
+                                    // Horizontal scrolling strip of window columns
+                                    Flickable {
+                                        id: colStrip
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        clip: true
+                                        boundsBehavior: Flickable.StopAtBounds
+                                        contentWidth: Math.max(width, colRow.implicitWidth)
+                                        contentHeight: height
+
+                                        readonly property int basePreviewW: Math.max(200, Math.round(height * (win.monLogicalW / win.monLogicalH)))
+
+                                        // Empty workspace / New workspace state
+                                        RowLayout {
+                                            anchors.centerIn: parent
+                                            visible: wsRowItem.modelData.columns.length === 0
+                                            spacing: Theme.spaceXs
+
+                                            Icon {
+                                                icon: wsRowItem.isNew ? "add_circle" : "desktop_windows"
+                                                size: 24
+                                                color: wsRowItem.isNew ? Theme.accent : Theme.textDim
+                                            }
+                                            StyledText {
+                                                text: wsRowItem.isNew
+                                                    ? "New workspace " + wsRowItem.wsId + " — click or press Enter"
+                                                    : "Empty workspace — click or press Enter to switch"
+                                                color: Theme.textDim
                                             }
                                         }
-                                    }
 
-                                    // Move window to next workspace
-                                    IconButton {
-                                        icon: "chevron_right"
-                                        implicitWidth: 28
-                                        implicitHeight: 28
-                                        iconSize: 18
-                                        onClicked: {
-                                            if (card.modelData?.address) {
-                                                Hypr.moveWindowToWorkspace(card.modelData.address, card.wsId + 1, false);
-                                                Hyprland.refreshWorkspaces();
-                                                Hyprland.refreshToplevels();
+                                        Row {
+                                            id: colRow
+                                            x: implicitWidth < colStrip.width ? Math.round((colStrip.width - implicitWidth) / 2) : 0
+                                            height: colStrip.height
+                                            spacing: Theme.spaceS
+                                            visible: wsRowItem.modelData.columns.length > 0
+
+                                            Repeater {
+                                                model: wsRowItem.modelData.columns
+
+                                                delegate: Item {
+                                                    id: colItem
+                                                    required property var modelData
+                                                    width: Math.max(180, Math.min(480, Math.round(colStrip.basePreviewW * modelData.colWidthRatio)))
+                                                    height: colStrip.height
+
+                                                    ColumnLayout {
+                                                        anchors.fill: parent
+                                                        spacing: Theme.spaceXxs
+
+                                                        Repeater {
+                                                            model: colItem.modelData.windows
+
+                                                            delegate: Rectangle {
+                                                                id: winCard
+                                                                required property var modelData
+                                                                readonly property var toplevel: modelData.toplevel
+                                                                readonly property int flatIndex: modelData.flatIndex
+                                                                readonly property bool isWinSelected: wsRowItem.isSelected && flatIndex === win.selectedWinIdx
+                                                                readonly property string iconSource: win.iconFor(toplevel)
+                                                                readonly property string addr: toplevel?.address || toplevel?.lastIpcObject?.address || ""
+                                                                readonly property bool controlsVisible: isWinSelected || winHover.containsMouse
+
+                                                                Layout.fillWidth: true
+                                                                Layout.fillHeight: true
+                                                                radius: Theme.radiusM
+                                                                color: isWinSelected ? Qt.rgba(0.22, 0.22, 0.25, 0.94) : Qt.rgba(0.10, 0.10, 0.12, 0.92)
+                                                                border.width: isWinSelected ? 2 : 1
+                                                                border.color: isWinSelected ? Theme.accent
+                                                                            : (winHover.containsMouse ? Qt.rgba(1, 1, 1, 0.42) : Theme.panelBorder)
+
+                                                                Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+                                                                onIsWinSelectedChanged: {
+                                                                    if (isWinSelected && colStrip.contentWidth > colStrip.width) {
+                                                                        const p = winCard.mapToItem(colStrip.contentItem, 0, 0);
+                                                                        if (p.x < colStrip.contentX)
+                                                                            colStrip.contentX = Math.max(0, p.x);
+                                                                        else if (p.x + winCard.width > colStrip.contentX + colStrip.width)
+                                                                            colStrip.contentX = Math.min(colStrip.contentWidth - colStrip.width, p.x + winCard.width - colStrip.width);
+                                                                    }
+                                                                }
+
+                                                                MouseArea {
+                                                                    id: winHover
+                                                                    anchors.fill: parent
+                                                                    hoverEnabled: true
+                                                                    cursorShape: Qt.PointingHandCursor
+                                                                    onEntered: {
+                                                                        win.selectedWsId = wsRowItem.wsId;
+                                                                        win.selectedWinIdx = winCard.flatIndex;
+                                                                    }
+                                                                    onClicked: win.activateToplevel(winCard.toplevel)
+                                                                }
+
+                                                                ColumnLayout {
+                                                                    anchors.fill: parent
+                                                                    anchors.margins: 6
+                                                                    spacing: 4
+
+                                                                    ClippingRectangle {
+                                                                        Layout.fillWidth: true
+                                                                        Layout.fillHeight: true
+                                                                        radius: Theme.radiusS
+                                                                        color: Qt.rgba(0.08, 0.08, 0.09, 1)
+
+                                                                        ScreencopyView {
+                                                                            id: preview
+                                                                            anchors.fill: parent
+                                                                            captureSource: winCard.toplevel?.wayland ?? null
+                                                                            live: true
+                                                                            paintCursor: false
+                                                                        }
+
+                                                                        Icon {
+                                                                            anchors.centerIn: parent
+                                                                            visible: !preview.hasContent
+                                                                            icon: "web_asset"
+                                                                            size: 36
+                                                                            color: Theme.textDim
+                                                                        }
+                                                                    }
+
+                                                                    // Compact window footer
+                                                                    RowLayout {
+                                                                        Layout.fillWidth: true
+                                                                        implicitHeight: 24
+                                                                        spacing: 6
+
+                                                                        Image {
+                                                                            visible: winCard.iconSource !== ""
+                                                                            source: winCard.iconSource
+                                                                            Layout.preferredWidth: 16
+                                                                            Layout.preferredHeight: 16
+                                                                            sourceSize.width: 32
+                                                                            sourceSize.height: 32
+                                                                            asynchronous: true
+                                                                        }
+
+                                                                        Icon {
+                                                                            visible: winCard.iconSource === ""
+                                                                            icon: "web_asset"
+                                                                            size: 16
+                                                                            color: Theme.accent
+                                                                        }
+
+                                                                        StyledText {
+                                                                            Layout.fillWidth: true
+                                                                            text: winCard.toplevel?.title || win.appNameFor(winCard.toplevel)
+                                                                            font.pixelSize: Theme.fontSizeSmall
+                                                                            font.weight: winCard.isWinSelected ? Font.DemiBold : Font.Normal
+                                                                            elide: Text.ElideRight
+                                                                        }
+
+                                                                        IconButton {
+                                                                            visible: winCard.controlsVisible
+                                                                            icon: "keyboard_arrow_up"
+                                                                            implicitWidth: 22
+                                                                            implicitHeight: 22
+                                                                            iconSize: 15
+                                                                            enabled: wsRowItem.wsId > 1
+                                                                            onClicked: {
+                                                                                if (winCard.addr && wsRowItem.wsId > 1) {
+                                                                                    Hypr.moveWindowToWorkspace(winCard.addr, wsRowItem.wsId - 1, false);
+                                                                                    Hyprland.refreshWorkspaces();
+                                                                                    Hyprland.refreshToplevels();
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        IconButton {
+                                                                            visible: winCard.controlsVisible
+                                                                            icon: "keyboard_arrow_down"
+                                                                            implicitWidth: 22
+                                                                            implicitHeight: 22
+                                                                            iconSize: 15
+                                                                            onClicked: {
+                                                                                if (winCard.addr) {
+                                                                                    Hypr.moveWindowToWorkspace(winCard.addr, wsRowItem.wsId + 1, false);
+                                                                                    Hyprland.refreshWorkspaces();
+                                                                                    Hyprland.refreshToplevels();
+                                                                                }
+                                                                            }
+                                                                        }
+
+                                                                        IconButton {
+                                                                            visible: winCard.controlsVisible
+                                                                            icon: "close"
+                                                                            implicitWidth: 22
+                                                                            implicitHeight: 22
+                                                                            iconSize: 15
+                                                                            onClicked: {
+                                                                                if (winCard.toplevel?.wayland) winCard.toplevel.wayland.close();
+                                                                                else if (winCard.addr) Hypr.closeWindow(winCard.addr);
+                                                                                searchInput.forceActiveFocus();
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
-
-                                    // Close window
-                                    IconButton {
-                                        icon: "close"
-                                        implicitWidth: 28
-                                        implicitHeight: 28
-                                        iconSize: 18
-                                        onClicked: {
-                                            if (card.modelData?.wayland) card.modelData.wayland.close();
-                                            else if (card.modelData?.address) Hypr.closeWindow(card.modelData.address);
-                                            searchInput.forceActiveFocus();
                                         }
                                     }
                                 }
@@ -751,7 +747,5 @@ Scope {
                 }
             }
         }
-        }
-    }
     }
 }

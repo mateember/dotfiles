@@ -93,7 +93,6 @@ Singleton {
                     for (const d of list) {
                         nextKnown[d.path] = true;
                         if (root.initialized && !root.knownPaths[d.path]) {
-                            // Newly plugged removable drive!
                             if (root.autoMount && !d.mounted) {
                                 root.mount(d.path, true);
                             } else {

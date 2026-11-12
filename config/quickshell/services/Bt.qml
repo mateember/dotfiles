@@ -14,8 +14,14 @@ Singleton {
     readonly property bool enabled: adapter?.enabled ?? false
     readonly property bool discovering: adapter?.discovering ?? false
     readonly property var devices: (adapter?.devices.values ?? []).slice().sort((a, b) =>
-        (b.connected - a.connected) || (b.paired - a.paired) || a.name.localeCompare(b.name))
+        (b.connected - a.connected) || (b.paired - a.paired) || (a.name || "").localeCompare(b.name || ""))
     readonly property var connected: devices.filter(d => d.connected)
+    readonly property var pairedDevices: devices.filter(d => d.paired || d.bonded || d.connected)
+    // Unnamed devices advertise their MAC as the name; hide those unless actively pairing.
+    readonly property var discoveredDevices: devices
+        .filter(d => !d.paired && !d.bonded && !d.connected
+            && (d.pairing || !/^([0-9A-F]{2}[:-]){5}[0-9A-F]{2}$/i.test(d.name || "")))
+        .sort((a, b) => (b.pairing - a.pairing) || (a.name || "").localeCompare(b.name || ""))
 
     // UPower fallback battery percentages keyed by uppercase MAC ("AA:BB:CC:DD:EE:FF": 85)
     property var upowerBatteries: ({})
@@ -43,6 +49,10 @@ Singleton {
         if (device.connected) device.disconnect();
         else if (device.paired || device.bonded) device.connect();
         else { device.trusted = true; device.pair(); }
+    }
+
+    function forget(device) {
+        if (device) device.forget();
     }
 
     function deviceBattery(device): int {

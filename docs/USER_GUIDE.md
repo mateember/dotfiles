@@ -1,81 +1,78 @@
-# Hyprland COSMIC Shell: User Guide
+# Hyprland COSMIC Shell & Dotfiles: User Guide
 
-A modern Wayland desktop environment combining **Hyprland** (configured via the Lua API with a Niri-style scrolling layout) and **Quickshell** (a complete desktop shell themed after System76 COSMIC).
+A Wayland desktop environment combining **Hyprland** (Lua configuration with a scrolling layout) and **Quickshell** (a COSMIC Dark desktop shell), plus shell, terminal, editor, and Qt theming configs.
 
-All user configuration lives in `~/dotfiles`:
-- Hyprland: `config/hypr/` (symlinked to `~/.config/hypr/`)
-- Desktop Shell: `config/quickshell/` (symlinked to `~/.config/quickshell/`)
+*(Historical note: Niri was used for a short time before switching to Hyprland's scrolling layout.)*
+
+Configuration lives in `~/dotfiles/` and is symlinked into `~/.config/` and `~/.scripts/` by [`link.sh`](file:///home/mate/dotfiles/link.sh):
+- Hyprland: [`config/hypr/`](file:///home/mate/dotfiles/config/hypr) -> `~/.config/hypr/`
+- Desktop Shell: [`config/quickshell/`](file:///home/mate/dotfiles/config/quickshell) -> `~/.config/quickshell/`
+- Scripts: [`scripts/`](file:///home/mate/dotfiles/scripts) -> `~/.scripts/`
 
 ---
 
-## 1. System Overview & Architecture
+## 1. Architecture Overview
 
-```
+```text
                        ┌───────────────────────────────────────────────┐
-                       │          Hyprland Compositor (Lua API)       │
-                       │  - Niri-style scrolling layout                │
-                       │  - Gestures & column window management        │
-                       │  - Window rules & dynamic SUPER+F width       │
+                       │          Hyprland Compositor (Lua API)        │
+                       │  - Scrolling layout & column width rules      │
+                       │  - Touchpad gestures & dynamic SUPER+F toggle │
+                       │  - Window/layer rules & DPMS cursor recovery  │
                        └───────┬───────────────────────────────┬───────┘
                                │                               │
-                Layer Shell IPC│                  Socket2 Events│
+                Layer Shell IPC│                  Socket2 Events
                                ▼                               ▼
        ┌───────────────────────────────────────────────────────────────┐
        │                 Quickshell Desktop Shell (qs)                 │
-       │                                                               │
-       │  ┌─────────────────────────────────────────────────────────┐  │
-       │  │ Top Panel (Bar): 21 modular, reorderable widgets        │  │
-       │  └─────────────────────────────────────────────────────────┘  │
-       │  ┌───────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-       │  │ Launcher      │  │ Overview         │  │ Quick Settings │  │
-       │  │ (SUPER Space) │  │ (SUPER Tab)      │  │ (SUPER Comma)  │  │
-       │  └───────────────┘  └──────────────────┘  └────────────────┘  │
-       │  ┌───────────────┐  ┌──────────────────┐  ┌────────────────┐  │
-       │  │ Notifications │  │ Screen Capture   │  │ Lock Screen    │  │
-       │  │ & OSD Toasts  │  │ Studio (Print)   │  │ (SUPER+CTRL+L) │  │
-       │  └───────────────┘  └──────────────────┘  └────────────────┘  │
+       │  - Top Panel (Bar): 21 modular, reorderable widgets           │
+       │  - Launcher (SUPER+Space) & Overview (SUPER+Tab)              │
+       │  - Quick Settings (SUPER+,) & Notifications / OSD Toasts      │
+       │  - Capture Studio (SUPER+Print) & Polkit Prompt               │
+       │  - Per-monitor Bing Wallpaper Slideshow                       │
+       └───────────────────────────────────────────────────────────────┘
+                               │
+                  Separate systemd unit (hcs-lock.service)
+                               ▼
+       ┌───────────────────────────────────────────────────────────────┐
+       │         Quickshell Lock Screen (lock.qml via lock.sh)         │
+       │  - Dual parallel PAM: instant password + Howdy IR face scan   │
+       │  - Blurred desktop wallpaper, clock, MPRIS pause, Suspend     │
        └───────────────────────────────────────────────────────────────┘
 ```
 
-The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the **COSMIC Dark Theme** specifications (`Theme.qml`):
-- Pure Wayland layer-shell surfaces with background blur.
-- Consistent color palettes (Amber accent `#FFAD00`, dark containers, semi-transparent frosted surfaces).
-- Native integration with NetworkManager, PipeWire, BlueZ, UPower, TLP, and Evolution Data Server (EDS).
+The shell is built with **Qt 6 / QML** via Quickshell and styled after **COSMIC Dark** ([`Theme.qml`](file:///home/mate/dotfiles/config/quickshell/Theme.qml)), integrating with NetworkManager, PipeWire, BlueZ, UPower, TLP, `hyprsunset`, and Evolution Data Server (EDS).
 
 ---
 
-## 2. Managing the Environment & Development
+## 2. Managing the Environment & IPC
 
 ### Quick Commands
 
 | Action | Command / Shortcut | Description |
 |---|---|---|
-| **Restart Shell + Reload Hyprland** | `SUPER + SHIFT + R` | Restarts Quickshell cleanly and triggers `hyprctl reload`. |
-| **Restart Shell Only** | `~/.config/hypr/scripts/restart-shell.sh` | Restarts the Quickshell process. |
-| **View Shell Logs** | `qs log` | Displays live console output and runtime QML errors. |
+| **Restart Shell + Reload Hyprland** | `SUPER + SHIFT + R` | Cleanly restarts the main Quickshell process and runs `hyprctl reload`. |
+| **Restart Shell Only** | `~/.config/hypr/scripts/restart-shell.sh` | Restarts the main shell (`shell.qml`) without touching an active lock screen (`lock.qml`). |
+| **View Shell Logs** | `qs log` | Displays live Quickshell output and runtime QML errors. |
 | **Check Hyprland Config Errors** | `hyprctl configerrors` | Validates Hyprland Lua syntax. |
-| **Hot Reloading** | Edit any file in `config/quickshell/` | Quickshell automatically hot-reloads modified QML files. |
-| **Lock Session via CLI** | `qs ipc call lock lock` | Locks the Wayland session immediately (Howdy face unlock + password). |
+| **Hot Reload** | Save any existing file in `config/quickshell/` | Quickshell automatically reloads modified `.qml` files (new folders require `restart-shell.sh`). |
+| **Lock Session** | `loginctl lock-session` or `~/.config/hypr/scripts/lock.sh` | Launches or signals `hcs-lock.service` (`qs -p ~/.config/quickshell/lock.qml`). |
 
-### Development & Customization Workflow
+### Shell IPC Reference
 
-- **Quickshell Hot Reload**:
-  - Modifying and saving existing `.qml` files triggers an automatic live reload in Quickshell without restarting the process.
-  - If you create a **new subfolder** under `config/quickshell/`, Quickshell's import engine will not detect it automatically; run `~/.config/hypr/scripts/restart-shell.sh` to restart.
-  - The restart script ensures the old process is completely terminated before launching a new one so they do not conflict over the bar, IPC, or layer-shell namespaces.
-- **Hyprland Lua API**:
-  - Configuration reloads automatically on save or via `hyprctl reload`.
-  - Check for syntax or configuration issues with `hyprctl configerrors`.
-  - For interactive Lua testing, run `hyprctl repl` or evaluate expressions directly with `hyprctl eval '<lua-code>'`.
-- **Scripting via Shell IPC**:
-  - Quickshell components register `IpcHandler` targets that can be invoked from bash or keybinds:
-    - Toggle any bar popup: `qs ipc call bar toggle <name>` (e.g. `volume`, `network`, `clipboard`, `weather`, `calendar`)
-    - Next wallpaper: `qs ipc call wallpaper next`
-    - Toggle app launcher: `qs ipc call launcher toggle`
-    - Toggle overview: `qs ipc call overview toggle`
-    - Toggle night light: `qs ipc call nightlight toggle` (or `on` / `off` / `auto`)
-    - Cycle power profiles: `qs ipc call powerprofile cycle`
-    - Lock screen: `qs ipc call lock lock` (also `lockForSleep`, `wakeFromSleep`, `isLocked`, `status`)
+Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method> [args]`:
+
+- **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
+- **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>`
+- **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
+- **System & appearance**: `wallpaper next|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
+- **Settings windows**: `barsettings toggle|open|close|reset`, `opacity toggle|open|close|reset`
+
+Lock screen IPC (runs on the separate `lock.qml` instance):
+
+```bash
+qs -p ~/.config/quickshell/lock.qml ipc call lock <lock|lockForSleep|wakeFromSleep|isLocked|status>
+```
 
 ---
 
@@ -87,19 +84,21 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
 
 | Keybind | Action | Description |
 |---|---|---|
-| `SUPER + Space` | **App Launcher** | Fuzzy search for apps, calculator (`=`), commands (`>`), and shell apps (`!`). |
-| `SUPER + Tab` / `SUPER + W` | **Overview** | KDE Plasma-style workspace strip with live window previews, search, and window controls. |
-| `SUPER + ,` (Comma) | **Quick Settings** | Control center dropdown with toggles, sliders, and media playback. |
-| `SUPER + N` | **Notification Center** | Notification history, Do Not Disturb toggle, and current media card. |
-| `SUPER + Period` | **Emoji Picker** | Search and paste emojis directly into the focused window. |
-| `SUPER + SHIFT + C` | **Clipboard History** | Cliphist manager with search and image previews. |
-| `SUPER + SHIFT + P` | **Color Picker** | Eyedropper tool; copies `#RRGGBB` hex to clipboard with an on-screen preview. |
-| `SUPER + Print` | **Capture Studio** | Interactive screenshot and screen recording overlay (region, window, display, audio, annotation). |
-| `SUPER + L` | **Power Menu** | Session controls: Lock, Suspend, Log out, Restart, Shut down. |
-| `SUPER + CTRL + L` | **Lock Screen** | Locks the screen with the native Quickshell lock screen (Howdy face scan + password). |
+| `SUPER + Space` | **App Launcher** | Search apps, evaluate math (`=`), run commands (`>`), search emojis (`:`), or open shell applets (`!`). |
+| `SUPER + Tab` / `SUPER + W` | **Overview** | Niri-style vertical stack of workspaces with horizontal window strips, live previews, search filter, and window move/close controls. |
+| `SUPER + ,` (Comma) | **Quick Settings** | Control center dropdown with quick tiles, volume/brightness sliders, and media controls. |
+| `SUPER + N` | **Notification Center** | Notification history, Do Not Disturb toggle, and media playback card. |
+| `SUPER + .` (Period) | **Emoji Picker** | Opens the launcher directly in `:` emoji mode; Enter types and copies the emoji. |
+| `SUPER + SHIFT + C` | **Clipboard History** | `cliphist` manager with search and image previews. |
+| `SUPER + SHIFT + P` | **Color Picker** | `hyprpicker` eyedropper; copies `#RRGGBB` hex to clipboard and shows an OSD preview. |
+| `SUPER + Print` | **Capture Studio** | Interactive screenshot and screen recording overlay. |
+| `SUPER + L` | **Lock Screen** | Locks the session via `loginctl lock-session`. |
+| `SUPER + CTRL + L` | **Power Menu** | Session controls: Lock, Suspend, Log out, Restart, Shut down (keyboard navigable). |
+| `SUPER + SHIFT + R` | **Restart Shell** | Restarts Quickshell and reloads Hyprland config. |
 | `SUPER + C` | Terminal | Launches `kitty`. |
-| `SUPER + E` | File Manager | Launches `nautilus` / `thunar`. |
+| `SUPER + E` | File Manager | Launches `nautilus`. |
 | `SUPER + B` | Web Browser | Launches `brave-origin`. |
+| `SUPER + SHIFT + F23` | Right Control | Sends `Control_R` via `wtype`. |
 
 ### Windows & Workspaces
 
@@ -107,145 +106,139 @@ The shell is built with **Qt 6 / QML** via Quickshell, adhering strictly to the 
 |---|---|---|
 | `SUPER + Q` | Close Window | Closes the active window. |
 | `SUPER + V` | Toggle Floating | Switches window between floating and tiled. |
-| `SUPER + M` | Exit Session | Cleanly stops the UWSM session (or exits Hyprland). |
-| `SUPER + P` | Pseudotile | Enables pseudotiling mode. |
-| `SUPER + J` | Toggle Split | Toggles layout split orientation (in dwindle mode). |
+| `SUPER + M` | Exit Session | Stops the UWSM session cleanly (or exits Hyprland directly). |
+| `SUPER + P` | Pseudotile | Toggles pseudotiling (dwindle layout). |
+| `SUPER + J` | Toggle Split | Toggles split orientation (dwindle layout). |
 | `SUPER + 1 … 0` | Switch Workspace | Switches to workspace 1 through 10. |
-| `SUPER + SHIFT + 1 … 0` | Move to Workspace | Moves the focused window to workspace 1 through 10. |
-| `SUPER + S` | Toggle Scratchpad | Shows / hides the special scratchpad workspace (`special:magic`). |
-| `SUPER + SHIFT + S` | Move to Scratchpad | Sends the focused window to the scratchpad. |
-| `SUPER + Mouse Scroll` | Switch Workspace | Cycles to next / previous workspace. |
+| `SUPER + SHIFT + 1 … 0` | Move to Workspace | Moves the active window to workspace 1 through 10 and follows it. |
+| `SUPER + S` | Toggle Scratchpad | Shows or hides the `special:magic` scratchpad workspace. |
+| `SUPER + SHIFT + S` | Move to Scratchpad | Moves the active window to `special:magic` and follows it. |
 | `SUPER + Left Drag` | Move Window | Drags window with the mouse. |
-| `SUPER + Right Drag` | Resize Window | Resizes window with the mouse. |
-| `SUPER + CTRL + Left Drag` | Resize Window | Alternative resize using mouse drag. |
+| `SUPER + Right Drag` / `SUPER + CTRL + Left Drag` | Resize Window | Resizes window with the mouse. |
 
-### Niri-Style Scrolling Layout (`config/hypr/conf/scrolling.lua`)
+### Scrolling Layout (`config/hypr/conf/scrolling.lua`)
 
-Hyprland uses the built-in scrolling layout. Windows open as columns on an endless horizontal strip, with workspaces stacked per monitor.
+Hyprland uses the built-in `scrolling` layout by default: windows open as columns on a horizontal strip, with workspaces stacked vertically per monitor.
 
 | Keybind / Gesture | Action | Description |
 |---|---|---|
-| **`SUPER + F`** | **Smart Width Toggle** | Toggles between **1.0 (fullscreen)** and the window's **previous width**. Windows opening at 1.0 shrink to **0.5 (half-screen)**. If resized to custom sizes (e.g. 0.6, 0.7), it preserves and restores that exact size. |
-| **`SUPER + SHIFT + F`** | **True Fullscreen** | Toggles exclusive fullscreen mode. |
-| **`SUPER + R`** | Cycle Widths Forward | Cycles through preset column widths: `0.333` → `0.5` → `0.667` → `1.0`. |
-| **`SUPER + CTRL + R`** | Cycle Widths Backward | Cycles backwards through preset column widths. |
-| **`SUPER + ó` / `SUPER + ü`** | Adjust Width (±10%) | Expands or shrinks the current column width by 10%. |
-| **`SUPER + ő` / `SUPER + ú`** | Consume / Expel Window | Pulls the adjacent window into the current column, or expels a window into its own column. |
-| **`SUPER + CTRL + C`** | Center Column | Scrolls the horizontal strip so the focused column is centered. |
-| **`SUPER + ← / →`** | Focus Column | Moves focus left/right across columns. At the end of the strip, moves to the adjacent monitor. |
-| **`SUPER + ↑ / ↓`** | Focus in Column | Moves focus up/down between stacked windows in the same column. |
-| **`SUPER + CTRL + ← / →`** | Move Column | Swaps the focused column with the one to the left/right. |
-| **`SUPER + CTRL + ↑ / ↓`** | Move in Column | Moves the window up/down inside its vertical column stack. |
-| **`SUPER + Page Down / Page Up`**<br>`SUPER + U / I` | Workspace Next / Prev | Moves to the next or previous workspace on this monitor. |
-| **`SUPER + CTRL + Page Down / Up`**<br>`SUPER + CTRL + U / I` | Move Window to Workspace | Moves the focused window to the next or previous workspace. |
-| **`SUPER + SHIFT + Arrows`** | Focus Monitor | Moves focus to the monitor in that direction. |
-| **`SUPER + SHIFT + CTRL + Arrows`**| Move Window to Monitor | Moves the focused window to that monitor and follows focus. |
-| **`SUPER + SHIFT + Mouse Scroll`**| Scroll Columns | Scrolls through the columns horizontally. |
-| **3-Finger Horizontal Swipe** | Touchpad Column Scroll | 1:1 smooth touchpad scrolling across the horizontal column strip (snaps to column edges). |
-| **3-Finger Vertical Swipe** | Touchpad Workspace Switch | Switches workspaces vertically. Swiping past the last workspace creates a new one. |
-| **4-Finger Vertical Swipe** | Live Overview Swipe | Pulls the Overview down or pushes it away with 1:1 finger tracking. |
+| `SUPER + F` | **Smart Width Toggle** | Toggles between `1.0` (full width) and the window's previous width (defaults to `0.5` if opened full-width; falls back to maximize when floating or in another layout). |
+| `SUPER + SHIFT + F` | **True Fullscreen** | Toggles exclusive fullscreen mode. |
+| `SUPER + R` / `SUPER + CTRL + R` | Cycle Widths | Cycles preset column widths (`0.333`, `0.5`, `0.667`, `1.0`) forward / backward. |
+| `SUPER + ü` / `SUPER + ó` | Adjust Width (±10%) | Shrinks (`-0.1`) or expands (`+0.1`) the focused column width. |
+| `SUPER + ő` / `SUPER + ú` | Consume / Expel | Pulls the previous/next window into the current column or expels it. |
+| `SUPER + CTRL + C` | Center Column | Centers the focused column on screen. |
+| `SUPER + ← / →` | Focus Column | Moves focus left/right across columns (and to the adjacent monitor at strip edges). |
+| `SUPER + ↑ / ↓` | Focus in Column | Moves focus up/down within a stacked column. |
+| `SUPER + CTRL + ← / →` | Swap Column | Swaps the focused column left/right. |
+| `SUPER + CTRL + ↑ / ↓` | Move in Column | Moves the active window up/down inside its column. |
+| `SUPER + Page Down / Up`<br>`SUPER + U / I` | Next / Prev Workspace | Moves to the next or previous workspace on this monitor (including empty trailing workspace). |
+| `SUPER + CTRL + Page Down / Up`<br>`SUPER + CTRL + U / I` | Move to Workspace | Moves the active window to the next or previous workspace and follows it. |
+| `SUPER + SHIFT + Arrows` | Focus Monitor | Moves focus to the monitor in that direction. |
+| `SUPER + SHIFT + CTRL + Arrows` | Move to Monitor | Moves the active window to the monitor in that direction and follows it. |
+| `SUPER + Mouse Scroll` | Scroll Columns | Focuses column left/right. |
+| `SUPER + SHIFT + Mouse Scroll` | Switch Workspace | Cycles existing workspaces (`e+1` / `e-1`). |
+| **3-Finger Horizontal Swipe** | Strip Scroll | Smooth 1:1 horizontal scrolling across columns (snaps to column edges). |
+| **3-Finger Vertical Swipe** | Workspace Switch | Switches vertical workspaces (creates a new one past the end). |
+| **4-Finger Vertical Swipe** | Live Overview | Pulls the Overview open or closed 1:1 with finger movement. |
 
-#### Automatic Column Width Rules
-Terminals (`kitty`, `CosmicTerm`, `foot`, `Alacritty`, `wezterm`, `gnome-terminal`) and File Managers (`nautilus`, `thunar`, `CosmicFiles`, `dolphin`) automatically open at **half width (0.5)**. All other applications open at **full width (1.0)**. Windows are prevented from maximizing themselves on launch to preserve this geometry.
+**Automatic Column Widths**: Terminals (`kitty`, `CosmicTerm`, `foot`, `Alacritty`, `wezterm`, `gnome-console`) and file managers (`thunar`, `nautilus`, `CosmicFiles`, `dolphin`) open at `0.5` width; all other apps open at `1.0`. Self-maximize events are suppressed so apps respect column geometry.
 
-### Hardware & Media Controls
+### Screenshots, Hardware Keys & Lid Switch
 
-| Key | Action |
+| Key / Event | Action |
 |---|---|
-| `XF86AudioRaiseVolume` | Increases volume (wpctl, up to 150%) + OSD toast. |
-| `XF86AudioLowerVolume` | Decreases volume + OSD toast. |
-| `XF86AudioMute` | Toggles audio mute + OSD toast. |
+| `Print` | Screenshot focused output to clipboard (`hyprshot`). |
+| `ALT + Print` | Screenshot active window to clipboard (`hyprshot`). |
+| `SHIFT + Print` | Screenshot selected region to clipboard (`hyprshot`). |
+| `XF86AudioRaiseVolume` / `LowerVolume` | Adjusts output volume by ±5% (capped at 150%) + OSD toast. |
+| `XF86AudioMute` | Toggles output mute + OSD toast. |
 | `XF86AudioMicMute` | Toggles microphone mute + OSD toast. |
-| `XF86MonBrightnessUp / Down` | Adjusts screen brightness by ±10% + OSD toast. |
-| `XF86AudioPlay / Pause`, `F11`, `ALT + P` | Toggles media playback (playerctl). |
-| `XF86AudioNext` / `XF86AudioPrev` | Skips track forward / backward. |
-| Laptop Lid Close | With 1 monitor: suspends system. With external monitor connected: disables laptop display. |
-| Laptop Lid Open | Re-enables the laptop display panel. |
+| `XF86AudioPlay`, `F11`, `ALT + P` | Toggles media playback (`playerctl play-pause`). |
+| `XF86AudioNext` / `Prev` | Skips track forward / backward. |
+| `XF86MonBrightnessUp` / `Down` | Adjusts laptop screen brightness by ±10% + OSD toast. |
+| Laptop Lid Close | With 1 monitor: suspends system. With external monitor: disables `eDP-1`. |
+| Laptop Lid Open | Re-enables `eDP-1` (`2880x1800@120`, scale 2, VRR). |
 
 ---
 
 ## 4. Top Panel & Modular Widgets
 
-The top bar (`config/quickshell/bar/Bar.qml`) is a floating pill styled after COSMIC Panel, hosting 21 modular widgets:
+The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.qml)) hosts 21 modular widgets configurable via **Bar Settings**:
 
 | Widget | Left Click | Right / Middle Click | Details |
 |---|---|---|---|
-| **Workspaces** | Focus workspace | Right/Middle: Opens Overview. Scroll: cycle workspaces | Active workspace is highlighted by an amber circle with **optically centered digits** (including subpixel alignment for `1`). |
-| **Clipboard** | Opens clipboard manager | Clear history button in header | Search, navigate with arrows, press Enter to copy; includes image thumbnail previews. |
-| **Night Light** | Opens Night Light menu | Right/Middle: Toggle on/off | Temperature slider, manual toggle, or follow schedule (`hyprsunset`). Amber icon when active. |
-| **Caffeine** | Toggles keep-awake indefinitely | Right/Middle: Preset timer dropdown | Dropdown offers `Indefinitely`, `15m`, `30m`, `1h`, `2h`, `4h` with a live remaining-time countdown. |
-| **System Monitor (Minimon)** | Opens Minimon dashboard | Right/Middle: Opens `btop` / Task Manager | Live sparklines and gauges for CPU, CPU Temp, Memory, Network, Disk, and Intel Arc GPU. Customizable display presets (`Graphs`, `Icons`, `Values`). |
-| **Weather** | Opens weather forecast | | Displays current temperature, precipitation chance/mm, wind speed, UV index, and 5-day forecast (Open-Meteo). |
-| **Clock & Calendar** | Opens calendar popup | | Month calendar synchronized with **GNOME Calendar / Evolution Data Server (EDS)**. Shows event dots, agenda list, and Nextcloud/Google tasks. |
-| **Screen Recorder** | Stops active recording | Right/Middle: Opens Capture Studio | Appears only while recording (`REC MM:SS`); saves recordings to `~/Videos/Recordings/`. |
-| **Privacy Indicator** | Shows active mic/cam/screen apps | | Amber indicator appears automatically whenever an application accesses microphone, webcam, or screencopy. |
-| **Storage / Removable Drives** | Opens drive management menu | | Appears when a USB drive or SD card is inserted; provides one-click mount, file manager open, and safe ejection (`udisksctl`). |
-| **System Tray** | Focuses app | Right click: app context menu | Host for standard StatusNotifierItem (SNI) tray icons (KDE Connect, etc.). |
-| **Display & Brightness** | Opens display menu | Scroll: adjust brightness | Controls display brightness, keyboard backlight level (Off/Low/High), and screen refresh rate (`60 Hz` / `120 Hz`). |
-| **Tiling Layout** | Toggles scrolling ↔ dwindle | Right click: layout presets & colresize | Allows on-the-fly switching between scrolling and traditional tiling layouts. |
-| **Media Player** | Opens media popup | Right/Middle: Play/Pause | Shows album artwork, title, artist, seek bar, volume, and playback controls (MPRIS). |
-| **Volume / Audio** | Opens audio mixer | Middle: Toggle Mute. Scroll: adjust volume | Per-app volume sliders, input/output device selector, and pavucontrol shortcut. |
-| **Bluetooth** | Opens Bluetooth menu | Middle: Toggle Bluetooth on/off | Lists paired and discovered devices, connection toggles, and connected device battery percentages. |
-| **Network & VPN** | Opens network menu | | Includes Ethernet status, full **VPN profile manager** (with connect toggles, edit gears, and inline password prompts), dedicated **Wi-Fi section with on/off switch**, and network list. |
-| **Battery & Power** | Opens battery popup | | Battery health and percentage, TLP power profile selector (**Power Saver / Balanced / Performance**), refresh rate toggle, and window blur toggle. |
-| **Notifications** | Opens notification center | Middle: Toggle Do Not Disturb | History of past notifications, Clear All button, and current media playback banner. |
-| **Quick Settings** | Opens Quick Settings | | Quick toggle tiles, sliders, and power shortcuts (equivalent to `SUPER + ,`). |
-| **Power Button** | Opens power menu | | Lock screen, Suspend, Log out, Restart, Shut down (equivalent to `SUPER + L`). |
+| **Workspaces** | Focus workspace | Right/Middle: Toggle Overview. Scroll: cycle workspaces | Shows active workspaces per monitor with optically centered digits. |
+| **Clipboard** | Open clipboard history | — | Search `cliphist` text/image entries, copy with Enter, or wipe history. |
+| **Night Light** | Open Night Light menu | Right/Middle: Toggle on/off | Warmth slider (`2500–6000 K`) and automatic schedule (`20:00–08:30`) via `hyprsunset`. |
+| **Caffeine** | Toggle keep-awake on/off | Right/Middle: Preset timer menu | Wayland `IdleInhibitor` with `Indefinitely`, `15m`, `30m`, `1h`, `2h`, `4h` timers and countdown. |
+| **System Stats (Minimon)** | Open sensor popup | Right/Middle: Open system monitor | Live sparklines/rings/values for CPU, CPU Temp, Memory, Network, Disk, and Intel Arc GPU. |
+| **Weather** | Open 5-day forecast | — | Current temp, rain, humidity, wind, UV, pressure, sunrise/sunset, and 5-day forecast (Open-Meteo). |
+| **Clock & Calendar** | Open calendar & agenda | — | Month calendar synced with Evolution Data Server (GNOME Calendar / Nextcloud / Google / Neptun) + tasks. |
+| **Screen Recorder** | Stop & save recording | Right/Middle: Open Capture Studio | Shown only while recording (`REC MM:SS`); saves to `~/Videos/Recordings/`. |
+| **Privacy Indicator** | Open active capture list | — | Appears when mic, webcam, or screen capture is active, with quick mute/stop actions. |
+| **Removable Drives** | Open drive menu | — | Appears when USB/SD media is present; supports automount, open in Files, and safe eject (`udisksctl`). |
+| **System Tray** | Focus / activate item | Right: App context menu | Hosts StatusNotifierItem (SNI) tray icons. |
+| **Display & Brightness** | Open display menu | Scroll: adjust brightness | Laptop + external DDC/CI brightness, keyboard backlight (`Off`/`Low`/`High`), `60/120 Hz` toggle, and quick capture actions. |
+| **Tiling Layout** | Toggle `scrolling` ↔ `dwindle` | Right: Layout list & actions | Switch between `dwindle`, `master`, `scrolling`, and `monocle`, plus column/split actions. |
+| **Media Player** | Open media popup | Right/Middle: Play/Pause | Album art, title/artist, seek bar, volume, and player switcher (MPRIS). |
+| **Volume** | Open audio mixer | Middle: Toggle mute. Scroll: volume | Output/input device selector, per-app PipeWire sliders, and `pavucontrol` shortcut. |
+| **Bluetooth** | Open Bluetooth menu | Middle: Toggle Bluetooth | Paired devices (with battery % and 2-click right-click forget) plus collapsible scan list. |
+| **Network & VPN** | Open network menu | — | Ethernet status, NetworkManager VPN/WireGuard manager (with inline password prompt), and Wi-Fi list. |
+| **Battery** | Open battery menu | — | Charge/health status, TLP power mode selector (`Power Saver` / `Balanced` / `Performance`), `60/120 Hz` toggle, and session-only blur toggle. |
+| **Notifications** | Open notification center | Middle: Toggle Do Not Disturb | Notification history, Clear All, DND switch, and media card. |
+| **Quick Settings** | Open Quick Settings | — | Equivalent to `SUPER + ,`. |
+| **Power Menu** | Open power menu | — | Equivalent to `SUPER + CTRL + L` (two-click confirm for Log out / Restart / Shut down). |
 
 ---
 
-## 5. Shell Customization & Built-In Apps
+## 5. Built-In Shell Apps & Features
 
-Quickshell includes standalone configuration tools accessible via the launcher (`SUPER + Space`) or IPC commands:
-
-### Bar Settings (`!bar` or `qs ipc call barsettings toggle`)
-An interactive window allowing full customization of the top panel:
-- **Toggle visibility** of any of the 21 widgets on or off. (Widgets hidden from the bar can still be opened as centered floating windows from the launcher).
-- **Reorder** widgets within each section using **↑ / ↓** buttons.
-- **Move** widgets between **Left**, **Center**, and **Right** panel sections.
-- **Reset** to default layout.
-Settings are automatically saved in `~/.config/quickshell/bar-config.json`.
-
-### Opacity & Transparency (`!opacity` or `qs ipc call opacity toggle`)
-Fine-grained opacity control with real-time preview and presets:
-- **Widgets**: Opacity of popups, launcher, and floating dialogs (default `96%`).
-- **Bar**: Top panel background opacity (default `66%`; `0%` renders floating icons).
-- **Notifications**: Notification popup toasts and notification center background (default `96%`).
-- **Volume & Brightness Toasts**: On-screen display indicator pills (default `96%`).
-- Presets available: **Default**, **Frosted Glass**, **Clear**, and **Solid**.
-
-### App Launcher (`SUPER + Space`)
-A unified search and command palette:
-- **Application Search**: Type an application name (e.g. `kitty`, `brave`, `thunar`). Frequently used apps are scored higher.
-- **Calculator**: Prefix with `=` or type arithmetic directly (e.g. `=2^10 * 3` or `45 * 1.25`) to evaluate via `qalc`. Pressing Enter copies the answer.
-- **Terminal Commands**: Prefix with `>` (e.g. `>top` or `>ping 1.1.1.1`). Pressing `Shift + Enter` executes the command inside a terminal window.
-- **Emoji Search**: Prefix with `:` (or press `SUPER + Period`) to search emojis (e.g. `:fire`, `:smile`).
-- **Quickshell Apps**: Prefix with `!` (or `/`, `@`) to launch shell panels and tools:
-  `!bar`, `!opacity`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper` (Next Wallpaper), `!colorpicker`, `!power`, `!calendar`, `!weather`, `!network`, `!storage`, `!privacy`, etc.
-
-### Wallpaper Slideshow
-- Rotates through images stored in `~/Pictures/BingWallpaper` every 5 minutes.
-- Uses smooth crossfading on transition, but switches instantly if a fullscreen window/game is active.
-- To advance to the next random wallpaper manually:
-  - Select **Next Wallpaper** (`!wallpaper`) in the launcher, or
-  - Run `qs ipc call wallpaper next`.
+- **Bar Settings** (`!bar` or `qs ipc call barsettings toggle`): Toggle any of the 21 widgets, reorder within sections (`↑` / `↓`), move between Left/Center/Right, or reset defaults (`bar-config.json`).
+- **Opacity & Transparency** (`!opacity` or `qs ipc call opacity toggle`): Independent opacity sliders for Widgets (`96%`), Bar (`66%`), Notifications (`96%`), and OSD Toast (`96%`), with **Default**, **Frosted Glass**, **Clear**, and **Solid** presets (`opacity-config.json`).
+- **App Launcher** (`SUPER + Space`):
+  - Default: fuzzy app search weighted by launch frequency (`launcher-usage.json`).
+  - `=expr` (or plain arithmetic): evaluates via `qalc`; Enter copies result.
+  - `>cmd`: executes a shell command (`Shift + Enter` runs it inside `kitty`).
+  - `:name` (or `SUPER + .`): searches Unicode emojis; Enter copies and types via `wtype`, `Shift + Enter` copies only.
+  - `!name` (also `/name`, `@name`): launches Quickshell panels and tools as centered floating windows (`!bar`, `!opacity`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper`, `!colorpicker`, `!power`, etc.).
+- **Capture Studio** (`SUPER + Print`): Region, window, full-screen, and color picker screenshots (`Copy`, `Save & Copy` to `~/Pictures/Screenshots/`, or `Annotate` with `swappy`, with `0s`/`3s`/`5s` delay), plus screen recording (`wf-recorder` / `wl-screenrec` to `~/Videos/Recordings/` with optional system or mic audio).
+- **Lock Screen** (`SUPER + L` or idle timeout): Runs in an isolated Quickshell process (`lock.qml` via `lock.sh`). Runs password (`qs-lock`) and Howdy IR (`qs-lock-face`) PAM checks in parallel so typing a password unlocks immediately even while Howdy is scanning, automatically hides face UI when Howdy/face models are absent, avoids pre-suspend Howdy unlocks via `lockForSleep`, shows pause-only MPRIS media controls, and offers a bottom-right `Suspend` pill.
+- **Wallpaper Slideshow**: Rotates images in `~/Pictures/BingWallpaper` every 5 minutes (`Config.qml`) with per-monitor selection and smooth crossfades (instant when a fullscreen window is active). Trigger manually with `!wallpaper` or `qs ipc call wallpaper next`.
 
 ---
 
-## 6. Configuration Files
+## 6. Other Dotfiles & Scripts
+
+- **Fish Shell** ([`config/fish/`](file:///home/mate/dotfiles/config/fish)):
+  - [`config.fish`](file:///home/mate/dotfiles/config/fish/config.fish): initializes `starship` and `zoxide`, suppresses greeting.
+  - [`conf.d/aliases.fish`](file:///home/mate/dotfiles/config/fish/conf.d/aliases.fish): NixOS helpers (`nixrbd`, `nixupd`, `nixgb`, `nixsyntax`), `rm` → `trash`, `vim` → `nvim`, `neofetch` → `fastfetch -c ~/.config/fastfetch/custom.jsonc`, and `winapps` shortcuts (`word`, `excel`, `ppt`, `win`).
+  - [`conf.d/functions.fish`](file:///home/mate/dotfiles/config/fish/conf.d/functions.fish): `vpn` (Tailscale exit-node toggle), `pm` (ACPI `platform_profile`), `cm` (Lenovo IdeaPad conservation mode), `tb` (`termbin.com` pastebin), `nixify` (exports `NIX_LD` / `NIX_LD_LIBRARY_PATH`), `screenoff`, `myip`, `bat`, `vencord`.
+- **Kitty** ([`config/kitty/kitty.conf`](file:///home/mate/dotfiles/config/kitty/kitty.conf)): JetBrains Mono Nerd Font Mono, `0.7` background opacity, beam cursor, no decorations, `fish` shell.
+- **Neovim** ([`config/nvim/`](file:///home/mate/dotfiles/config/nvim)): Lazy.nvim plugin setup.
+- **Qt & KDE COSMIC Dark Theme** ([`config/qt6ct/make-cosmic-shell-theme.py`](file:///home/mate/dotfiles/config/qt6ct/make-cosmic-shell-theme.py)): Generates matching `CosmicShell` palettes/themes for `qt6ct`, KDE (`kdeglobals` + color scheme), and `Kvantum` (`KvArcDark` recolored to match `Theme.qml`).
+- **Utility Scripts** ([`scripts/`](file:///home/mate/dotfiles/scripts), linked to `~/.scripts/`):
+  - [`tlpmodes.sh`](file:///home/mate/dotfiles/scripts/tlpmodes.sh): switches or cycles `low-power` / `balanced` / `performance` (used by Quickshell's `PowerProfile`).
+  - [`bingpaper.sh`](file:///home/mate/dotfiles/scripts/bingpaper.sh): downloads today's 4K Bing wallpaper into `~/Pictures/BingWallpaper`.
+  - [`sunshine.sh`](file:///home/mate/dotfiles/scripts/sunshine.sh): creates/removes a headless `REMOTE` Hyprland output for Sunshine/VNC streaming.
+
+---
+
+## 7. Key Configuration Files
 
 | Path | Purpose |
 |---|---|
-| `config/hypr/hyprland.lua` | Main compositor entry point; defines display monitors, devices, and loads submodules. |
-| `config/hypr/conf/scrolling.lua` | Niri-style scrolling layout configuration, column widths, touchpad gestures, and `toggle_width`. |
-| `config/hypr/conf/keybinds.lua` | Core keyboard shortcuts, Quickshell IPC shortcuts, mouse bindings, touchpad sensitivity, and hardware keys. |
-| `config/hypr/conf/rules.lua` | Window and layer rules for floating popups, Quickshell windows, frosted blur, and file pickers. |
-| `config/hypr/conf/autostart.lua` | Services started on compositor launch (`qs`, `hypridle`, `hyprsunset`, cliphist). |
-| `config/hypr/conf/looks.lua` | Window borders, gaps, rounding, inactive opacity, and animations. |
-| `config/hypr/conf/environment.lua` | Wayland environment variables, default browser, icon theme, and timezone directory. |
-| `config/hypr/hypridle.conf` | Idle & sleep hooks calling Quickshell lock IPC (`lock`, `lockForSleep`, `wakeFromSleep`), DPMS, cursor re-assert, and suspend. |
-| `config/hypr/scripts/reassert-cursor.sh` | Re-applies the cursor theme after DPMS/sleep resume (Hyprland 0.57 clears the DRM cursor plane on DPMS off). Called by `hypridle` and the lock screen. |
-| `config/quickshell/lock/LockScreen.qml` | Native Wayland session lock (`WlSessionLock`) & PAM/Howdy state machine (`PamContext`). |
-| `config/quickshell/lock/LockSurface.qml` | Per-monitor COSMIC Dark lock screen UI (blurred wallpaper, clock, greeting, password pill, pause-only MPRIS, battery & Suspend pills). |
-| `config/quickshell/Config.qml` | User-tunable shell variables (wallpaper directory, weather coordinates, clock format). |
-| `config/quickshell/Theme.qml` | Single source of truth for COSMIC dark colors, radii, spacing, and fonts. |
+| [`config/hypr/hyprland.lua`](file:///home/mate/dotfiles/config/hypr/hyprland.lua) | Compositor entry point: monitors, touchpad device, and submodule imports. |
+| [`config/hypr/conf/scrolling.lua`](file:///home/mate/dotfiles/config/hypr/conf/scrolling.lua) | Scrolling layout settings, column width rules, touchpad gestures, and `SUPER+F` toggle. |
+| [`config/hypr/conf/keybinds.lua`](file:///home/mate/dotfiles/config/hypr/conf/keybinds.lua) | Input settings, core/IPC shortcuts, screenshots, media keys, and lid switch hooks. |
+| [`config/hypr/conf/rules.lua`](file:///home/mate/dotfiles/config/hypr/conf/rules.lua) | Floating/centering rules, dynamic browser PiP/extension placement, and Quickshell blur rules. |
+| [`config/hypr/conf/autostart.lua`](file:///home/mate/dotfiles/config/hypr/conf/autostart.lua) | Startup services (`qs`, `cliphist`, `kdeconnect-indicator`, `hyprsunset`). |
+| [`config/hypr/conf/looks.lua`](file:///home/mate/dotfiles/config/hypr/conf/looks.lua) | Borders, gaps, rounding, blur, shadows, animations, and `allow_session_lock_restore`. |
+| [`config/hypr/conf/environment.lua`](file:///home/mate/dotfiles/config/hypr/conf/environment.lua) | Wayland environment variables (`TZDIR`, `BROWSER`, `QS_ICON_THEME`, cursor themes). |
+| [`config/hypr/hypridle.conf`](file:///home/mate/dotfiles/config/hypr/hypridle.conf) | Idle lock (`245s`), DPMS off (`250s`), suspend (`600s`), sleep hooks, and cursor re-assert. |
+| [`config/hypr/scripts/lock.sh`](file:///home/mate/dotfiles/config/hypr/scripts/lock.sh) | Manages the `hcs-lock.service` Quickshell lock instance (`lock` / `sleep` / `wake`). |
+| [`config/hypr/scripts/reassert-cursor.sh`](file:///home/mate/dotfiles/config/hypr/scripts/reassert-cursor.sh) | Re-applies cursor theme on DPMS/sleep wake so hardware cursors reappear immediately. |
+| [`config/quickshell/shell.qml`](file:///home/mate/dotfiles/config/quickshell/shell.qml) | Main Quickshell entry point (bar, wallpaper, launcher, overview, OSDs, notifications, polkit). |
+| [`config/quickshell/lock.qml`](file:///home/mate/dotfiles/config/quickshell/lock.qml) | Lock screen Quickshell entry point. |
+| [`config/quickshell/Config.qml`](file:///home/mate/dotfiles/config/quickshell/Config.qml) | User-tunable shell settings (clock format, calendar options, weather coordinates, wallpaper directory). |
+| [`config/quickshell/Theme.qml`](file:///home/mate/dotfiles/config/quickshell/Theme.qml) | Single source of truth for COSMIC Dark colors, spacing, radii, fonts, and default opacities. |

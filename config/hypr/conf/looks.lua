@@ -1,5 +1,3 @@
--- Lua version of conf/looks.conf.
-
 hl.config({
     general = {
         gaps_in = 3,
@@ -11,8 +9,6 @@ hl.config({
         },
 
         layout = "dwindle",
-
-        -- Please see https://wiki.hypr.land/Configuring/Tearing/ before you turn this on
         allow_tearing = true,
     },
 
@@ -44,8 +40,7 @@ hl.config({
     },
 
     dwindle = {
-        -- `pseudotile = true` was removed in Hyprland 0.55 (pseudotiling is always available, SUPER P)
-        preserve_split = true, -- you probably want this
+        preserve_split = true,
     },
 
     master = {
@@ -53,10 +48,10 @@ hl.config({
     },
 
     misc = {
-        force_default_wallpaper = 0, -- Set to 0 to disable the anime mascot wallpapers
+        force_default_wallpaper = 0,
         vrr = 2,
-        focus_on_activate = true,    -- Focus app window when clicking a notification / XDG activation
-        allow_session_lock_restore = true, -- Allow Quickshell WlSessionLock to recover cleanly after a restart
+        focus_on_activate = true,          -- Focus app window on notification / XDG activation
+        allow_session_lock_restore = true, -- Recover Quickshell WlSessionLock after restart
     },
 
     xwayland = {
@@ -64,9 +59,7 @@ hl.config({
     },
 })
 
--- Animations (same as the original hyprlang `bezier` / `animation` lines)
 hl.curve("myBezier", { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.05 } } })
---bezier = myBezier, 0.05,0.9,0.1,1.1
 
 hl.animation({ leaf = "windows", enabled = true, speed = 7, bezier = "myBezier" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 7, bezier = "default", style = "popin 80%" })

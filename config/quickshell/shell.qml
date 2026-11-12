@@ -11,7 +11,6 @@ import qs.wallpaper
 import qs.notifications
 import qs.osd
 import qs.polkit
-import qs.lock
 import qs.quicksettings
 import qs.services
 
@@ -43,11 +42,11 @@ ShellRoot {
     OsdWindow {}
     OsdTriggers {}
     PolkitPrompt {}
-    LockScreen {}
+    // The lock screen is a separate Quickshell instance: lock.qml, started by hypr/scripts/lock.sh.
     QuickSettings {}
 
     // Open bar popups from keybinds/scripts, on the focused monitor:
-    //   qs -p <root>/shell ipc call bar toggle volume
+    //   qs ipc call bar toggle volume
     // Popup names: clipboard weather calendar display layout media volume
     //              bluetooth network battery notifications power
     IpcHandler {
@@ -63,7 +62,7 @@ ShellRoot {
         function close(): void { Popups.close(); }
     }
 
-    // Targets used by the binds in hypr/conf/keybinds.lua.
+    // Keybind IPC targets (hypr/conf/keybinds.lua)
     IpcHandler {
         target: "clipboard"
         function toggle(): void { Popups.toggle("clipboard@" + (Hyprland.focusedMonitor?.name ?? "")); }
@@ -72,7 +71,7 @@ ShellRoot {
         target: "notifications"
         function toggle(): void { Popups.toggle("notifications@" + (Hyprland.focusedMonitor?.name ?? "")); }
     }
-    // qs -p <root>/shell ipc call kbd cycle|toggle|set <level>
+    // qs ipc call kbd cycle|toggle|set <level>
     IpcHandler {
         target: "kbd"
         function cycle(): void { Brightness.cycleKbd(); }

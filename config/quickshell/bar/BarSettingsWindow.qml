@@ -19,10 +19,9 @@ Scope {
             id: win
 
             title: "HCS — Bar Settings"
-            implicitWidth: 560
-            implicitHeight: 620
-            minimumSize: Qt.size(560, 620)
-            maximumSize: Qt.size(560, 620)
+            implicitWidth: 680
+            implicitHeight: 720
+            minimumSize: Qt.size(520, 460)
             color: "transparent"
 
             onClosed: BarConfig.settingsOpen = false
@@ -65,7 +64,6 @@ Scope {
                     anchors.margins: Theme.spaceS
                     spacing: Theme.spaceXs
 
-                    // ---- Header ----
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Theme.spaceXs
@@ -79,14 +77,18 @@ Scope {
                             Layout.fillWidth: true
                             spacing: 0
                             StyledText {
+                                Layout.fillWidth: true
                                 text: "Bar Settings"
                                 font.pixelSize: Theme.fontSizeLarge
                                 font.weight: Font.Bold
+                                elide: Text.ElideRight
                             }
                             StyledText {
+                                Layout.fillWidth: true
                                 text: "Toggle modules on/off, reorder with ↑/↓, or click section badge"
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.textDim
+                                wrapMode: Text.WordWrap
                             }
                         }
                         Rectangle {
@@ -146,7 +148,6 @@ Scope {
                         }
                     }
 
-                    // ---- Section filter tabs ----
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Theme.spaceXxs
@@ -188,7 +189,6 @@ Scope {
 
                     Separator {}
 
-                    // ---- Module list ----
                     ListView {
                         id: list
                         Layout.fillWidth: true

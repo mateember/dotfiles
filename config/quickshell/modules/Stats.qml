@@ -85,7 +85,6 @@ BarButton {
         }
     }
 
-    // Reusable sparkline graph box
     component SparkGraph: Rectangle {
         id: graphBox
         property var samples: []
@@ -133,7 +132,6 @@ BarButton {
         }
     }
 
-    // Reusable circular ring gauge (like minimon.png's circular gauges)
     component RingGauge: Item {
         id: ringBox
         property real value: 0
@@ -184,7 +182,7 @@ BarButton {
     RowLayout {
         spacing: 5
 
-        // Fallback icon if the user turns off every sensor in the bar
+        // Fallback icon if every sensor is hidden
         Icon {
             visible: {
                 for (const s of root.sensorDefs) {
@@ -210,13 +208,11 @@ BarButton {
                 visible: prefixMode !== "none" || showText || chartMode !== "none"
                 spacing: 3
 
-                // Optional sensor icon (classic style)
                 Icon {
                     visible: barSensor.prefixMode === "icon"
                     icon: barSensor.modelData.icon
                 }
 
-                // Optional short text label ("CPU", "TEMP", "MEM", "NET", "DISK", "GPU")
                 StyledText {
                     visible: barSensor.prefixMode === "label"
                     text: barSensor.modelData.shortLabel
@@ -225,7 +221,6 @@ BarButton {
                     color: Theme.textDim
                 }
 
-                // Single-line text (CPU, Temp, Memory, GPU)
                 StyledText {
                     visible: barSensor.showText && barSensor.sid !== "net" && barSensor.sid !== "disk"
                     text: root.sensorBarLabel(barSensor.sid)
@@ -236,7 +231,6 @@ BarButton {
                         : Theme.text
                 }
 
-                // Stacked 2-line text for Network / Disk (matching minimon.png)
                 ColumnLayout {
                     visible: barSensor.showText && (barSensor.sid === "net" || barSensor.sid === "disk")
                     spacing: -2
@@ -259,7 +253,6 @@ BarButton {
                     }
                 }
 
-                // Mini sparkline graph in bar
                 SparkGraph {
                     visible: barSensor.chartMode === "graph"
                     implicitWidth: 21
@@ -269,7 +262,6 @@ BarButton {
                     fillColor: barSensor.modelData.fill
                 }
 
-                // Mini ring gauge in bar
                 RingGauge {
                     visible: barSensor.chartMode === "ring"
                     value: root.sensorFraction(barSensor.sid)
@@ -280,7 +272,6 @@ BarButton {
         }
     }
 
-    // ---- Minimon Dropdown Popup ----
     Popup {
         id: pop
         name: "stats"
@@ -293,7 +284,6 @@ BarButton {
             if (!open) page = "";
         }
 
-        // Top pill button ("System Monitor ↗" / "COSMIC Observatory ↗") matching minimon.png
         Rectangle {
             visible: pop.page === ""
             Layout.alignment: Qt.AlignHCenter
@@ -330,7 +320,6 @@ BarButton {
             }
         }
 
-        // Main menu card with divided rows (matching minimon.png)
         Rectangle {
             visible: pop.page === ""
             Layout.fillWidth: true
@@ -346,7 +335,6 @@ BarButton {
                 anchors.margins: 4
                 spacing: 0
 
-                // Row 0: General settings
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 42
@@ -379,7 +367,6 @@ BarButton {
                     }
                 }
 
-                // Sensor rows
                 Repeater {
                     model: root.sensorDefs
 
@@ -440,9 +427,7 @@ BarButton {
             }
         }
 
-        // =====================================================================
-        // Sub-page: Back header
-        // =====================================================================
+        // Sub-page back header
         RowLayout {
             visible: pop.page !== ""
             Layout.fillWidth: true
@@ -469,9 +454,7 @@ BarButton {
             }
         }
 
-        // =====================================================================
         // Sub-page: General settings
-        // =====================================================================
         ColumnLayout {
             visible: pop.page === "general"
             Layout.fillWidth: true
@@ -491,7 +474,6 @@ BarButton {
                     anchors.margins: Theme.spaceS
                     spacing: Theme.spaceS
 
-                    // Quick bar style preset across all sensors
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText { Layout.fillWidth: true; text: "Quick style" }
@@ -679,7 +661,6 @@ BarButton {
                 }
             }
 
-            // Controls card
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: sensorCtrlCol.implicitHeight + 2 * Theme.spaceS
@@ -694,7 +675,6 @@ BarButton {
                     anchors.margins: Theme.spaceS
                     spacing: Theme.spaceS
 
-                    // Select prefix in bar (Off / Icon / Text label like CPU, MEM)
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {
@@ -732,7 +712,6 @@ BarButton {
 
                     Separator {}
 
-                    // Toggle value text on bar
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {
@@ -766,7 +745,6 @@ BarButton {
 
                     Separator {}
 
-                    // Select chart type on bar (Off / Graph / Ring)
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {

@@ -8,12 +8,11 @@
 # 'module "qs.bar" is not installed'.
 # The new shell is started by Hyprland (hyprctl dispatch), so it doesn't inherit this
 # script's environment or restrictions.
+# The lock screen is a separate Quickshell instance (hcs-lock.service, see lock.sh), so this is
+# safe while locked: only the bar instance is matched and restarted.
 set -u
-if [ "${1:-}" != "--force" ] && [ "$(timeout 2 qs ipc call lock isLocked 2>/dev/null)" = "true" ]; then
-    exit 0
-fi
 
-pids() { pgrep -f '^/nix/store/[^ ]*/bin/quickshell( -p [^ ]*)?$'; }
+pids() { pgrep -af '^/nix/store/[^ ]*/bin/quickshell( -p [^ ]*)?$' | grep -v '/lock\.qml$' | cut -d' ' -f1; }
 
 timeout 3 qs kill >/dev/null 2>&1
 for _ in $(seq 20); do [ -z "$(pids)" ] && break; sleep 0.1; done

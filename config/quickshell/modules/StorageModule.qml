@@ -123,14 +123,12 @@ BarButton {
                             }
                         }
 
-                        // Mount / Unmount button
                         IconButton {
                             icon: drvRow.modelData.mounted ? "folder_open" : "play_arrow"
                             visible: !drvRow.modelData.mounted
                             onClicked: Storage.mount(drvRow.modelData.path, false)
                         }
 
-                        // Safe Eject button
                         IconButton {
                             icon: "eject"
                             onClicked: Storage.eject(drvRow.modelData.path, drvRow.modelData.diskPath)

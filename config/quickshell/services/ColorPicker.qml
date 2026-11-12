@@ -5,8 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 
-// Screen color picker (hyprpicker). The picked color is copied as #RRGGBB and shown in the OSD.
-//   qs -p <root>/shell ipc call picker color      (SUPER SHIFT P)
+// Screen color picker (hyprpicker); copies #RRGGBB and shows OSD (qs ipc call picker color).
 Singleton {
     id: root
 

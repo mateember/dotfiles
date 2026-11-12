@@ -66,7 +66,6 @@ BarButton {
             Layout.fillWidth: true
         }
 
-        // Microphone active section
         ColumnLayout {
             visible: Privacy.micActive
             Layout.fillWidth: true
@@ -112,7 +111,6 @@ BarButton {
             }
         }
 
-        // Camera active section
         ColumnLayout {
             visible: Privacy.cameraActive
             Layout.fillWidth: true
@@ -139,7 +137,6 @@ BarButton {
             }
         }
 
-        // Screen share / recording active section
         ColumnLayout {
             visible: Privacy.screenActive
             Layout.fillWidth: true

@@ -169,7 +169,7 @@ for text in (body, summary):
         property bool dnd: false
     }
 
-    // run.sh --no-notify skips the server so another daemon can keep the D-Bus name.
+    // HCS_NO_NOTIFY=1 skips the server so another daemon can keep the D-Bus name.
     LazyLoader {
         id: loader
         active: Config.notificationsEnabled

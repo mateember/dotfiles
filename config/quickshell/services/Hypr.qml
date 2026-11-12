@@ -54,10 +54,61 @@ Singleton {
         else Hyprland.dispatch("workspace " + selector);
     }
 
+    property var _pendingWindow: null
+
     function focusWindow(addr: string) {
         const w = "address:" + normalizeAddress(addr);
-        if (root.lua) Hyprland.dispatch("hl.dsp.focus({ window = " + luaValue(w) + " })");
-        else Hyprland.dispatch("focuswindow " + w);
+        if (root.lua) {
+            const wLit = luaValue(w);
+            Quickshell.execDetached([
+                "hyprctl", "eval",
+                "local w = " + wLit + "; "
+                + "local ok = false; "
+                + "if hl.dsp.window and hl.dsp.window.focus then "
+                + "ok = pcall(function() hl.dispatch(hl.dsp.window.focus({ window = w })) end) "
+                + "end; "
+                + "if not ok and hl.dsp.focus then "
+                + "pcall(function() hl.dispatch(hl.dsp.focus({ window = w })) end) "
+                + "end"
+            ]);
+        } else {
+            Hyprland.dispatch("focuswindow " + w);
+        }
+    }
+
+    function activateWindow(t) {
+        if (!t) return;
+        const wsId = t.workspace?.id ?? 0;
+        const addr = t.address || t.lastIpcObject?.address || "";
+        const wl = t.wayland ?? null;
+        const needsWsSwitch = wsId > 0 && (Hyprland.focusedWorkspace?.id ?? 0) !== wsId;
+        root._pendingWindow = { wsId: wsId, addr: addr, wl: wl, switchWs: needsWsSwitch };
+        root.closeOverview();
+        if (needsWsSwitch) wsBeforeFocusTimer.restart();
+        else winFocusTimer.restart();
+    }
+
+    Timer {
+        id: wsBeforeFocusTimer
+        interval: 30
+        onTriggered: {
+            const p = root._pendingWindow;
+            if (!p) return;
+            if (p.wsId > 0) root.focusWorkspace(p.wsId);
+            winFocusTimer.restart();
+        }
+    }
+
+    Timer {
+        id: winFocusTimer
+        interval: 35
+        onTriggered: {
+            const p = root._pendingWindow;
+            root._pendingWindow = null;
+            if (!p) return;
+            if (p.wl) p.wl.activate();
+            if (p.addr) root.focusWindow(p.addr);
+        }
     }
 
     function closeWindow(addr: string) {
@@ -188,13 +239,13 @@ Singleton {
 
     Component.onCompleted: refreshLayout()
 
-    // Scriptable workspace switching: qs -p <root>/shell ipc call workspaces focus 3
+    // qs ipc call workspaces focus 3
     IpcHandler {
         target: "workspaces"
         function focus(selector: string): void { root.focusWorkspace(/^\d+$/.test(selector) ? Number(selector) : selector); }
     }
 
-    // KDE Plasma-style Overview: qs ipc call overview toggle
+    // qs ipc call overview toggle
     IpcHandler {
         target: "overview"
         function toggle(): void { root.toggleOverview(); }

@@ -9,15 +9,12 @@ import qs
 import qs.components
 import qs.services
 
-// COSMIC-launcher-style app launcher.
-//   qs -p <root>/shell ipc call launcher toggle      (SUPER Space)
-// Typing searches installed apps (fuzzy, most-used first). Prefixes:
-//   =expr    calculator (qalc); plain math like "2*21" works too. Enter copies the result.
-//   >cmd     run a shell command. Shift+Enter runs it in a terminal (kitty).
-//   :name    emoji picker. Enter types the emoji into the focused window (and copies it),
-//            Shift+Enter only copies. Also: ipc call launcher emoji (SUPER period).
-//   !name    Quickshell built-in apps & panels (also /name or @name). Also: ipc call launcher shell.
-// Keys: ↑/↓ (also Tab, Ctrl+J/K) select, Enter launch, Esc close.
+// App launcher (qs ipc call launcher toggle, SUPER Space).
+// Typing searches apps (fuzzy, most-used first). Prefixes:
+//   =expr    calculator (qalc); plain math like "2*21" works too. Enter copies.
+//   >cmd     shell command. Shift+Enter runs in kitty.
+//   :name    emoji picker (Enter types + copies; Shift+Enter copies). Also: ipc call launcher emoji.
+//   !name    built-in panels (also /name or @name). Also: ipc call launcher shell.
 Scope {
     id: root
 
@@ -61,7 +58,7 @@ Scope {
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
-            else if (id === "qs:lock") Quickshell.execDetached(["qs", "ipc", "call", "lock", "lock"]);
+            else if (id === "qs:lock") Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/lock.sh"]);
             else if (id.startsWith("qs:popup:")) Popups.openWindow(id.slice(9) + "@" + scr);
         }
     }

@@ -27,10 +27,50 @@ BarButton {
         name: "bluetooth"
         anchorItem: root
 
-        onOpenChanged: Bt.setDiscovering(open)
+        property bool discoveredOpen: false
+        property string confirmForgetAddr: ""
+        readonly property bool shouldScan: pop.open && Bt.enabled && pop.discoveredOpen
+
+        function armConfirmForget(addr: string) {
+            pop.confirmForgetAddr = addr;
+            forgetResetTimer.restart();
+        }
+
+        function clearConfirmForget() {
+            pop.confirmForgetAddr = "";
+            forgetResetTimer.stop();
+        }
+
+        function statusText(dev, batPct: int): string {
+            if (dev.state === BluetoothDeviceState.Connecting) return "Connecting…";
+            if (dev.state === BluetoothDeviceState.Disconnecting) return "Disconnecting…";
+            if (dev.pairing) return "Pairing…";
+            if (dev.connected) return "Connected" + (batPct >= 0 ? ` · ${batPct}%` : "");
+            if (dev.paired || dev.bonded) return "Paired";
+            return "Click to pair";
+        }
+
+        Timer {
+            id: forgetResetTimer
+            interval: 4000
+            onTriggered: pop.confirmForgetAddr = ""
+        }
+
+        onOpenChanged: {
+            clearConfirmForget();
+            discoveredOpen = open && Bt.pairedDevices.length === 0;
+        }
+        onShouldScanChanged: Bt.setDiscovering(shouldScan)
+
         Connections {
             target: Bt
-            function onEnabledChanged() { if (pop.open) Bt.setDiscovering(true); }
+            function onEnabledChanged() {
+                if (pop.shouldScan) Bt.setDiscovering(true);
+            }
+            function onPairedDevicesChanged() {
+                if (pop.open && Bt.pairedDevices.length === 0)
+                    pop.discoveredOpen = true;
+            }
         }
 
         PopupHeader {
@@ -45,57 +85,128 @@ BarButton {
             color: Theme.textDim
         }
 
-        ListView {
-            visible: Bt.enabled
+        // ---- Paired devices (hidden when none are paired) ----
+        StyledText {
+            visible: Bt.enabled && Bt.pairedDevices.length > 0
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(contentHeight, 360)
+            text: "Paired devices"
+            font.weight: Font.DemiBold
+        }
+
+        ListView {
+            visible: Bt.enabled && Bt.pairedDevices.length > 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(contentHeight, 200)
             clip: true
             spacing: 2
             boundsBehavior: Flickable.StopAtBounds
-            // Unnamed devices advertise their MAC as the name; hide those unless already paired.
-            model: Bt.enabled ? Bt.devices.filter(d => d.paired || d.connected || !/^([0-9A-F]{2}[:-]){5}[0-9A-F]{2}$/i.test(d.name)) : []
+            model: Bt.enabled ? Bt.pairedDevices : []
             delegate: ListItem {
-                id: devRow
+                id: pairedRow
                 required property BluetoothDevice modelData
+                readonly property bool confirmingForget: pop.confirmForgetAddr !== "" && pop.confirmForgetAddr === modelData.address
                 readonly property int batPct: Bt.deviceBattery(modelData)
+
                 width: ListView.view.width
-                icon: Bt.deviceIcon(modelData)
-                text: modelData.name
-                highlighted: modelData.connected
-                subtext: modelData.state === BluetoothDeviceState.Connecting ? "Connecting…"
-                       : modelData.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…"
-                       : modelData.pairing ? "Pairing…"
-                       : modelData.connected ? ("Connected" + (batPct >= 0 ? ` · ${batPct}%` : ""))
-                       : modelData.paired ? "Paired" : "Click to pair"
-                onClicked: Bt.activate(modelData)
+                icon: confirmingForget ? "delete" : Bt.deviceIcon(modelData)
+                iconColor: confirmingForget ? Theme.destructive : (highlighted ? Theme.accent : Theme.text)
+                text: modelData.name || modelData.address
+                highlighted: modelData.connected && !confirmingForget
+                subtextColor: confirmingForget ? Theme.destructive : Theme.textDim
+                subtext: confirmingForget ? "Right-click again to forget" : pop.statusText(modelData, batPct)
+
+                onClicked: button => {
+                    if (button === Qt.RightButton) {
+                        if (pairedRow.confirmingForget) {
+                            pop.clearConfirmForget();
+                            Bt.forget(pairedRow.modelData);
+                        } else {
+                            pop.armConfirmForget(pairedRow.modelData.address);
+                        }
+                    } else {
+                        if (pairedRow.confirmingForget) {
+                            pop.clearConfirmForget();
+                            return;
+                        }
+                        pop.clearConfirmForget();
+                        Bt.activate(pairedRow.modelData);
+                    }
+                }
 
                 RowLayout {
-                    visible: devRow.batPct >= 0
+                    visible: pairedRow.batPct >= 0 && !pairedRow.confirmingForget
                     spacing: 2
                     Icon {
-                        icon: Bt.batteryIcon(devRow.batPct)
+                        icon: Bt.batteryIcon(pairedRow.batPct)
                         size: 16
-                        color: devRow.batPct <= 20 ? Theme.danger : Theme.textDim
+                        color: pairedRow.batPct <= 20 ? Theme.danger : Theme.textDim
                     }
                     StyledText {
-                        text: devRow.batPct + "%"
+                        text: pairedRow.batPct + "%"
                         font.pixelSize: Theme.fontSizeSmall
-                        color: devRow.batPct <= 20 ? Theme.danger : Theme.textDim
+                        color: pairedRow.batPct <= 20 ? Theme.danger : Theme.textDim
                         font.features: { "tnum": 1 }
                     }
                 }
             }
         }
 
-        RowLayout {
-            visible: Bt.enabled
+        StyledText {
+            visible: Bt.enabled && Bt.pairedDevices.length > 0
             Layout.fillWidth: true
-            Icon { icon: "radar"; color: Theme.textDim; size: 16 }
-            StyledText {
-                Layout.fillWidth: true
-                text: Bt.discovering ? "Searching for devices…" : "Not searching"
-                font.pixelSize: Theme.fontSizeSmall
-                color: Theme.textDim
+            font.pixelSize: Theme.fontSizeSmall
+            color: Theme.textDim
+            text: "Right-click twice to forget a device."
+        }
+
+        Separator {
+            visible: Bt.enabled && Bt.pairedDevices.length > 0
+        }
+
+        // ---- Discovered / Available devices (collapsible dropdown) ----
+        ListItem {
+            visible: Bt.enabled
+            icon: pop.discoveredOpen ? "expand_less" : "expand_more"
+            text: "Available devices"
+            subtext: !pop.discoveredOpen ? "Click to scan for new devices"
+                   : Bt.discovering ? (Bt.discoveredDevices.length > 0
+                       ? `Searching… · ${Bt.discoveredDevices.length} found`
+                       : "Searching for devices…")
+                   : `${Bt.discoveredDevices.length} found`
+            onClicked: {
+                pop.clearConfirmForget();
+                pop.discoveredOpen = !pop.discoveredOpen;
+            }
+
+            Icon {
+                visible: pop.discoveredOpen && Bt.discovering
+                icon: "radar"
+                size: 16
+                color: Theme.accent
+            }
+        }
+
+        ListView {
+            visible: Bt.enabled && pop.discoveredOpen && Bt.discoveredDevices.length > 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(contentHeight, 220)
+            clip: true
+            spacing: 2
+            boundsBehavior: Flickable.StopAtBounds
+            model: (Bt.enabled && pop.discoveredOpen) ? Bt.discoveredDevices : []
+            delegate: ListItem {
+                id: discRow
+                required property BluetoothDevice modelData
+                width: ListView.view.width
+                icon: Bt.deviceIcon(modelData)
+                text: modelData.name || modelData.address
+                subtext: pop.statusText(modelData, -1)
+                onClicked: button => {
+                    if (button === Qt.LeftButton) {
+                        pop.clearConfirmForget();
+                        Bt.activate(discRow.modelData);
+                    }
+                }
             }
         }
     }

@@ -12,6 +12,8 @@ Rectangle {
     property string text: ""
     property string subtext: ""
     property bool highlighted: false
+    property color iconColor: highlighted ? Theme.accent : Theme.text
+    property color subtextColor: Theme.textDim
     property bool enabled: true
     property bool selected: false   // keyboard selection (arrow / vim keys), drawn like hover
     default property alias trailing: trail.data
@@ -51,7 +53,7 @@ Rectangle {
             visible: root.icon !== ""
             icon: root.icon
             filled: root.iconFilled
-            color: root.highlighted ? Theme.accent : Theme.text
+            color: root.iconColor
         }
 
         ColumnLayout {
@@ -69,7 +71,7 @@ Rectangle {
                 text: root.subtext
                 elide: Text.ElideRight
                 font.pixelSize: Theme.fontSizeSmall
-                color: Theme.textDim
+                color: root.subtextColor
             }
         }
 

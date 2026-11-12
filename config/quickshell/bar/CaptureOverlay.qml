@@ -33,7 +33,6 @@ Scope {
                 onActivated: Recorder.closeOverlay()
             }
 
-            // Subtle backdrop; clicking outside closes the overlay
             Rectangle {
                 anchors.fill: parent
                 color: Qt.rgba(0, 0, 0, 0.35)
@@ -66,7 +65,6 @@ Scope {
                     anchors.margins: Theme.spaceM
                     spacing: Theme.spaceS
 
-                    // ---- Header: Mode Tabs + Close button ----
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Theme.spaceXs
@@ -129,7 +127,6 @@ Scope {
                         }
                     }
 
-                    // ---- Active Recording Banner (if currently recording) ----
                     Rectangle {
                         visible: Recorder.recording
                         Layout.fillWidth: true
@@ -189,7 +186,6 @@ Scope {
                         }
                     }
 
-                    // ---- Target Grid: Screenshot Mode ----
                     RowLayout {
                         visible: Recorder.tab === "shot"
                         Layout.fillWidth: true
@@ -252,13 +248,11 @@ Scope {
                         }
                     }
 
-                    // ---- Screenshot Options Row (Action + Delay) ----
                     RowLayout {
                         visible: Recorder.tab === "shot"
                         Layout.fillWidth: true
                         spacing: Theme.spaceXs
 
-                        // Action selector (Copy / Save & Copy / Annotate)
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 34
@@ -313,7 +307,6 @@ Scope {
                             }
                         }
 
-                        // Timer delay selector (0s / 3s / 5s)
                         Rectangle {
                             implicitWidth: 138
                             implicitHeight: 34
@@ -361,7 +354,6 @@ Scope {
                         }
                     }
 
-                    // ---- Target Grid: Screen Record Mode ----
                     RowLayout {
                         visible: Recorder.tab === "record"
                         Layout.fillWidth: true
@@ -418,7 +410,6 @@ Scope {
                         }
                     }
 
-                    // ---- Screen Record Audio Options Row ----
                     Rectangle {
                         visible: Recorder.tab === "record"
                         Layout.fillWidth: true

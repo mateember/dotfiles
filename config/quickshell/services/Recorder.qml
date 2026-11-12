@@ -12,11 +12,9 @@ Singleton {
     property bool fromQuickSettings: false
     property string tab: "shot"               // "shot" | "record"
 
-    // Screenshot options
     property string shotAction: "copy"        // "copy" | "save" | "annotate"
     property int shotDelay: 0                 // 0 | 3 | 5
 
-    // Recording options & state
     property string recordAudio: "none"       // "none" | "system" | "mic"
     property string recordMode: "screen"      // "screen" | "region" | "window"
     property bool recording: false
@@ -83,7 +81,6 @@ Singleton {
     }
 
     function stopRecording() {
-        // Send SIGINT directly to wf-recorder / wl-screenrec via capture.sh stop
         Quickshell.execDetached(["bash", root.scriptPath, "stop"]);
         if (recProc.running) {
             recProc.signal(2);
