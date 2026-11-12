@@ -85,7 +85,7 @@ qs -p ~/.config/quickshell/lock.qml ipc call lock <lock|lockForSleep|wakeFromSle
 | Keybind | Action | Description |
 |---|---|---|
 | `SUPER + Space` | **App Launcher** | Search apps, evaluate math (`=`), run commands (`>`), search emojis (`:`), or open shell applets (`!`). |
-| `SUPER + Tab` / `SUPER + W` | **Overview** | Niri-style vertical stack of workspaces with horizontal window strips, live previews, search filter, and window move/close controls. |
+| `SUPER + Tab` / `SUPER + W` | **Overview** | Niri-style vertical stack of workspaces with horizontal window strips, live previews, search filter, drag-and-drop reordering across/inside workspaces, and close/move controls. |
 | `SUPER + ,` (Comma) | **Quick Settings** | Control center dropdown with quick tiles, volume/brightness sliders, and media controls. |
 | `SUPER + N` | **Notification Center** | Notification history, Do Not Disturb toggle, and media playback card. |
 | `SUPER + .` (Period) | **Emoji Picker** | Opens the launcher directly in `:` emoji mode; Enter types and copies the emoji. |

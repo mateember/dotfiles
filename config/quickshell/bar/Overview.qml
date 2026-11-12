@@ -113,7 +113,6 @@ Scope {
                 let fallbackIdx = 0;
                 for (const t of monitorToplevels) {
                     if ((t.workspace?.id ?? 0) !== wsId) continue;
-                    if (!matchesQuery(t, q)) continue;
                     const ipc = t.lastIpcObject;
                     const x = (ipc && ipc.at && ipc.at.length >= 2) ? Number(ipc.at[0]) : (fallbackIdx * 1000);
                     const y = (ipc && ipc.at && ipc.at.length >= 2) ? Number(ipc.at[1]) : 0;
@@ -129,21 +128,39 @@ Scope {
                     return a.seq - b.seq;
                 });
 
-                const columns = [];
+                const allColumns = [];
+                let tiledColIdx = 0;
                 for (const item of items) {
                     const ratio = Math.max(0.32, Math.min(1.0, item.w / win.monLogicalW));
-                    if (!item.floating && columns.length > 0 && !columns[columns.length - 1].floating && Math.abs(item.x - columns[columns.length - 1].x) <= 24) {
-                        const col = columns[columns.length - 1];
-                        col.windows.push({ toplevel: item.toplevel, flatIndex: 0 });
+                    if (!item.floating && allColumns.length > 0 && !allColumns[allColumns.length - 1].floating && Math.abs(item.x - allColumns[allColumns.length - 1].x) <= 24) {
+                        const col = allColumns[allColumns.length - 1];
+                        col.windows.push({ toplevel: item.toplevel, flatIndex: 0, realStackIdx: col.windows.length, floating: false });
                         col.colWidthRatio = Math.max(col.colWidthRatio, ratio);
                     } else {
-                        columns.push({
+                        allColumns.push({
                             x: item.x,
                             floating: item.floating,
+                            realColIdx: item.floating ? -1 : tiledColIdx++,
                             colWidthRatio: ratio,
-                            windows: [{ toplevel: item.toplevel, flatIndex: 0 }]
+                            totalWindows: 1,
+                            windows: [{ toplevel: item.toplevel, flatIndex: 0, realStackIdx: 0, floating: item.floating }]
                         });
                     }
+                }
+
+                const columns = [];
+                for (const col of allColumns) {
+                    col.totalWindows = col.windows.length;
+                    const filteredWins = col.windows.filter(wItem => matchesQuery(wItem.toplevel, q));
+                    if (filteredWins.length === 0) continue;
+                    columns.push({
+                        x: col.x,
+                        floating: col.floating,
+                        realColIdx: col.realColIdx,
+                        colWidthRatio: col.colWidthRatio,
+                        totalWindows: col.totalWindows,
+                        windows: filteredWins
+                    });
                 }
 
                 const flatWindows = [];
@@ -250,10 +267,343 @@ Scope {
                 }
             }
 
+            property bool isDragging: false
+            property var dragToplevel: null
+            property string dragSrcAddr: ""
+            property int dragSrcWsId: -1
+            property int dragSrcColIdx: -1
+            property int dragSrcStackIdx: -1
+            property int dragSrcColSize: 1
+            property bool dragSrcFloating: false
+            property string dragTitle: ""
+            property string dragIconSource: ""
+            property real dragStartX: 0
+            property real dragStartY: 0
+            property real dragX: 0
+            property real dragY: 0
+            property real dragGhostW: 220
+            property real dragGhostH: 140
+            property real dragHotspotX: 110
+            property real dragHotspotY: 70
+
+            // Drop mode: "" | "workspace" | "column" | "stack" | "swap"
+            property string dropMode: ""
+            property int dropWsId: -1
+            property int dropInsertCol: -1
+            property int dropTargetCol: -1
+            property int dropInsertStack: -1
+            property real dropBarX: 0
+            property real dropBarY: 0
+            property string dropSwapAddr: ""
+            property var hoveredColStrip: null
+
+            function clearDropTarget() {
+                win.dropMode = "";
+                win.dropWsId = -1;
+                win.dropInsertCol = -1;
+                win.dropTargetCol = -1;
+                win.dropInsertStack = -1;
+                win.dropBarX = 0;
+                win.dropBarY = 0;
+                win.dropSwapAddr = "";
+                win.hoveredColStrip = null;
+            }
+
+            function clearDragState() {
+                win.isDragging = false;
+                win.dragToplevel = null;
+                win.dragSrcAddr = "";
+                win.dragSrcWsId = -1;
+                win.dragSrcColIdx = -1;
+                win.dragSrcStackIdx = -1;
+                win.dragSrcColSize = 1;
+                win.dragSrcFloating = false;
+                win.dragTitle = "";
+                win.dragIconSource = "";
+                win.clearDropTarget();
+            }
+
+            function startPendingDrag(toplevel, addr: string, wsId: int, colIdx: int, stackIdx: int, colSize: int, floating: bool, title: string, iconSrc: string, sx: real, sy: real, cardW: real, cardH: real, localX: real, localY: real) {
+                win.isDragging = false;
+                win.dragToplevel = toplevel;
+                win.dragSrcAddr = addr;
+                win.dragSrcWsId = wsId;
+                win.dragSrcColIdx = colIdx;
+                win.dragSrcStackIdx = stackIdx;
+                win.dragSrcColSize = colSize;
+                win.dragSrcFloating = floating;
+                win.dragTitle = title;
+                win.dragIconSource = iconSrc;
+                win.dragStartX = sx;
+                win.dragStartY = sy;
+                win.dragX = sx;
+                win.dragY = sy;
+                const gw = Math.max(180, Math.min(270, cardW));
+                const gh = Math.max(115, Math.min(175, cardH));
+                win.dragGhostW = gw;
+                win.dragGhostH = gh;
+                win.dragHotspotX = cardW > 0 ? Math.max(20, Math.min(gw - 20, localX * (gw / cardW))) : gw / 2;
+                win.dragHotspotY = cardH > 0 ? Math.max(16, Math.min(gh - 16, localY * (gh / cardH))) : gh / 2;
+                win.clearDropTarget();
+            }
+
+            function updateDragPosition(sx: real, sy: real) {
+                win.dragX = sx;
+                win.dragY = sy;
+                if (!win.isDragging && Math.hypot(sx - win.dragStartX, sy - win.dragStartY) >= 8)
+                    win.isDragging = true;
+                if (win.isDragging) win.updateDropTarget();
+            }
+
+            function updateDropTarget() {
+                if (!win.isDragging) { win.clearDropTarget(); return; }
+                const pWs = slideContainer.mapToItem(wsList, win.dragX, win.dragY);
+                if (pWs.x < 0 || pWs.x > wsList.width || pWs.y < 0 || pWs.y > wsList.height) {
+                    win.clearDropTarget();
+                    return;
+                }
+                const pWsContent = slideContainer.mapToItem(wsList.contentItem, win.dragX, win.dragY);
+                const rowItem = wsList.itemAt(pWsContent.x, pWsContent.y);
+                if (!rowItem || !rowItem.wsCardItem) {
+                    win.clearDropTarget();
+                    return;
+                }
+                const pCard = slideContainer.mapToItem(rowItem.wsCardItem, win.dragX, win.dragY);
+                if (pCard.x < 0 || pCard.x > rowItem.wsCardItem.width || pCard.y < 0 || pCard.y > rowItem.wsCardItem.height) {
+                    win.clearDropTarget();
+                    return;
+                }
+
+                const cols = rowItem.modelData.columns;
+                if (rowItem.isNew || cols.length === 0) {
+                    win.clearDropTarget();
+                    if (rowItem.wsId !== win.dragSrcWsId) {
+                        win.dropMode = "workspace";
+                        win.dropWsId = rowItem.wsId;
+                    }
+                    return;
+                }
+
+                const strip = rowItem.colStripItem;
+                const pStrip = slideContainer.mapToItem(strip, win.dragX, win.dragY);
+                if (pStrip.x < 0 || pStrip.x > strip.width) {
+                    win.clearDropTarget();
+                    if (rowItem.wsId !== win.dragSrcWsId) {
+                        win.dropMode = "workspace";
+                        win.dropWsId = rowItem.wsId;
+                    }
+                    return;
+                }
+
+                win.hoveredColStrip = strip;
+
+                if (Hypr.layout !== "scrolling" || win.dragSrcFloating) {
+                    if (!win.dragSrcFloating && rowItem.colRepeaterItem) {
+                        for (let ci = 0; ci < rowItem.colRepeaterItem.count; ci++) {
+                            const colItem = rowItem.colRepeaterItem.itemAt(ci);
+                            if (!colItem || !colItem.winRepeaterItem) continue;
+                            for (let wi = 0; wi < colItem.winRepeaterItem.count; wi++) {
+                                const wCard = colItem.winRepeaterItem.itemAt(wi);
+                                if (!wCard) continue;
+                                const pWin = slideContainer.mapToItem(wCard, win.dragX, win.dragY);
+                                if (pWin.x >= 0 && pWin.x <= wCard.width && pWin.y >= 0 && pWin.y <= wCard.height) {
+                                    if (wCard.addr && wCard.addr !== win.dragSrcAddr && !colItem.modelData.floating) {
+                                        win.clearDropTarget();
+                                        win.hoveredColStrip = strip;
+                                        win.dropMode = "swap";
+                                        win.dropWsId = rowItem.wsId;
+                                        win.dropSwapAddr = wCard.addr;
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    win.clearDropTarget();
+                    win.hoveredColStrip = strip;
+                    if (rowItem.wsId !== win.dragSrcWsId) {
+                        win.dropMode = "workspace";
+                        win.dropWsId = rowItem.wsId;
+                    }
+                    return;
+                }
+
+                const pRow = slideContainer.mapToItem(rowItem.colRowItem, win.dragX, win.dragY);
+
+                // Vertical reorder inside the dragged window's own stacked column.
+                if (rowItem.wsId === win.dragSrcWsId && win.dragSrcColSize > 1 && rowItem.colRepeaterItem) {
+                    for (let ci = 0; ci < rowItem.colRepeaterItem.count; ci++) {
+                        const colItem = rowItem.colRepeaterItem.itemAt(ci);
+                        if (!colItem || colItem.modelData.realColIdx !== win.dragSrcColIdx || !colItem.winRepeaterItem) continue;
+                        if (pRow.x >= colItem.x + 18 && pRow.x <= colItem.x + colItem.width - 18 && colItem.winRepeaterItem.count > 1) {
+                            const pCol = slideContainer.mapToItem(colItem, win.dragX, win.dragY);
+                            let insertStack = colItem.winRepeaterItem.count;
+                            let barY = 0;
+                            for (let wi = 0; wi < colItem.winRepeaterItem.count; wi++) {
+                                const wCard = colItem.winRepeaterItem.itemAt(wi);
+                                if (!wCard) continue;
+                                if (pCol.y < wCard.y + wCard.height / 2) {
+                                    insertStack = wi;
+                                    if (wi === 0) barY = Math.max(2, wCard.y - 2);
+                                    else {
+                                        const prevW = colItem.winRepeaterItem.itemAt(wi - 1);
+                                        barY = (prevW.y + prevW.height + wCard.y) / 2;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (insertStack === colItem.winRepeaterItem.count) {
+                                const lastW = colItem.winRepeaterItem.itemAt(colItem.winRepeaterItem.count - 1);
+                                barY = Math.min(colItem.height - 4, lastW.y + lastW.height - 2);
+                            }
+                            win.clearDropTarget();
+                            win.hoveredColStrip = strip;
+                            const targetItem = insertStack < colItem.winRepeaterItem.count
+                                ? colItem.winRepeaterItem.itemAt(insertStack).modelData.realStackIdx
+                                : (colItem.winRepeaterItem.itemAt(colItem.winRepeaterItem.count - 1).modelData.realStackIdx + 1);
+                            if (targetItem !== win.dragSrcStackIdx && targetItem !== win.dragSrcStackIdx + 1) {
+                                win.dropMode = "stack";
+                                win.dropWsId = rowItem.wsId;
+                                win.dropTargetCol = win.dragSrcColIdx;
+                                win.dropInsertStack = targetItem;
+                                win.dropBarY = barY;
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // Horizontal column insertion slot on this workspace.
+                const tiledCols = [];
+                if (rowItem.colRepeaterItem) {
+                    for (let ci = 0; ci < rowItem.colRepeaterItem.count; ci++) {
+                        const colItem = rowItem.colRepeaterItem.itemAt(ci);
+                        if (colItem && !colItem.modelData.floating) tiledCols.push(colItem);
+                    }
+                }
+                if (tiledCols.length === 0) {
+                    win.clearDropTarget();
+                    win.hoveredColStrip = strip;
+                    if (rowItem.wsId !== win.dragSrcWsId) {
+                        win.dropMode = "workspace";
+                        win.dropWsId = rowItem.wsId;
+                    }
+                    return;
+                }
+
+                let k = tiledCols.length;
+                for (let ti = 0; ti < tiledCols.length; ti++) {
+                    if (pRow.x < tiledCols[ti].x + tiledCols[ti].width / 2) {
+                        k = ti;
+                        break;
+                    }
+                }
+
+                let barX = 0;
+                if (k === 0) {
+                    barX = tiledCols[0].x - 3;
+                } else if (k === tiledCols.length) {
+                    const lastC = tiledCols[tiledCols.length - 1];
+                    barX = lastC.x + lastC.width + 3;
+                } else {
+                    const prevC = tiledCols[k - 1];
+                    const nextC = tiledCols[k];
+                    barX = (prevC.x + prevC.width + nextC.x) / 2;
+                }
+
+                const realInsertCol = k < tiledCols.length
+                    ? tiledCols[k].modelData.realColIdx
+                    : (tiledCols[tiledCols.length - 1].modelData.realColIdx + 1);
+
+                if (rowItem.wsId === win.dragSrcWsId && win.dragSrcColSize === 1
+                        && (realInsertCol === win.dragSrcColIdx || realInsertCol === win.dragSrcColIdx + 1)) {
+                    win.clearDropTarget();
+                    win.hoveredColStrip = strip;
+                    return;
+                }
+
+                const wantCol = (rowItem.wsId === win.dragSrcWsId && win.dragSrcColSize === 1 && realInsertCol > win.dragSrcColIdx)
+                    ? (realInsertCol - 1)
+                    : realInsertCol;
+
+                win.clearDropTarget();
+                win.hoveredColStrip = strip;
+                win.dropMode = "column";
+                win.dropWsId = rowItem.wsId;
+                win.dropInsertCol = k;
+                win.dropTargetCol = wantCol;
+                win.dropBarX = barX;
+            }
+
+            function commitDragDrop() {
+                const mode = win.dropMode;
+                const addr = win.dragSrcAddr;
+                const srcWs = win.dragSrcWsId;
+                const srcCol = win.dragSrcColIdx;
+                const srcColSize = win.dragSrcColSize;
+                const srcStack = win.dragSrcStackIdx;
+                const dstWs = win.dropWsId;
+                const dstCol = win.dropTargetCol;
+                const dstStack = win.dropInsertStack;
+                const swapAddr = win.dropSwapAddr;
+                win.clearDragState();
+                if (!addr || !mode) return;
+
+                if (mode === "workspace") {
+                    Hypr.placeWindowInOverview(addr, srcWs, dstWs, -1, "");
+                    win.selectedWsId = dstWs;
+                } else if (mode === "column") {
+                    const expelDir = (srcWs === dstWs && srcColSize > 1) ? (dstCol <= srcCol ? "prev" : "next") : "";
+                    Hypr.placeWindowInOverview(addr, srcWs, dstWs, dstCol, expelDir);
+                    win.selectedWsId = dstWs;
+                } else if (mode === "stack") {
+                    const finalStack = dstStack > srcStack ? (dstStack - 1) : dstStack;
+                    const delta = finalStack - srcStack;
+                    if (delta !== 0) Hypr.moveWindowInStack(addr, delta);
+                } else if (mode === "swap" && swapAddr) {
+                    Hypr.swapWindows(addr, swapAddr);
+                }
+            }
+
+            Timer {
+                id: autoScrollTimer
+                interval: 16
+                repeat: true
+                running: win.isDragging
+                onTriggered: {
+                    let moved = false;
+                    const pWs = slideContainer.mapToItem(wsList, win.dragX, win.dragY);
+                    if (wsList.contentHeight > wsList.height && pWs.x >= 0 && pWs.x <= wsList.width) {
+                        const maxY = wsList.contentHeight - wsList.height;
+                        if (pWs.y >= 0 && pWs.y < 54 && wsList.contentY > 0) {
+                            wsList.contentY = Math.max(0, wsList.contentY - Math.max(3, Math.round((54 - pWs.y) * 0.25)));
+                            moved = true;
+                        } else if (pWs.y > wsList.height - 54 && pWs.y <= wsList.height && wsList.contentY < maxY) {
+                            wsList.contentY = Math.min(maxY, wsList.contentY + Math.max(3, Math.round((pWs.y - (wsList.height - 54)) * 0.25)));
+                            moved = true;
+                        }
+                    }
+                    const strip = win.hoveredColStrip;
+                    if (strip && strip.contentWidth > strip.width) {
+                        const pStrip = slideContainer.mapToItem(strip, win.dragX, win.dragY);
+                        const maxX = strip.contentWidth - strip.width;
+                        if (pStrip.x >= 0 && pStrip.x < 48 && strip.contentX > 0) {
+                            strip.contentX = Math.max(0, strip.contentX - Math.max(3, Math.round((48 - pStrip.x) * 0.25)));
+                            moved = true;
+                        } else if (pStrip.x > strip.width - 48 && pStrip.x <= strip.width && strip.contentX < maxX) {
+                            strip.contentX = Math.min(maxX, strip.contentX + Math.max(3, Math.round((pStrip.x - (strip.width - 48)) * 0.25)));
+                            moved = true;
+                        }
+                    }
+                    if (moved) win.updateDropTarget();
+                }
+            }
+
             function resetForOpen() {
                 Hyprland.refreshMonitors();
                 Hyprland.refreshWorkspaces();
                 Hyprland.refreshToplevels();
+                win.clearDragState();
                 win.query = "";
                 searchInput.text = "";
                 win.selectedWsId = Hyprland.focusedWorkspace?.id ?? win.monitor?.activeWorkspace?.id ?? 1;
@@ -263,7 +613,10 @@ Scope {
 
             Shortcut {
                 sequences: ["Escape"]
-                onActivated: win.close()
+                onActivated: {
+                    if (win.isDragging) win.clearDragState();
+                    else win.close();
+                }
             }
 
             Connections {
@@ -357,7 +710,8 @@ Scope {
 
                                 Keys.onPressed: event => {
                                     if (event.key === Qt.Key_Escape) {
-                                        win.close();
+                                        if (win.isDragging) win.clearDragState();
+                                        else win.close();
                                         event.accepted = true;
                                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                         win.activateCurrentSelection();
@@ -382,7 +736,7 @@ Scope {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     visible: !searchInput.text
-                                    text: "Search windows (Enter switch, ↑/↓ workspace, ←/→ window, Esc close)..."
+                                    text: "Search windows (Drag to move/reorder, Enter switch, ↑/↓ ws, ←/→ win)..."
                                     color: Theme.textDim
                                     elide: Text.ElideRight
                                 }
@@ -433,6 +787,7 @@ Scope {
                         orientation: ListView.Vertical
                         spacing: Theme.spaceM
                         clip: true
+                        cacheBuffer: 6000
                         boundsBehavior: Flickable.StopAtBounds
                         model: win.workspaceModels
 
@@ -447,11 +802,18 @@ Scope {
                             height: wsRowItem.modelData.isNew && win.query.trim() === ""
                                 ? Math.min(116, wsList.rowHeight)
                                 : wsList.rowHeight
+                            ListView.delayRemove: win.isDragging && win.dragSrcWsId === wsRowItem.wsId
 
                             readonly property int wsId: modelData.wsId
                             readonly property bool isNew: modelData.isNew
                             readonly property bool isCurrentHypr: !isNew && (Hyprland.focusedWorkspace?.id ?? 0) === wsId
                             readonly property bool isSelected: win.selectedWsId === wsId
+                            readonly property bool isDropTargetRow: win.isDragging && win.dropWsId === wsId
+
+                            readonly property alias wsCardItem: wsCard
+                            readonly property alias colStripItem: colStrip
+                            readonly property alias colRowItem: colRow
+                            readonly property alias colRepeaterItem: colRepeater
 
                             Rectangle {
                                 id: wsCard
@@ -459,11 +821,13 @@ Scope {
                                 height: parent.height
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 radius: Theme.radiusL
-                                color: wsRowItem.isSelected ? Qt.rgba(1, 0.68, 0, 0.11)
+                                color: (wsRowItem.isDropTargetRow && win.dropMode === "workspace") ? Qt.rgba(1, 0.68, 0, 0.16)
+                                     : (wsRowItem.isDropTargetRow ? Qt.rgba(1, 0.68, 0, 0.12)
+                                     : (wsRowItem.isSelected ? Qt.rgba(1, 0.68, 0, 0.11)
                                      : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.05)
-                                     : (wsBgHover.containsMouse ? Theme.componentHover : Theme.overviewBg))
-                                border.width: wsRowItem.isSelected ? 2 : 1
-                                border.color: wsRowItem.isSelected ? Theme.accent
+                                     : (wsBgHover.containsMouse ? Theme.componentHover : Theme.overviewBg))))
+                                border.width: (wsRowItem.isDropTargetRow || wsRowItem.isSelected) ? 2 : 1
+                                border.color: (wsRowItem.isDropTargetRow || wsRowItem.isSelected) ? Theme.accent
                                             : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.48) : Theme.panelBorder)
 
                                 Behavior on color { ColorAnimation { duration: Theme.animFast } }
@@ -474,8 +838,8 @@ Scope {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onEntered: win.selectedWsId = wsRowItem.wsId
-                                    onClicked: win.switchToWorkspace(wsRowItem.wsId)
+                                    onEntered: if (!win.isDragging) win.selectedWsId = wsRowItem.wsId
+                                    onClicked: if (!win.isDragging) win.switchToWorkspace(wsRowItem.wsId)
                                 }
 
                                 RowLayout {
@@ -554,13 +918,15 @@ Scope {
                                             Icon {
                                                 icon: wsRowItem.isNew ? "add_circle" : "desktop_windows"
                                                 size: 24
-                                                color: wsRowItem.isNew ? Theme.accent : Theme.textDim
+                                                color: (wsRowItem.isNew || (wsRowItem.isDropTargetRow && win.dropMode === "workspace")) ? Theme.accent : Theme.textDim
                                             }
                                             StyledText {
-                                                text: wsRowItem.isNew
-                                                    ? "New workspace " + wsRowItem.wsId + " — click or press Enter"
-                                                    : "Empty workspace — click or press Enter to switch"
-                                                color: Theme.textDim
+                                                text: (wsRowItem.isDropTargetRow && win.dropMode === "workspace")
+                                                    ? ("Drop to move to workspace " + wsRowItem.wsId)
+                                                    : (wsRowItem.isNew
+                                                        ? ("New workspace " + wsRowItem.wsId + " — click, drop, or press Enter")
+                                                        : "Empty workspace — click, drop, or press Enter")
+                                                color: (wsRowItem.isDropTargetRow && win.dropMode === "workspace") ? Theme.accent : Theme.textDim
                                             }
                                         }
 
@@ -572,6 +938,7 @@ Scope {
                                             visible: wsRowItem.modelData.columns.length > 0
 
                                             Repeater {
+                                                id: colRepeater
                                                 model: wsRowItem.modelData.columns
 
                                                 delegate: Item {
@@ -580,11 +947,14 @@ Scope {
                                                     width: Math.max(180, Math.min(480, Math.round(colStrip.basePreviewW * modelData.colWidthRatio)))
                                                     height: colStrip.height
 
+                                                    readonly property alias winRepeaterItem: winRepeater
+
                                                     ColumnLayout {
                                                         anchors.fill: parent
                                                         spacing: Theme.spaceXxs
 
                                                         Repeater {
+                                                            id: winRepeater
                                                             model: colItem.modelData.windows
 
                                                             delegate: Rectangle {
@@ -592,19 +962,24 @@ Scope {
                                                                 required property var modelData
                                                                 readonly property var toplevel: modelData.toplevel
                                                                 readonly property int flatIndex: modelData.flatIndex
-                                                                readonly property bool isWinSelected: wsRowItem.isSelected && flatIndex === win.selectedWinIdx
+                                                                readonly property bool isWinSelected: !win.isDragging && wsRowItem.isSelected && flatIndex === win.selectedWinIdx
                                                                 readonly property string iconSource: win.iconFor(toplevel)
                                                                 readonly property string addr: toplevel?.address || toplevel?.lastIpcObject?.address || ""
-                                                                readonly property bool controlsVisible: isWinSelected || winHover.containsMouse
+                                                                readonly property bool isDraggedCard: win.isDragging && win.dragSrcAddr === addr
+                                                                readonly property bool isSwapTarget: win.isDragging && win.dropMode === "swap" && win.dropSwapAddr === addr
+                                                                readonly property bool controlsVisible: !win.isDragging && (isWinSelected || winHover.containsMouse)
 
                                                                 Layout.fillWidth: true
                                                                 Layout.fillHeight: true
                                                                 radius: Theme.radiusM
-                                                                color: isWinSelected ? Qt.rgba(0.22, 0.22, 0.25, 0.94) : Qt.rgba(0.10, 0.10, 0.12, 0.92)
-                                                                border.width: isWinSelected ? 2 : 1
-                                                                border.color: isWinSelected ? Theme.accent
-                                                                            : (winHover.containsMouse ? Qt.rgba(1, 1, 1, 0.42) : Theme.panelBorder)
+                                                                opacity: isDraggedCard ? 0.32 : 1.0
+                                                                color: isSwapTarget ? Qt.rgba(1, 0.68, 0, 0.18)
+                                                                     : (isWinSelected ? Qt.rgba(0.22, 0.22, 0.25, 0.94) : Qt.rgba(0.10, 0.10, 0.12, 0.92))
+                                                                border.width: (isSwapTarget || isWinSelected) ? 2 : 1
+                                                                border.color: (isSwapTarget || isWinSelected) ? Theme.accent
+                                                                            : (winHover.containsMouse && !win.isDragging ? Qt.rgba(1, 1, 1, 0.42) : Theme.panelBorder)
 
+                                                                Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
                                                                 Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
 
                                                                 onIsWinSelectedChanged: {
@@ -621,12 +996,46 @@ Scope {
                                                                     id: winHover
                                                                     anchors.fill: parent
                                                                     hoverEnabled: true
-                                                                    cursorShape: Qt.PointingHandCursor
+                                                                    preventStealing: true
+                                                                    cursorShape: win.isDragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                                                                     onEntered: {
-                                                                        win.selectedWsId = wsRowItem.wsId;
-                                                                        win.selectedWinIdx = winCard.flatIndex;
+                                                                        if (!win.isDragging) {
+                                                                            win.selectedWsId = wsRowItem.wsId;
+                                                                            win.selectedWinIdx = winCard.flatIndex;
+                                                                        }
                                                                     }
-                                                                    onClicked: win.activateToplevel(winCard.toplevel)
+                                                                    onPressed: mouse => {
+                                                                        const p = winHover.mapToItem(slideContainer, mouse.x, mouse.y);
+                                                                        win.startPendingDrag(
+                                                                            winCard.toplevel,
+                                                                            winCard.addr,
+                                                                            wsRowItem.wsId,
+                                                                            colItem.modelData.realColIdx,
+                                                                            winCard.modelData.realStackIdx,
+                                                                            colItem.modelData.totalWindows,
+                                                                            colItem.modelData.floating,
+                                                                            winCard.toplevel?.title || win.appNameFor(winCard.toplevel),
+                                                                            winCard.iconSource,
+                                                                            p.x, p.y,
+                                                                            winCard.width, winCard.height,
+                                                                            mouse.x, mouse.y
+                                                                        );
+                                                                    }
+                                                                    onPositionChanged: mouse => {
+                                                                        if (pressed) {
+                                                                            const p = winHover.mapToItem(slideContainer, mouse.x, mouse.y);
+                                                                            win.updateDragPosition(p.x, p.y);
+                                                                        }
+                                                                    }
+                                                                    onReleased: mouse => {
+                                                                        if (win.isDragging) {
+                                                                            win.commitDragDrop();
+                                                                        } else {
+                                                                            win.clearDragState();
+                                                                            win.activateToplevel(winCard.toplevel);
+                                                                        }
+                                                                    }
+                                                                    onCanceled: win.clearDragState()
                                                                 }
 
                                                                 ColumnLayout {
@@ -736,11 +1145,117 @@ Scope {
                                                             }
                                                         }
                                                     }
+
+                                                    // Horizontal insertion bar when dragging inside a stacked column.
+                                                    Rectangle {
+                                                        visible: win.isDragging
+                                                                 && win.dropMode === "stack"
+                                                                 && win.dropWsId === wsRowItem.wsId
+                                                                 && win.dropTargetCol === colItem.modelData.realColIdx
+                                                        z: 10
+                                                        x: 4
+                                                        y: Math.max(0, Math.min(colItem.height - height, win.dropBarY - height / 2))
+                                                        width: colItem.width - 8
+                                                        height: 4
+                                                        radius: 2
+                                                        color: Theme.accent
+                                                    }
                                                 }
                                             }
                                         }
+
+                                        // Vertical insertion bar between columns (visible across workspaces too).
+                                        Rectangle {
+                                            visible: win.isDragging
+                                                     && win.dropMode === "column"
+                                                     && win.dropWsId === wsRowItem.wsId
+                                            z: 10
+                                            x: Math.max(0, Math.min(colStrip.contentWidth - width, colRow.x + win.dropBarX - width / 2))
+                                            y: 6
+                                            width: 4
+                                            height: colStrip.height - 12
+                                            radius: 2
+                                            color: Theme.accent
+                                        }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // Floating drag preview following the cursor.
+                Rectangle {
+                    id: dragGhost
+                    visible: win.isDragging
+                    z: 100
+                    width: win.dragGhostW
+                    height: win.dragGhostH
+                    x: Math.max(0, Math.min(slideContainer.width - width, win.dragX - win.dragHotspotX))
+                    y: Math.max(0, Math.min(slideContainer.height - height, win.dragY - win.dragHotspotY))
+                    radius: Theme.radiusM
+                    color: Qt.rgba(0.15, 0.15, 0.18, 0.96)
+                    border.width: 2
+                    border.color: Theme.accent
+                    opacity: 0.95
+                    scale: 1.03
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        spacing: 4
+
+                        ClippingRectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            radius: Theme.radiusS
+                            color: Qt.rgba(0.08, 0.08, 0.09, 1)
+
+                            ScreencopyView {
+                                id: ghostPreview
+                                anchors.fill: parent
+                                captureSource: win.dragToplevel?.wayland ?? null
+                                live: true
+                                paintCursor: false
+                            }
+
+                            Icon {
+                                anchors.centerIn: parent
+                                visible: !ghostPreview.hasContent
+                                icon: "web_asset"
+                                size: 30
+                                color: Theme.textDim
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            implicitHeight: 20
+                            spacing: 6
+
+                            Image {
+                                visible: win.dragIconSource !== ""
+                                source: win.dragIconSource
+                                Layout.preferredWidth: 14
+                                Layout.preferredHeight: 14
+                                sourceSize.width: 28
+                                sourceSize.height: 28
+                                asynchronous: true
+                            }
+
+                            Icon {
+                                visible: win.dragIconSource === ""
+                                icon: "web_asset"
+                                size: 14
+                                color: Theme.accent
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: win.dragTitle
+                                font.pixelSize: Theme.fontSizeSmall
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
                             }
                         }
                     }
