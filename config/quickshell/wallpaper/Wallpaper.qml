@@ -5,9 +5,9 @@ import Quickshell.Wayland
 import qs
 import qs.services
 
-// Wallpaper for one screen, on the background layer. Crossfades to a new random image from
-// Wallpapers on every tick. While a fullscreen window is on this monitor (games, video) the
-// image switches instantly instead of animating, like the old swww.sh "game mode".
+// Wallpaper surface for one monitor on the Wayland background layer.
+// Delegates visual rendering (folder slideshow, single image, live shaders, animated GIFs, solid color)
+// to WallpaperScene and tracks per-screen fullscreen state to skip transitions / pause animations.
 PanelWindow {
     id: root
 
@@ -21,67 +21,81 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Background
     WlrLayershell.namespace: "hcs-wallpaper"
 
+    readonly property string screenName: root.screen?.name ?? ""
     readonly property bool fullscreenActive: Hyprland.monitorFor(screen)?.activeWorkspace?.hasFullscreen ?? false
-    property Image front: imgA
-    property Image back: imgB
-    property bool shownOnce: false
+    readonly property real dpr: root.screen?.devicePixelRatio ?? 1
 
-    function change() {
-        const url = Wallpapers.randomUrl(String(root.front.source));
-        if (url === "") return;
-        root.back.source = url;   // shown by onStatusChanged once decoded
-    }
+    property string currentUrl: ""
 
-    function reveal(img: Image) {
-        if (img !== root.back || img.status !== Image.Ready) return;
-        root.back = root.front;
-        root.front = img;
-        img.z = 1;
-        root.back.z = 0;
-        Wallpapers.setScreenUrl(root.screen?.name ?? "", String(img.source));
-        // First image and fullscreen: switch instantly. Otherwise crossfade.
-        if (root.fullscreenActive || !root.shownOnce) {
-            fade.stop();
-            img.opacity = 1;
-            root.back.opacity = 0;
-            root.shownOnce = true;
-        } else {
-            fade.target = img;
-            fade.restart();
+    function pickInitialOrNext() {
+        if (Wallpapers.mode === "folder") {
+            let url = "";
+            if (Wallpapers.syncScreens && Wallpapers.current) {
+                url = Wallpapers.current;
+            } else {
+                const existing = Wallpapers.screenUrls[root.screenName];
+                url = existing || Wallpapers.pickNextUrl(root.screenName, root.currentUrl);
+            }
+            if (url) root.currentUrl = url;
+        } else if (Wallpapers.mode === "image") {
+            if (Wallpapers.resolvedSingleImageUrl) root.currentUrl = Wallpapers.resolvedSingleImageUrl;
+        } else if (Wallpapers.mode === "animated" && Wallpapers.animatedKind === "file") {
+            if (Wallpapers.resolvedAnimatedFileUrl) root.currentUrl = Wallpapers.resolvedAnimatedFileUrl;
         }
     }
 
-    component Wall: Image {
-        id: wall
-        anchors.fill: parent
-        fillMode: Image.PreserveAspectCrop   // COSMIC "Zoom"
-        asynchronous: true
-        cache: false
-        smooth: true
-        opacity: 0
-        sourceSize.width: root.width * (root.screen?.devicePixelRatio ?? 1)
-        sourceSize.height: root.height * (root.screen?.devicePixelRatio ?? 1)
-        onStatusChanged: root.reveal(wall)
+    function advanceSlideshow() {
+        if (Wallpapers.mode !== "folder") return;
+        const url = Wallpapers.pickNextUrl(root.screenName, root.currentUrl);
+        if (url) root.currentUrl = url;
     }
 
-    Wall { id: imgA }
-    Wall { id: imgB }
-
-    NumberAnimation {
-        id: fade
-        property: "opacity"
-        from: 0
-        to: 1
-        duration: 1200
-        easing.type: Easing.InOutQuad
-        onFinished: if (root.back) root.back.opacity = 0
+    WallpaperScene {
+        id: scene
+        anchors.fill: parent
+        imageUrl: root.currentUrl
+        paused: (Wallpapers.mode === "animated" && Wallpapers.effectivelyAnimatedPaused)
+             || (Wallpapers.pauseOnFullscreen && root.fullscreenActive)
+        instantTransitions: root.fullscreenActive
+        decodeWidth: root.width * root.dpr
+        decodeHeight: root.height * root.dpr
+        reportScreenUrl: Wallpapers.mode === "folder"
+        screenName: root.screenName
     }
 
     Connections {
         target: Wallpapers
-        function onTick() { root.change(); }
-        function onCountChanged() { if (!root.front.source.toString()) root.change(); }
+        function onTick() { root.advanceSlideshow(); }
+        function onScreenForceUrl(sn: string, url: string) {
+            if (sn === "" || sn === root.screenName) root.currentUrl = url;
+        }
+        function onFolderFilesChanged() {
+            if (Wallpapers.mode !== "folder" || Wallpapers.folderFiles.length === 0) return;
+            if (Wallpapers.syncScreens) {
+                if (Wallpapers.current && Wallpapers.folderFiles.some(f => f.url === Wallpapers.current))
+                    root.currentUrl = Wallpapers.current;
+                return;
+            }
+            const cur = root.currentUrl;
+            const stillPresent = cur !== "" && Wallpapers.folderFiles.some(f => f.url === cur);
+            if (!stillPresent) {
+                const url = Wallpapers.pickNextUrl(root.screenName, "");
+                if (url) root.currentUrl = url;
+            }
+        }
+        function onModeChanged() { root.pickInitialOrNext(); }
+        function onAnimatedKindChanged() { root.pickInitialOrNext(); }
+        function onResolvedSingleImageUrlChanged() {
+            if (Wallpapers.mode === "image") root.currentUrl = Wallpapers.resolvedSingleImageUrl;
+        }
+        function onResolvedAnimatedFileUrlChanged() {
+            if (Wallpapers.mode === "animated" && Wallpapers.animatedKind === "file")
+                root.currentUrl = Wallpapers.resolvedAnimatedFileUrl;
+        }
+        function onReadyChanged() {
+            if (Wallpapers.ready) root.pickInitialOrNext();
+        }
     }
 
-    Component.onCompleted: change()
+    Component.onCompleted: pickInitialOrNext()
 }

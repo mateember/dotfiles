@@ -36,7 +36,7 @@ dotfiles/
 │   │   ├── Theme.qml               # COSMIC Dark palette, spacing, radii, typography, opacities
 │   │   ├── Config.qml              # Initial shell defaults (clock, calendar, weather fallback, wallpaper)
 │   │   ├── bar/                    # Top panel (Bar.qml), Overview, CaptureOverlay, settings windows
-│   │   ├── modules/                # 21 modular bar widgets (including modules/weather/ subcomponents)
+│   │   ├── modules/                # 22 modular bar widgets (including modules/background/ & modules/weather/)
 │   │   ├── services/               # Singletons (Hypr, Net, Bt, Notifs, Wallpapers, SystemStats, WeatherConfig, etc.)
 │   │   ├── components/             # UI primitives (Popup, ListItem, Toggle, StyledText, Icon, etc.)
 │   │   ├── launcher/               # Unified launcher (apps, calc, shell commands, emoji, !applets)
@@ -45,7 +45,7 @@ dotfiles/
 │   │   ├── osd/                    # On-screen display (OsdWindow.qml, OsdTriggers.qml)
 │   │   ├── polkit/                 # Polkit authentication prompt (PolkitPrompt.qml)
 │   │   ├── quicksettings/          # Quick Settings panel (QuickSettings.qml)
-│   │   ├── wallpaper/              # Per-screen wallpaper slideshow layer (Wallpaper.qml)
+│   │   ├── wallpaper/              # Multi-mode wallpaper renderer (Wallpaper.qml, WallpaperScene.qml, shaders/)
 │   │   └── scripts/                # capture.sh, calendar-events.py, hardware-status.py, hungaromet.py
 │   ├── fish/                       # Fish shell config, aliases, functions, completions
 │   ├── kitty/                      # Kitty terminal configuration

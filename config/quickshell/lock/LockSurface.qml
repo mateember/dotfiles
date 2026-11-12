@@ -6,6 +6,7 @@ import Quickshell.Hyprland
 import qs
 import qs.components
 import qs.services
+import qs.wallpaper
 
 // Visual UI for one monitor's lock surface (used inside WlSessionLockSurface in LockScreen.qml).
 Item {
@@ -21,7 +22,13 @@ Item {
         if (focused !== "") return screenName === focused;
         return screenName === (Quickshell.screens[0]?.name ?? "");
     }
-    // Same image as the desktop (from the bar instance); a random one if the bar didn't answer.
+    // Same backdrop as the desktop (from the bar instance); random folder image if the bar didn't answer.
+    readonly property var wallpaperInfo: controller.wallpaperInfo ?? ({})
+    readonly property string wallpaperMode: String(wallpaperInfo.mode ?? "folder")
+    readonly property bool useSceneBackdrop: controller.wallpaperReady && (
+        wallpaperMode === "solid"
+        || (wallpaperMode === "animated" && String(wallpaperInfo.animatedKind ?? "scene") === "scene")
+    )
     readonly property string wallpaperUrl: !controller.wallpaperReady ? ""
         : (controller.wallpaperFor(screenName) || Wallpapers.urlForScreen(screenName))
     property bool showPassword: false
@@ -70,24 +77,53 @@ Item {
         color: Theme.bg
     }
 
-    Image {
+    Item {
         id: wallSource
         anchors.fill: parent
-        source: stage.wallpaperUrl
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        smooth: true
-        cache: false
-        // Fixed decode resolution avoids a 1x1->full re-decode on initial Wayland surface configure
-        // and decodes much faster since MultiEffect blurs it heavily anyway.
-        sourceSize: Qt.size(1280, 800)
         visible: false
+        readonly property bool readyForEffect: stage.useSceneBackdrop ? true : (wallImage.status === Image.Ready)
+
+        Image {
+            id: wallImage
+            anchors.fill: parent
+            visible: !stage.useSceneBackdrop
+            source: stage.useSceneBackdrop ? "" : stage.wallpaperUrl
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            smooth: true
+            cache: false
+            // Fixed decode resolution avoids a 1x1->full re-decode on initial Wayland surface configure
+            // and decodes much faster since MultiEffect blurs it heavily anyway.
+            sourceSize: Qt.size(1280, 800)
+        }
+
+        Loader {
+            anchors.fill: parent
+            active: stage.useSceneBackdrop
+            sourceComponent: WallpaperScene {
+                readonly property var info: stage.wallpaperInfo
+                mode: String(info.mode ?? "solid")
+                animatedKind: String(info.animatedKind ?? "scene")
+                sceneId: String(info.sceneId ?? "aurora")
+                paletteBg: info.paletteBg ?? "#111114"
+                paletteC1: info.paletteC1 ?? "#FFAD00"
+                paletteC2: info.paletteC2 ?? "#E06D1F"
+                paletteC3: info.paletteC3 ?? "#4A588A"
+                animSpeed: Number(info.animSpeed ?? 1.0)
+                animIntensity: Number(info.animIntensity ?? 1.0)
+                solidColor: String(info.solidColor ?? "#1B1B1B")
+                solidVignette: info.solidVignette !== undefined ? Boolean(info.solidVignette) : true
+                blurAmount: 0
+                dimAmount: 0
+                paused: stage.controller.sleeping
+            }
+        }
     }
 
     MultiEffect {
         anchors.fill: wallSource
         source: wallSource
-        visible: wallSource.status === Image.Ready
+        visible: wallSource.readyForEffect
         autoPaddingEnabled: false
         blurEnabled: true
         blurMax: 48

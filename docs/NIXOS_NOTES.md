@@ -48,6 +48,7 @@ Quickshell's `PowerProfile` service and [`scripts/tlpmodes.sh`](file:///home/mat
 - **Emoji Picker**: `HCS_EMOJI_FILE` environment variable pointing to Unicode's `emoji-test.txt`, plus `wtype` and `wl-clipboard`.
 - **Capture & Recording**: `grim`, `slurp`, `swappy`, `wf-recorder` / `wl-screenrec`, `hyprshot`, `hyprpicker`.
 - **Removable Storage**: `services.udisks2.enable = true` (`udisksctl`, `lsblk`, `udevadm`).
+- **Background Selector & Animated Loops**: `zenity` (native folder/media pickers), `ffmpeg` (converts `.webp` images and short video clips into cached looping GIFs), and `qt6.qtshadertools` (`qsb`, only needed when recompiling [GLSL fragment shaders](file:///home/mate/dotfiles/config/quickshell/wallpaper/shaders/compile.sh)).
 - **System Controls & Icons**: `hyprsunset`, `brightnessctl`, `ddcutil`, `playerctl`, `cliphist`, `libqalculate` (`qalc`), `pavucontrol`, `networkmanagerapplet`, `gnome-calendar`, `kdePackages.kdeconnect-kde`, `pop-icon-theme`, and fonts (`material-symbols`, `fira-sans`, `noto-fonts-color-emoji`).
 
 ## 6. KWallet & Secret Portal

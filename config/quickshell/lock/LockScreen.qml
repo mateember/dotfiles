@@ -31,9 +31,10 @@ Scope {
     property string passwordPamConfig: "qs-lock"
     property bool probeDone: false
 
-    // Per-screen wallpaper URLs from the bar instance, so the lock shows the desktop's image.
+    // Per-screen wallpaper URLs and background mode state from the bar instance, so lock matches desktop.
     property var wallpaperMap: ({})
     property string wallpaperCurrent: ""
+    property var wallpaperInfo: ({})
     property bool wallpaperReady: false
 
     function wallpaperFor(screenName: string): string {
@@ -413,6 +414,7 @@ Scope {
             onStreamFinished: {
                 try {
                     const info = JSON.parse(this.text.trim());
+                    root.wallpaperInfo = info ?? {};
                     root.wallpaperMap = info.screens ?? {};
                     root.wallpaperCurrent = String(info.current ?? "");
                 } catch (e) {}
@@ -535,6 +537,7 @@ Scope {
     }
 
     Component.onCompleted: {
+        Wallpapers.passiveMode = true;
         root.refreshPamProbe();
         wallpaperProc.running = true;
         if (persist.locked) {

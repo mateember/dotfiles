@@ -29,6 +29,7 @@ Singleton {
         { id: "recorder",      name: "Screen Recorder",      subtitle: "Active recording timer & stop pill",       icon: "videocam",            section: "right",  enabled: true },
         { id: "privacy",       name: "Privacy Indicator",    subtitle: "Active mic, camera & screen share alert",  icon: "shield",              section: "right",  enabled: true },
         { id: "storage",       name: "Removable Drives",     subtitle: "USB / SD automounter and safe eject",      icon: "usb",                 section: "right",  enabled: true },
+        { id: "background",    name: "Background",           subtitle: "Folder slideshows, images, and live scenes", icon: "photo_library",     section: "right",  enabled: true },
         { id: "tray",          name: "System Tray",          subtitle: "Background app tray icons",                icon: "dock_to_bottom",      section: "right",  enabled: true },
         { id: "display",       name: "Display & Brightness", subtitle: "Brightness, keyboard light, screenshots",  icon: "desktop_windows",     section: "right",  enabled: true },
         { id: "layout",        name: "Tiling Layout",        subtitle: "Scrolling / dwindle layout switch",        icon: "view_column",         section: "right",  enabled: true },

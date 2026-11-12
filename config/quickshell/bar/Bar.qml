@@ -55,6 +55,7 @@ PanelWindow {
     Component { id: compRecorder; RecorderIndicator {} }
     Component { id: compPrivacy; PrivacyIndicator {} }
     Component { id: compStorage; StorageModule {} }
+    Component { id: compBackground; BackgroundModule {} }
     Component { id: compTray; Tray {} }
     Component { id: compDisplay; Display {} }
     Component { id: compLayout; TilingLayout {} }
@@ -79,6 +80,7 @@ PanelWindow {
             case "recorder": return compRecorder;
             case "privacy": return compPrivacy;
             case "storage": return compStorage;
+            case "background": return compBackground;
             case "tray": return compTray;
             case "display": return compDisplay;
             case "layout": return compLayout;

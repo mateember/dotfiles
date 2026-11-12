@@ -25,11 +25,11 @@ Configuration lives in `~/dotfiles/` and is symlinked into `~/.config/` and `~/.
                                ▼                               ▼
        ┌───────────────────────────────────────────────────────────────┐
        │                 Quickshell Desktop Shell (qs)                 │
-       │  - Top Panel (Bar): 21 modular, reorderable widgets           │
+       │  - Top Panel (Bar): 22 modular, reorderable widgets           │
        │  - Launcher (SUPER+Space) & Overview (SUPER+Tab)              │
        │  - Quick Settings (SUPER+,) & Notifications / OSD Toasts      │
        │  - Capture Studio (SUPER+Print) & Polkit Prompt               │
-       │  - Per-monitor Bing Wallpaper Slideshow                       │
+       │  - Multi-mode Background (slideshows, images, shaders, loops) │
        └───────────────────────────────────────────────────────────────┘
                                │
                   Separate systemd unit (hcs-lock.service)
@@ -62,10 +62,10 @@ The shell is built with **Qt 6 / QML** via Quickshell and styled after **COSMIC 
 
 Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method> [args]`:
 
-- **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar back` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
+- **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar back` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `background`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
 - **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>`
 - **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
-- **System & appearance**: `wallpaper next|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
+- **System & appearance**: `wallpaper next|prev|togglePause|setMode <m>|setFolder <p>|setImage <p>|setScene <id>|setPalette <id>|setSolidColor <hex>|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
 - **Settings windows**: `barsettings toggle|open|close|reset`, `opacity toggle|open|close|reset`
 - **Weather**: `weather refresh`, `weather open [settings|location|bar|popup|units]`
 
@@ -165,7 +165,7 @@ Hyprland uses the built-in `scrolling` layout by default: windows open as column
 
 ## 4. Top Panel & Modular Widgets
 
-The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.qml)) hosts 21 modular widgets configurable via **Bar Settings**:
+The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.qml)) hosts 22 modular widgets configurable via **Bar Settings**:
 
 | Widget | Left Click | Right / Middle Click | Details |
 |---|---|---|---|
@@ -179,6 +179,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | **Screen Recorder** | Stop & save recording | Right/Middle: Open Capture Studio | Shown only while recording (`REC MM:SS`); saves to `~/Videos/Recordings/`. |
 | **Privacy Indicator** | Open active capture list | — | Appears when mic, webcam, or screen capture is active, with quick mute/stop actions. |
 | **Removable Drives** | Open drive menu | — | Appears when USB/SD media is present; supports automount, open in Files, and safe eject (`udisksctl`). |
+| **Background** | Open Background settings | Right: Next wallpaper / toggle anim pause. Middle: Pause/Resume | Switch between Folder slideshows, Single images/GIFs, Live GPU shader scenes or GIF/video loops, and Solid backdrops, plus blur/dim/fit effects. |
 | **System Tray** | Focus / activate item | Right: App context menu | Hosts StatusNotifierItem (SNI) tray icons. |
 | **Display & Brightness** | Open display menu | Scroll: adjust brightness | Laptop + external DDC/CI brightness, keyboard backlight (`Off`/`Low`/`High`), `60/120 Hz` toggle, and quick capture actions. |
 | **Tiling Layout** | Toggle `scrolling` ↔ `dwindle` | Right: Layout list & actions | Switch between `dwindle`, `master`, `scrolling`, and `monocle`, plus column/split actions. |
@@ -195,8 +196,8 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 
 ## 5. Built-In Shell Apps & Features
 
-- **Widget Back Navigation (`Escape` & `←`)**: Drilling down from **Quick Settings** into a bar widget or **Capture Studio**, from **Display** into **Capture Studio**, from **Bar Settings** into **Opacity & Transparency**, or into sub-pages/prompts (such as **System Stats** sensor views, **Weather** settings, inline **Network** password prompts, or **Power** confirmations) pushes onto the shell navigation history (`WidgetHistory.qml`). Pressing `Escape` or clicking the header `←` button steps back to the previous view/widget before closing; clicking outside or completing an action dismisses everything immediately.
-- **Bar Settings** (`!bar` or `qs ipc call barsettings toggle`): Toggle any of the 21 widgets, reorder within sections (`↑` / `↓`), move between Left/Center/Right, or reset defaults (`bar-config.json`).
+- **Widget Back Navigation (`Escape` & `←`)**: Drilling down from **Quick Settings** into a bar widget or **Capture Studio**, from **Display** into **Background** or **Capture Studio**, from **Bar Settings** into **Opacity & Transparency**, or into sub-pages/prompts (such as **Background** effects, **System Stats** sensor views, **Weather** settings, inline **Network** password prompts, or **Power** confirmations) pushes onto the shell navigation history (`WidgetHistory.qml`). Pressing `Escape` or clicking the header `←` button steps back to the previous view/widget before closing; clicking outside or completing an action dismisses everything immediately.
+- **Bar Settings** (`!bar` or `qs ipc call barsettings toggle`): Toggle any of the 22 widgets, reorder within sections (`↑` / `↓`), move between Left/Center/Right, or reset defaults (`bar-config.json`).
 - **Weather Settings** (Gear icon, right-click bar widget, or `qs ipc call weather open settings`): Toggle between **HungaroMet + Open-Meteo** (10-minute Hungarian station measurements merged with Open-Meteo forecasts, falling back automatically abroad) and **Open-Meteo only**; toggle and reorder bar pills (`icon`, `temp`, `condition`, `feelsLike`, `rain`, `wind`, `humidity`, `highLow`, `location`), popup sections, and 10 detail tiles; configure IP auto-locate, Open-Meteo city search, saved locations, custom coordinates, units, and refresh interval (`weather-config.json`).
 - **Opacity & Transparency** (`!opacity` or `qs ipc call opacity toggle`): Independent opacity sliders for Widgets (`96%`), Bar (`66%`), Notifications (`96%`), and OSD Toast (`96%`), with **Default**, **Frosted Glass**, **Clear**, and **Solid** presets (`opacity-config.json`).
 - **App Launcher** (`SUPER + Space`):
@@ -204,10 +205,10 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
   - `=expr` (or plain arithmetic): evaluates via `qalc`; Enter copies result.
   - `>cmd`: executes a shell command (`Shift + Enter` runs it inside `kitty`).
   - `:name` (or `SUPER + .`): searches Unicode emojis; Enter copies and types via `wtype`, `Shift + Enter` copies only.
-  - `!name` (also `/name`, `@name`): launches Quickshell panels and tools as centered floating windows (`!bar`, `!opacity`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper`, `!colorpicker`, `!power`, etc.).
+  - `!name` (also `/name`, `@name`): launches Quickshell panels and tools as centered floating windows (`!bar`, `!background`, `!opacity`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper`, `!colorpicker`, `!power`, etc.).
 - **Capture Studio** (`SUPER + Print`): Region, window, full-screen, and color picker screenshots (`Copy`, `Save & Copy` to `~/Pictures/Screenshots/`, or `Annotate` with `swappy`, with `0s`/`3s`/`5s` delay), plus screen recording (`wf-recorder` / `wl-screenrec` to `~/Videos/Recordings/` with optional system or mic audio).
 - **Lock Screen** (`SUPER + L` or idle timeout): Runs in an isolated Quickshell process (`lock.qml` via `lock.sh`). Runs password (`qs-lock`) and Howdy IR (`qs-lock-face`) PAM checks in parallel so typing a password unlocks immediately even while Howdy is scanning, automatically hides face UI when Howdy/face models are absent, avoids pre-suspend Howdy unlocks via `lockForSleep`, shows pause-only MPRIS media controls, and offers a bottom-right `Suspend` pill.
-- **Wallpaper Slideshow**: Rotates images in `~/Pictures/BingWallpaper` every 5 minutes (`Config.qml`) with per-monitor selection and smooth crossfades (instant when a fullscreen window is active). Trigger manually with `!wallpaper` or `qs ipc call wallpaper next`.
+- **Background & Wallpaper Engine** ([`BackgroundModule.qml`](file:///home/mate/dotfiles/config/quickshell/modules/BackgroundModule.qml), `!background`): Switch cleanly between **Folder** slideshows (custom/recent folders, random vs sequential, configurable interval or manual, subfolders toggle, per-monitor vs synced, virtualized thumbnail browser, Bing fetch trigger), **Single Image** (built-in folder gallery or native `zenity` file picker with `.webp` conversion cache and recent strip), **Animated** (5 GPU fragment shaders — *Aurora Silk*, *Ambient Orbs*, *Starfield*, *Silk Waves*, *Velvet Flow* — with palettes/eyedropper/speed/intensity, or looping `.gif`/video clips converted via `ffmpeg`, auto-pausing on fullscreen or Power Saver), and **Solid** backdrops (swatches, hex/`hyprpicker` eyedropper, vignette). Shared **Effects** include fit mode (`Fill`/`Fit`/`Stretch`/`Center`), crossfade speed, dim, blur, and subtle Ken Burns pan/zoom, persisted in `wallpaper-config.json` and mirrored (blurred) onto the lock screen.
 
 ---
 

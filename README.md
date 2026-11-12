@@ -20,7 +20,7 @@ Run [`link.sh`](file:///home/mate/dotfiles/link.sh) to symlink everything into p
 
 - **Desktop Environment** ([`config/hypr/`](file:///home/mate/dotfiles/config/hypr), [`config/quickshell/`](file:///home/mate/dotfiles/config/quickshell)):
   - Hyprland (Lua config) with scrolling layout, touchpad gestures, dynamic `SUPER+F` column width toggling, and window/layer rules
-  - Quickshell desktop shell with a 21-widget customizable top bar, app launcher (`=`, `>`, `:`, `!`), Overview, Quick Settings, Capture & Screen Recording studio, notification center & OSDs, polkit prompt, Bing wallpaper slideshow, and a separate-process Wayland lock screen (password + Howdy IR)
+  - Quickshell desktop shell with a 22-widget customizable top bar, app launcher (`=`, `>`, `:`, `!`), Overview, Quick Settings, Capture & Screen Recording studio, notification center & OSDs, polkit prompt, multi-mode background & animated shader engine, and a separate-process Wayland lock screen (password + Howdy IR)
 - **Shell, Terminal & Editor**:
   - [`config/fish/`](file:///home/mate/dotfiles/config/fish) — Fish shell with Starship/Zoxide, NixOS & utility aliases, and helper functions
   - [`config/kitty/`](file:///home/mate/dotfiles/config/kitty) — Kitty terminal configuration

@@ -31,6 +31,14 @@ BarButton {
 
         PopupHeader {
             title: "Display"
+            IconButton {
+                icon: "wallpaper"
+                onClicked: {
+                    const scr = pop.barWindow?.screen?.name ?? "";
+                    WidgetHistory.push({ kind: "popup", id: pop.popupId, asWindow: Popups.asWindow, fromQuickSettings: Popups.fromQuickSettings });
+                    Popups.restore("background@" + scr, Popups.asWindow, Popups.fromQuickSettings);
+                }
+            }
             AppButton { command: ["cosmic-settings", "displays"] }
         }
 
