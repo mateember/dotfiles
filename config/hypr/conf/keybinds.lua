@@ -59,7 +59,7 @@ hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAUL
 hl.bind("xf86audiomute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
 hl.bind("xf86audioplay", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("F11", hl.dsp.exec_cmd("playerctl play-pause"))
+hl.bind("CTRL + ALT + Tab", hl.dsp.exec_cmd("playerctl play-pause"))
 hl.bind("ALT + P", hl.dsp.exec_cmd("playerctl play-pause"))
 hl.bind("xf86audionext", hl.dsp.exec_cmd("playerctl next"))
 hl.bind("xf86audioprev", hl.dsp.exec_cmd("playerctl previous"))

@@ -154,7 +154,7 @@ Hyprland uses the built-in `scrolling` layout by default: windows open as column
 | `XF86AudioRaiseVolume` / `LowerVolume` | Adjusts output volume by ±5% (capped at 150%) + OSD toast. |
 | `XF86AudioMute` | Toggles output mute + OSD toast. |
 | `XF86AudioMicMute` | Toggles microphone mute + OSD toast. |
-| `XF86AudioPlay`, `F11`, `ALT + P` | Toggles media playback (`playerctl play-pause`). |
+| `XF86AudioPlay`, `CTRL + ALT + Tab` (F11 overview key), `ALT + P` | Toggles media playback (`playerctl play-pause`). |
 | `XF86AudioNext` / `Prev` | Skips track forward / backward. |
 | `XF86MonBrightnessUp` / `Down` | Adjusts laptop screen brightness by ±10% + OSD toast. |
 | Laptop Lid Close | With 1 monitor: suspends system. With external monitor: disables `eDP-1`. |
