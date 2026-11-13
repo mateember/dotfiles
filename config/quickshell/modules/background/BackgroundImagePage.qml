@@ -6,9 +6,10 @@ import Quickshell.Widgets
 import qs
 import qs.components
 import qs.services
+import qs.wallpaper
 import "../weather"
 
-// Single image tab: native zenity file picker (including .webp conversion),
+// Single image tab: native zenity file picker (including .apng & .webp),
 // recent images strip, and a virtualized in-popup folder gallery browser.
 ColumnLayout {
     id: root
@@ -20,7 +21,10 @@ ColumnLayout {
 
     readonly property string browseNorm: Wallpapers.normalizePath(Wallpapers.browseDir)
     readonly property string singleNorm: Wallpapers.normalizePath(Wallpapers.singleImagePath)
-    readonly property bool isCurrentGif: Wallpapers.isGifPath(Wallpapers.singleImagePath)
+    readonly property bool isCurrentAnimated: Wallpapers.isGifPath(Wallpapers.singleImagePath)
+        || Wallpapers.isApngPath(Wallpapers.singleImagePath)
+        || Wallpapers.singleImageIsApng
+        || (Wallpapers.hasWebpPlugin && Wallpapers.isWebpPath(Wallpapers.singleImagePath))
 
     property var browseFiles: []
 
@@ -30,7 +34,16 @@ ColumnLayout {
             const url = String(browseModel.get(i, "fileUrl") || "");
             const name = String(browseModel.get(i, "fileName") || "");
             const path = String(browseModel.get(i, "filePath") || Wallpapers.urlToPath(url));
-            if (url) arr.push({ name: name, path: path, url: url, isGif: Wallpapers.isGifPath(name) });
+            if (url) {
+                arr.push({
+                    name: name,
+                    path: path,
+                    url: url,
+                    isGif: Wallpapers.isGifPath(name),
+                    isApng: Wallpapers.isApngPath(name),
+                    isWebp: Wallpapers.isWebpPath(name)
+                });
+            }
         }
         root.browseFiles = arr;
     }
@@ -44,7 +57,7 @@ ColumnLayout {
     FolderListModel {
         id: browseModel
         folder: Wallpapers.pathToUrl(Wallpapers.browseDir)
-        nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.svg", "*.gif"]
+        nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.apng", "*.bmp", "*.svg", "*.gif"].concat(Wallpapers.hasWebpPlugin ? ["*.webp"] : [])
         showDirs: false
         caseSensitive: false
         sortField: FolderListModel.Name
@@ -79,13 +92,16 @@ ColumnLayout {
                     border.width: 1
                     border.color: Theme.componentDivider
 
-                    Image {
+                    WallpaperScene {
                         anchors.fill: parent
-                        source: Wallpapers.resolvedSingleImageUrl
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: false
-                        sourceSize: Qt.size(160, 90)
+                        visible: Wallpapers.resolvedSingleImageUrl !== ""
+                        mode: "image"
+                        imageUrl: (root.popupOpen && root.isCurrentPage) ? Wallpapers.resolvedSingleImageUrl : ""
+                        blurAmount: 0
+                        dimAmount: 0
+                        decodeWidth: 160
+                        decodeHeight: 90
+                        paused: true
                     }
 
                     Icon {
@@ -114,7 +130,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: Wallpapers.singleImagePath
                             ? Wallpapers.displayPath(Wallpapers.singleImagePath)
-                            : "Supports JPG, PNG, SVG, GIF & WebP"
+                            : "Supports JPG, PNG, APNG, WebP, SVG & GIF"
                         font.pixelSize: 11
                         color: Theme.textDim
                         elide: Text.ElideMiddle
@@ -157,11 +173,11 @@ ColumnLayout {
                 wrapMode: Text.WordWrap
             }
 
-            // GIF speed selector when current single image is an animated GIF
+            // Playback speed selector when current single image is an animated image
             OptionPills {
-                visible: root.isCurrentGif && Wallpapers.mode === "image"
+                visible: root.isCurrentAnimated && Wallpapers.mode === "image"
                 Layout.fillWidth: true
-                label: "GIF Speed"
+                label: "Playback Speed"
                 options: [
                     { value: 0.5, label: "0.5x" },
                     { value: 1.0, label: "1x" },
@@ -197,7 +213,9 @@ ColumnLayout {
             delegate: ClippingRectangle {
                 required property string modelData
                 readonly property bool isSel: Wallpapers.normalizePath(modelData) === root.singleNorm
-                readonly property bool isWebp: modelData.toLowerCase().endsWith(".webp")
+                readonly property bool isWebp: Wallpapers.isWebpPath(modelData)
+                readonly property bool isApng: Wallpapers.isApngPath(modelData)
+                readonly property bool canThumb: (!isWebp || Wallpapers.hasWebpPlugin) && !isApng
 
                 width: 72
                 height: 40
@@ -210,8 +228,8 @@ ColumnLayout {
 
                 Image {
                     anchors.fill: parent
-                    visible: !isWebp
-                    source: Wallpapers.pathToUrl(modelData)
+                    visible: canThumb
+                    source: canThumb ? Wallpapers.pathToUrl(modelData) : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: false
@@ -219,9 +237,9 @@ ColumnLayout {
                 }
 
                 Icon {
-                    visible: isWebp
+                    visible: !canThumb
                     anchors.centerIn: parent
-                    icon: "image"
+                    icon: isApng ? "animation" : "image"
                     size: 16
                     color: Theme.textDim
                 }
@@ -368,12 +386,22 @@ ColumnLayout {
                                 : Theme.componentDivider
 
                     Image {
+                        id: bThumbImg
                         anchors.fill: parent
-                        source: modelData.url
+                        visible: !modelData.isApng
+                        source: modelData.isApng ? "" : modelData.url
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         cache: false
                         sourceSize: Qt.size(240, 135)
+                    }
+
+                    Icon {
+                        visible: modelData.isApng || bThumbImg.status === Image.Error
+                        anchors.centerIn: parent
+                        icon: modelData.isApng ? "animation" : "image"
+                        size: 20
+                        color: Theme.textDim
                     }
 
                     Rectangle {
@@ -389,7 +417,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: Boolean(modelData.isGif)
+                        visible: Boolean(modelData.isGif || modelData.isApng || modelData.isWebp)
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.margins: 4
@@ -401,7 +429,7 @@ ColumnLayout {
                         StyledText {
                             id: gifTag
                             anchors.centerIn: parent
-                            text: "GIF"
+                            text: modelData.isGif ? "GIF" : modelData.isApng ? "APNG" : "WEBP"
                             font.pixelSize: 9
                             font.weight: Font.Bold
                             color: Theme.accent
@@ -430,7 +458,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
-                text: browseFilter.text.trim() ? "No matching images" : "No JPG/PNG/GIF images in this folder (use Browse File… for WebP)"
+                text: browseFilter.text.trim() ? "No matching images" : "No compatible images found in this folder"
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.textDim
             }

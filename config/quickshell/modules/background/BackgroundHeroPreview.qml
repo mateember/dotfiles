@@ -41,11 +41,21 @@ ColumnLayout {
             return "Folder • " + timing + " • " + Wallpapers.count + (Wallpapers.count === 1 ? " image" : " images");
         }
         if (Wallpapers.mode === "image") {
-            const kind = Wallpapers.isGifPath(Wallpapers.singleImagePath) ? "Animated GIF" : "Single Image";
+            let kind = "Single Image";
+            if (Wallpapers.isGifPath(Wallpapers.singleImagePath)) kind = "Animated GIF";
+            else if (Wallpapers.isApngPath(Wallpapers.singleImagePath) || Wallpapers.singleImageIsApng) kind = "Animated PNG";
+            else if (Wallpapers.isWebpPath(Wallpapers.singleImagePath)) kind = "WebP Image";
             return kind + (Wallpapers.kenBurns ? " • Ken Burns" : "");
         }
         if (Wallpapers.mode === "animated") {
-            const kind = Wallpapers.animatedKind === "scene" ? "Live Shader" : "Loop";
+            let kind = "Live Shader";
+            if (Wallpapers.animatedKind === "file") {
+                if (Wallpapers.isVideoPath(Wallpapers.animatedFilePath)) kind = "Video Loop";
+                else if (Wallpapers.isApngPath(Wallpapers.animatedFilePath) || Wallpapers.animatedFileIsApng) kind = "APNG Loop";
+                else if (Wallpapers.isWebpPath(Wallpapers.animatedFilePath)) kind = "Animated WebP";
+                else if (Wallpapers.isGifPath(Wallpapers.animatedFilePath)) kind = "GIF Loop";
+                else kind = "Loop";
+            }
             const state = Wallpapers.animatedPaused ? "Paused" : "Playing";
             return kind + " • " + state;
         }

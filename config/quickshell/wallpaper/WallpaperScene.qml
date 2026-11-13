@@ -4,9 +4,9 @@ import qs
 import qs.services
 
 // Reusable wallpaper renderer supporting all 4 background modes:
-//   - "folder" / "image": double-buffered Image & AnimatedImage (.gif) crossfades + optional Ken Burns motion
+//   - "folder" / "image": double-buffered Image & AnimatedImage (.gif / .webp) crossfades + optional Ken Burns motion (plus VideoLayer for .apng)
 //   - "animated" ("scene"): GPU Fragment ShaderEffect (aurora, orbs, stars, waves, plasma)
-//   - "animated" ("file"):  AnimatedImage (.gif / ffmpeg-cached video loop)
+//   - "animated" ("file"):  VideoLayer (QtMultimedia full-framerate video / APNG) or AnimatedImage (.webp / .gif / ffmpeg fallback)
 //   - "solid":              Solid color with optional subtle radial vignette
 // Used by desktop Wallpaper.qml, live popup previews, and LockSurface.qml.
 Item {
@@ -30,6 +30,8 @@ Item {
     property real dimAmount: Wallpapers.dimAmount
     property real blurAmount: Wallpapers.blurAmount
     property bool paused: false
+    property bool staticPreviewOnly: false
+    property bool isApngMedia: false
     property bool instantTransitions: false
     property real decodeWidth: width
     property real decodeHeight: height
@@ -39,6 +41,7 @@ Item {
     readonly property bool isMediaMode: mode === "folder" || mode === "image" || (mode === "animated" && animatedKind === "file")
     readonly property bool isShaderMode: mode === "animated" && animatedKind === "scene"
     readonly property bool isSolidMode: mode === "solid"
+    readonly property bool useVideoLayer: isMediaMode && !staticPreviewOnly && isVideoUrl(imageUrl) && imageUrl !== ""
 
     readonly property int resolvedFillMode: {
         if (fitMode === "fit") return Image.PreserveAspectFit;
@@ -54,8 +57,35 @@ Item {
 
     signal imageApplied(string url)
 
+    function urlLowerClean(u: string): string {
+        return (u || "").toLowerCase().split("?")[0];
+    }
+
     function isGifUrl(u: string): bool {
-        return (u || "").toLowerCase().split("?")[0].endsWith(".gif");
+        return urlLowerClean(u).endsWith(".gif");
+    }
+
+    function isAnimatedImgUrl(u: string): bool {
+        const clean = urlLowerClean(u);
+        return clean.endsWith(".gif") || (Wallpapers.hasWebpPlugin && clean.endsWith(".webp"));
+    }
+
+    function isVideoUrl(u: string): bool {
+        if (!Wallpapers.hasVideoBackend || !u) return false;
+        const clean = urlLowerClean(u);
+        if (clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".mkv")
+            || clean.endsWith(".mov") || clean.endsWith(".m4v") || clean.endsWith(".avi")
+            || clean.endsWith(".apng")) {
+            return true;
+        }
+        if (clean.endsWith(".png")) {
+            if (root.isApngMedia) return true;
+            if (root.mode === "animated" && root.animatedKind === "file"
+                && Wallpapers.animatedFileIsApng && u === Wallpapers.resolvedAnimatedFileUrl) return true;
+            if (root.mode === "image"
+                && Wallpapers.singleImageIsApng && u === Wallpapers.resolvedSingleImageUrl) return true;
+        }
+        return false;
     }
 
     function loadUrl(url: string) {
@@ -95,10 +125,18 @@ Item {
     }
 
     onImageUrlChanged: {
-        if (isMediaMode && imageUrl !== "") loadUrl(imageUrl);
+        if (isMediaMode && imageUrl !== "" && !useVideoLayer) loadUrl(imageUrl);
     }
     onIsMediaModeChanged: {
-        if (isMediaMode && imageUrl !== "") loadUrl(imageUrl);
+        if (isMediaMode && imageUrl !== "" && !useVideoLayer) loadUrl(imageUrl);
+    }
+    onUseVideoLayerChanged: {
+        if (useVideoLayer) {
+            slotA.unload();
+            slotB.unload();
+        } else if (isMediaMode && imageUrl !== "") {
+            loadUrl(imageUrl);
+        }
     }
 
     clip: true
@@ -172,14 +210,60 @@ Item {
             }
         }
 
-        // Media layer (Folder slideshow, Single Image, or Animated GIF/video loop)
+        // Native QtMultimedia Video / APNG layer (full framerate & resolution)
+        Loader {
+            id: videoLoader
+            anchors.fill: parent
+            active: root.useVideoLayer
+            sourceComponent: Wallpapers.videoLayerComponent
+        }
+
+        Binding {
+            target: videoLoader.item
+            property: "sourceUrl"
+            value: root.imageUrl
+            when: videoLoader.status === Loader.Ready && videoLoader.item !== null
+        }
+        Binding {
+            target: videoLoader.item
+            property: "fitMode"
+            value: root.fitMode
+            when: videoLoader.status === Loader.Ready && videoLoader.item !== null
+        }
+        Binding {
+            target: videoLoader.item
+            property: "paused"
+            value: root.paused
+            when: videoLoader.status === Loader.Ready && videoLoader.item !== null
+        }
+        Binding {
+            target: videoLoader.item
+            property: "playbackRate"
+            value: (root.mode === "animated" || root.mode === "image") ? root.animSpeed : 1.0
+            when: videoLoader.status === Loader.Ready && videoLoader.item !== null
+        }
+
+        Connections {
+            target: videoLoader.item
+            function onMediaReady() {
+                if (root.reportScreenUrl) Wallpapers.setScreenUrl(root.screenName, root.imageUrl);
+                root.imageApplied(root.imageUrl);
+            }
+            function onMediaError(msg) {
+                if (root.mode === "animated" && root.animatedKind === "file") {
+                    Wallpapers.reportVideoError(msg);
+                }
+            }
+        }
+
+        // Media layer (Folder slideshow, Single Image, or AnimatedImage .webp / .gif / fallback loop)
         Item {
             id: mediaStage
             anchors.fill: parent
-            visible: root.isMediaMode
+            visible: root.isMediaMode && !root.useVideoLayer
 
             // Subtle Ken Burns motion (only for static images when enabled and unpaused)
-            readonly property bool kbActive: root.isMediaMode && root.kenBurns && !root.paused && !root.frontSlot.isGif
+            readonly property bool kbActive: visible && root.kenBurns && !root.paused && root.frontSlot.allowsKenBurns
             property real kbScale: 1.0
             property real kbOffsetX: 0.0
             property real kbOffsetY: 0.0
@@ -220,9 +304,19 @@ Item {
                 property string url: ""
                 property bool isGif: false
                 property bool loaded: false
+                readonly property bool allowsKenBurns: !slot.isGif || (gifImg.status === AnimatedImage.Ready && gifImg.frameCount <= 1)
+
+                function unload() {
+                    slot.loaded = false;
+                    slot.isGif = false;
+                    slot.url = "";
+                    slot.opacity = 0;
+                    staticImg.source = "";
+                    gifImg.source = "";
+                }
 
                 function load(u: string) {
-                    const g = root.isGifUrl(u);
+                    const g = root.isAnimatedImgUrl(u);
                     slot.loaded = false;
                     slot.isGif = g;
                     slot.url = u;
@@ -261,7 +355,7 @@ Item {
                     asynchronous: true
                     cache: false
                     smooth: true
-                    playing: slot.isGif && root.isMediaMode && !root.paused && slot.opacity > 0.01
+                    playing: slot.isGif && mediaStage.visible && !root.paused && slot.opacity > 0.01 && gifImg.frameCount !== 1
                     speed: root.mode === "animated" || root.mode === "image" ? root.animSpeed : 1.0
                     onStatusChanged: {
                         if (status === AnimatedImage.Ready && slot.isGif) {

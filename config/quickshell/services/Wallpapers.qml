@@ -8,8 +8,8 @@ import qs
 
 // Persistent wallpaper & background controller supporting:
 //   - "folder":   Folder slideshow (random / sequential, configurable interval, optional subfolders)
-//   - "image":    Single static image or animated GIF
-//   - "animated": Built-in live GPU shaders (Aurora, Orbs, Stars, Waves, Plasma) or GIF/video loop
+//   - "image":    Single static image, animated GIF, APNG, or WebP
+//   - "animated": Built-in live GPU shaders (Aurora, Orbs, Stars, Waves, Plasma) or full-framerate video / APNG / WebP / GIF loops
 //   - "solid":    Solid color or subtle vignette backdrop
 //
 // Settings persist in Quickshell.statePath("wallpaper-config.json"); live per-screen URLs persist
@@ -65,9 +65,15 @@ Singleton {
     property string solidColor: "#1B1B1B"
     property bool solidVignette: true
 
-    // ---- Transient Status ----
+    // ---- Transient Status & Runtime Codec Capabilities ----
+    property var videoLayerComponent: null        // dynamically loaded ../wallpaper/VideoLayer.qml when QtMultimedia is available
+    readonly property bool hasVideoBackend: videoLayerComponent !== null
+    property bool hasWebpPlugin: false            // true when qtimageformats (libqwebp.so) is present
+    property bool singleImageIsApng: false        // true when singleImagePath (.png) is an APNG stream
+    property bool animatedFileIsApng: false       // true when animatedFilePath (.png) is an APNG stream
+
     property bool scanningFolder: false
-    property var folderFiles: []                  // [{ name, path, url, isGif }]
+    property var folderFiles: []                  // [{ name, path, url, isGif, isWebp }]
     property bool convertingMedia: false
     property string convertError: ""
     property bool bingFetching: false
@@ -204,17 +210,26 @@ Singleton {
         return normalizePath(p).toLowerCase().endsWith(".gif");
     }
 
+    function isApngPath(p: string): bool {
+        return normalizePath(p).toLowerCase().endsWith(".apng");
+    }
+
+    function isPngPath(p: string): bool {
+        return normalizePath(p).toLowerCase().endsWith(".png");
+    }
+
     function isWebpPath(p: string): bool {
         return normalizePath(p).toLowerCase().endsWith(".webp");
     }
 
     function isVideoPath(p: string): bool {
         const low = normalizePath(p).toLowerCase();
-        return low.endsWith(".mp4") || low.endsWith(".webm") || low.endsWith(".mkv") || low.endsWith(".mov");
+        return low.endsWith(".mp4") || low.endsWith(".webm") || low.endsWith(".mkv")
+            || low.endsWith(".mov") || low.endsWith(".m4v") || low.endsWith(".avi");
     }
 
-    function needsConversion(p: string): bool {
-        return isWebpPath(p) || isVideoPath(p);
+    function reportVideoError(msg: string): void {
+        if (!root.passiveMode && msg) root.convertError = msg;
     }
 
     // ---- Runtime Per-Screen History & Active URLs ----
@@ -678,7 +693,7 @@ Singleton {
         Qt.callLater(() => root.next());
     }
 
-    // ---- Media Resolution (Native vs ffmpeg Cache for .webp / video) ----
+    // ---- Media Resolution (Native QtMultimedia / libqwebp vs ffmpeg Fallback) ----
     function hashString(str: string): string {
         let h = 2166136261;
         for (let i = 0; i < str.length; i++) {
@@ -690,20 +705,42 @@ Singleton {
 
     function resolveSingleMedia(path: string): void {
         const clean = normalizePath(path);
+        root.singleImageIsApng = isApngPath(clean);
         if (!clean) {
             root.resolvedSingleImageUrl = "";
             return;
         }
-        if (!needsConversion(clean)) {
+        if (isGifPath(clean)) {
+            root.convertError = "";
             root.resolvedSingleImageUrl = pathToUrl(clean);
             return;
         }
-        if (root.passiveMode) return;
-        startMediaConvert("single", clean, isVideoPath(clean));
+        if (isWebpPath(clean)) {
+            if (root.hasWebpPlugin) {
+                root.convertError = "";
+                root.resolvedSingleImageUrl = pathToUrl(clean);
+                return;
+            }
+            if (!root.passiveMode) startMediaConvert("single", clean, false, false);
+            return;
+        }
+        if (isApngPath(clean) || isVideoPath(clean)) {
+            if (root.hasVideoBackend) {
+                root.convertError = "";
+                root.resolvedSingleImageUrl = pathToUrl(clean);
+                return;
+            }
+            if (!root.passiveMode) startMediaConvert("single", clean, true, isApngPath(clean));
+            return;
+        }
+        root.convertError = "";
+        root.resolvedSingleImageUrl = pathToUrl(clean);
+        if (isPngPath(clean) && !root.passiveMode) enqueuePngProbe("single", clean);
     }
 
     function resolveAnimatedMedia(path: string): void {
         const clean = normalizePath(path);
+        root.animatedFileIsApng = isApngPath(clean);
         if (!clean) {
             root.resolvedAnimatedFileUrl = "";
             return;
@@ -713,33 +750,73 @@ Singleton {
             root.resolvedAnimatedFileUrl = pathToUrl(clean);
             return;
         }
-        if (!needsConversion(clean)) {
-            root.convertError = "";
-            root.resolvedAnimatedFileUrl = pathToUrl(clean);
+        if (isWebpPath(clean)) {
+            if (root.hasWebpPlugin) {
+                root.convertError = "";
+                root.resolvedAnimatedFileUrl = pathToUrl(clean);
+                return;
+            }
+            if (!root.passiveMode) startMediaConvert("animated", clean, false, false);
             return;
         }
-        if (root.passiveMode) return;
-        startMediaConvert("animated", clean, isVideoPath(clean));
+        if (isApngPath(clean) || isVideoPath(clean)) {
+            if (root.hasVideoBackend) {
+                root.convertError = "";
+                root.resolvedAnimatedFileUrl = pathToUrl(clean);
+                return;
+            }
+            if (!root.passiveMode) startMediaConvert("animated", clean, true, isApngPath(clean));
+            return;
+        }
+        root.convertError = "";
+        root.resolvedAnimatedFileUrl = pathToUrl(clean);
+        if (isPngPath(clean) && !root.passiveMode) enqueuePngProbe("animated", clean);
     }
 
-    function startMediaConvert(slot: string, srcPath: string, asGif: bool): void {
+    property var convertQueue: []
+
+    function startMediaConvert(slot: string, srcPath: string, asGif: bool, isApng: bool): void {
         root.convertError = "";
         root.convertingMedia = true;
-        const ext = asGif ? ".gif" : ".png";
-        const outPath = root.cacheDir + "/" + hashString(srcPath) + ext;
-        convertProc.pendingSlot = slot;
+        // Replace any stale queued job for the same slot so rapid clicks never backlog.
+        root.convertQueue = root.convertQueue.filter(j => j.slot !== slot);
+        root.convertQueue.push({ slot: slot, srcPath: srcPath, asGif: asGif, isApng: isApng });
+        if (!convertProc.running) runNextMediaConvert();
+    }
+
+    function runNextMediaConvert(): void {
+        if (convertProc.running || root.convertQueue.length === 0) {
+            if (!convertProc.running && root.convertQueue.length === 0) root.convertingMedia = false;
+            return;
+        }
+        const job = root.convertQueue.shift();
+        const suffix = !job.asGif ? ".png" : (job.isApng ? "-apng-hq.gif" : "-clip-hq.gif");
+        const outPath = root.cacheDir + "/" + hashString(job.srcPath) + suffix;
+        convertProc.pendingSlot = job.slot;
+        convertProc.pendingSrc = job.srcPath;
         convertProc.pendingOut = outPath;
-        convertProc.running = false;
-        if (asGif) {
-            // Convert video (capped at first 12s, 15fps, 960px wide) to a looping GIF in cache.
-            convertProc.command = [
-                "sh", "-c",
-                'mkdir -p "$3"; ' +
-                'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                '  ffmpeg -y -v error -t 12 -i "$1" -vf "fps=15,scale=\'min(960,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=192[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
-                'fi',
-                "sh", srcPath, outPath, root.cacheDir
-            ];
+        if (job.asGif) {
+            if (job.isApng) {
+                // Fallback when QtMultimedia is absent: preserve APNG duration and up to 50fps / 1920px
+                convertProc.command = [
+                    "sh", "-c",
+                    'mkdir -p "$3"; ' +
+                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
+                    '  ffmpeg -y -v error -i "$1" -vf "fps=\'min(50,source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
+                    'fi',
+                    "sh", job.srcPath, outPath, root.cacheDir
+                ];
+            } else {
+                // Fallback video clip loop when QtMultimedia is absent (up to 20s, 30fps, 1280px)
+                convertProc.command = [
+                    "sh", "-c",
+                    'mkdir -p "$3"; ' +
+                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
+                    '  ffmpeg -y -v error -t 20 -i "$1" -vf "fps=30,scale=\'min(1280,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=224[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
+                    'fi',
+                    "sh", job.srcPath, outPath, root.cacheDir
+                ];
+            }
         } else {
             convertProc.command = [
                 "sh", "-c",
@@ -747,7 +824,7 @@ Singleton {
                 'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
                 '  ffmpeg -y -v error -i "$1" -frames:v 1 "$2"; ' +
                 'fi',
-                "sh", srcPath, outPath, root.cacheDir
+                "sh", job.srcPath, outPath, root.cacheDir
             ];
         }
         convertProc.running = true;
@@ -756,6 +833,7 @@ Singleton {
     Process {
         id: convertProc
         property string pendingSlot: ""
+        property string pendingSrc: ""
         property string pendingOut: ""
         stderr: StdioCollector {
             onStreamFinished: {
@@ -764,15 +842,74 @@ Singleton {
             }
         }
         onExited: code => {
-            root.convertingMedia = false;
             if (code !== 0) {
-                if (!root.convertError) root.convertError = "Could not decode media file";
-                return;
+                if (root.isWebpPath(pendingSrc)) {
+                    root.convertError = "Animated WebP requires qt6.qtimageformats (see docs/NIXOS_NOTES.md)";
+                } else if (!root.convertError) {
+                    root.convertError = "Could not decode media file";
+                }
+            } else {
+                root.convertError = "";
+                const url = root.pathToUrl(pendingOut);
+                if (pendingSlot === "single" && root.normalizePath(root.singleImagePath) === pendingSrc) {
+                    root.resolvedSingleImageUrl = url;
+                } else if (pendingSlot === "animated" && root.normalizePath(root.animatedFilePath) === pendingSrc) {
+                    root.resolvedAnimatedFileUrl = url;
+                }
             }
-            root.convertError = "";
-            const url = root.pathToUrl(pendingOut);
-            if (pendingSlot === "single") root.resolvedSingleImageUrl = url;
-            else if (pendingSlot === "animated") root.resolvedAnimatedFileUrl = url;
+            root.runNextMediaConvert();
+        }
+    }
+
+    // Detect .png-extension APNG streams cleanly via ffprobe so animated .png wallpapers play properly.
+    property var pngProbeQueue: []
+
+    function enqueuePngProbe(slot: string, path: string): void {
+        root.pngProbeQueue.push({ slot: slot, path: path });
+        if (!pngProbeProc.running) runNextPngProbe();
+    }
+
+    function runNextPngProbe(): void {
+        if (pngProbeProc.running || root.pngProbeQueue.length === 0) return;
+        const job = root.pngProbeQueue.shift();
+        pngProbeProc.pendingSlot = job.slot;
+        pngProbeProc.pendingPath = job.path;
+        pngProbeProc.detectedCodec = "";
+        pngProbeProc.command = [
+            "ffprobe", "-v", "error", "-select_streams", "v:0",
+            "-show_entries", "stream=codec_name", "-of", "default=nw=1:nk=1",
+            job.path
+        ];
+        pngProbeProc.running = true;
+    }
+
+    Process {
+        id: pngProbeProc
+        property string pendingSlot: ""
+        property string pendingPath: ""
+        property string detectedCodec: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                pngProbeProc.detectedCodec = text.trim().toLowerCase();
+            }
+        }
+        onExited: code => {
+            if (code === 0 && pngProbeProc.detectedCodec === "apng") {
+                if (pngProbeProc.pendingSlot === "single"
+                        && root.normalizePath(root.singleImagePath) === pngProbeProc.pendingPath) {
+                    root.singleImageIsApng = true;
+                    if (!root.hasVideoBackend) {
+                        root.startMediaConvert("single", pngProbeProc.pendingPath, true, true);
+                    }
+                } else if (pngProbeProc.pendingSlot === "animated"
+                        && root.normalizePath(root.animatedFilePath) === pngProbeProc.pendingPath) {
+                    root.animatedFileIsApng = true;
+                    if (!root.hasVideoBackend) {
+                        root.startMediaConvert("animated", pngProbeProc.pendingPath, true, true);
+                    }
+                }
+            }
+            root.runNextPngProbe();
         }
     }
 
@@ -784,7 +921,7 @@ Singleton {
             const url = String(folder.get(i, "fileUrl") || "");
             const name = String(folder.get(i, "fileName") || "");
             const path = String(folder.get(i, "filePath") || urlToPath(url));
-            if (url) arr.push({ name: name, path: path, url: url, isGif: isGifPath(name) });
+            if (url) arr.push({ name: name, path: path, url: url, isGif: isGifPath(name), isWebp: isWebpPath(name) });
         }
         root.folderFiles = arr;
         if (!root.passiveMode && root.mode === "folder" && root.syncScreens && arr.length > 0) {
@@ -797,9 +934,10 @@ Singleton {
         if (root.includeSubfolders) {
             root.scanningFolder = true;
             recursiveScanProc.running = false;
+            const webpExpr = root.hasWebpPlugin ? ' -o -iname "*.webp"' : '';
             recursiveScanProc.command = [
                 "sh", "-c",
-                'find "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.svg" -o -iname "*.gif" \\) 2>/dev/null | sort -V | head -n 2000',
+                'find "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.svg" -o -iname "*.gif"' + webpExpr + ' \\) 2>/dev/null | sort -V | head -n 2000',
                 "sh", root.folderPath
             ];
             recursiveScanProc.running = true;
@@ -817,7 +955,7 @@ Singleton {
     FolderListModel {
         id: folder
         folder: root.includeSubfolders ? "" : root.pathToUrl(root.folderPath)
-        nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.svg", "*.gif"]
+        nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.svg", "*.gif"].concat(root.hasWebpPlugin ? ["*.webp"] : [])
         showDirs: false
         caseSensitive: false
         sortField: FolderListModel.Name
@@ -836,7 +974,8 @@ Singleton {
                         name: root.baseName(p),
                         path: p,
                         url: root.pathToUrl(p),
-                        isGif: root.isGifPath(p)
+                        isGif: root.isGifPath(p),
+                        isWebp: root.isWebpPath(p)
                     });
                 }
                 root.folderFiles = arr;
@@ -878,13 +1017,13 @@ Singleton {
         } else if (kind === "animatedFile") {
             cmd = [
                 "sh", "-c",
-                'zenity --file-selection --title="Select Animated Wallpaper (GIF / Video)" --filename="$1" --file-filter="Animated & Video | *.gif *.mp4 *.webm *.mkv *.mov *.webp" --file-filter="All files | *" < /dev/null',
+                'zenity --file-selection --title="Select Animated Wallpaper (Video / APNG / WebP / GIF)" --filename="$1" --file-filter="Animated & Video | *.mp4 *.webm *.mkv *.mov *.m4v *.avi *.apng *.png *.webp *.gif" --file-filter="All files | *" < /dev/null',
                 "sh", cleanStart
             ];
         } else {
             cmd = [
                 "sh", "-c",
-                'zenity --file-selection --title="Select Wallpaper Image" --filename="$1" --file-filter="Images & GIFs | *.jpg *.jpeg *.png *.webp *.gif *.bmp *.svg" --file-filter="All files | *" < /dev/null',
+                'zenity --file-selection --title="Select Wallpaper Image" --filename="$1" --file-filter="Images & Animations | *.jpg *.jpeg *.png *.apng *.webp *.gif *.bmp *.svg" --file-filter="All files | *" < /dev/null',
                 "sh", cleanStart
             ];
         }
@@ -1097,9 +1236,46 @@ Singleton {
                 animSpeed: root.animSpeed,
                 animIntensity: root.animIntensity,
                 animatedFileUrl: root.resolvedAnimatedFileUrl,
+                animatedFileIsApng: root.animatedFileIsApng,
+                singleImageIsApng: root.singleImageIsApng,
                 solidColor: root.solidColor,
                 solidVignette: root.solidVignette
             });
         }
     }
+
+    function probeCapabilities(): void {
+        // 1. Dynamically check QtMultimedia availability via isolated VideoLayer.qml.
+        const comp = Qt.createComponent(Qt.resolvedUrl("../wallpaper/VideoLayer.qml"));
+        if (comp.status === Component.Ready) {
+            root.videoLayerComponent = comp;
+        }
+
+        // 2. Probe qtimageformats WebP plugin via an ephemeral 1x1 WebP Image.
+        const probe = Qt.createQmlObject(
+            'import QtQuick; Image { visible: false; source: "data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=" }',
+            root, "webpProbe"
+        );
+        if (!probe) return;
+        const finishProbe = () => {
+            if (probe.status === Image.Ready) {
+                root.hasWebpPlugin = true;
+                if (root.ready) {
+                    if (root.singleImagePath && root.isWebpPath(root.singleImagePath))
+                        root.resolveSingleMedia(root.singleImagePath);
+                    if (root.animatedFilePath && root.isWebpPath(root.animatedFilePath))
+                        root.resolveAnimatedMedia(root.animatedFilePath);
+                    if (!root.passiveMode) root.refreshFolderFiles();
+                }
+            }
+            if (probe.status !== Image.Loading) probe.destroy();
+        };
+        if (probe.status !== Image.Loading) {
+            finishProbe();
+        } else {
+            probe.statusChanged.connect(finishProbe);
+        }
+    }
+
+    Component.onCompleted: probeCapabilities()
 }

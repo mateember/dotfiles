@@ -50,7 +50,7 @@ ColumnLayout {
         command: [
             "sh", "-c",
             'for d in "$HOME/Videos/Hidamari" "$HOME/Videos" "$HOME/Pictures" "$HOME/.local/share/backgrounds"; do ' +
-            '  [ -d "$d" ] && find "$d" -maxdepth 3 -type f \\( -iname "*.gif" -o -iname "*.mp4" -o -iname "*.webm" -o -iname "*.mkv" -o -iname "*.mov" \\) 2>/dev/null; ' +
+            '  [ -d "$d" ] && find "$d" -maxdepth 3 -type f \\( -iname "*.gif" -o -iname "*.apng" -o -iname "*.webp" -o -iname "*.mp4" -o -iname "*.webm" -o -iname "*.mkv" -o -iname "*.mov" -o -iname "*.m4v" \\) 2>/dev/null; ' +
             'done | awk \'!seen[$0]++\' | head -n 60'
         ]
         stdout: StdioCollector {
@@ -60,7 +60,9 @@ ColumnLayout {
                     path: p,
                     name: Wallpapers.baseName(p),
                     dir: Wallpapers.displayPath(p.slice(0, p.lastIndexOf("/"))),
-                    isGif: Wallpapers.isGifPath(p)
+                    isGif: Wallpapers.isGifPath(p),
+                    isApng: Wallpapers.isApngPath(p),
+                    isWebp: Wallpapers.isWebpPath(p)
                 }));
             }
         }
@@ -87,7 +89,7 @@ ColumnLayout {
         Repeater {
             model: [
                 { id: "scene", label: "Live Shaders", icon: "auto_awesome" },
-                { id: "file",  label: "GIF / Video Loop", icon: "movie" }
+                { id: "file",  label: "Video / GIF / APNG", icon: "movie" }
             ]
             delegate: Rectangle {
                 required property var modelData
@@ -459,10 +461,13 @@ ColumnLayout {
                             visible: Wallpapers.resolvedAnimatedFileUrl !== ""
                             mode: "animated"
                             animatedKind: "file"
-                            imageUrl: Wallpapers.resolvedAnimatedFileUrl
+                            imageUrl: (root.popupOpen && root.isCurrentPage && Wallpapers.animatedKind === "file")
+                                ? Wallpapers.resolvedAnimatedFileUrl : ""
                             blurAmount: 0
                             dimAmount: 0
-                            paused: !root.popupOpen || !root.isCurrentPage || Wallpapers.animatedKind !== "file"
+                            decodeWidth: 160
+                            decodeHeight: 90
+                            paused: true
                         }
 
                         Icon {
@@ -491,7 +496,9 @@ ColumnLayout {
                             Layout.fillWidth: true
                             text: Wallpapers.animatedFilePath
                                 ? Wallpapers.displayPath(Wallpapers.animatedFilePath)
-                                : "GIFs load directly; videos auto-loop (≤12s GIF)"
+                                : (Wallpapers.hasVideoBackend
+                                    ? "Native 60fps MP4/WebM/MKV, APNG, WebP & GIF"
+                                    : "Supports APNG, WebP, GIF & video (GIF fallback active)")
                             font.pixelSize: 11
                             color: Theme.textDim
                             elide: Text.ElideMiddle
@@ -526,7 +533,7 @@ ColumnLayout {
                 StyledText {
                     visible: Wallpapers.convertingMedia || Wallpapers.convertError !== ""
                     Layout.fillWidth: true
-                    text: Wallpapers.convertingMedia ? "Converting video clip into looping wallpaper GIF via ffmpeg…" : Wallpapers.convertError
+                    text: Wallpapers.convertingMedia ? "Converting media into looping wallpaper cache via ffmpeg…" : Wallpapers.convertError
                     font.pixelSize: 11
                     color: Wallpapers.convertingMedia ? Theme.accent : Theme.destructive
                     wrapMode: Text.WordWrap
@@ -547,7 +554,45 @@ ColumnLayout {
             }
         }
 
-        // Local discovered GIFs / videos
+        // Runtime backend hint shown only when QtMultimedia or qtimageformats is missing
+        Rectangle {
+            visible: !Wallpapers.hasVideoBackend || !Wallpapers.hasWebpPlugin
+            Layout.fillWidth: true
+            implicitHeight: backendHintRow.implicitHeight + 10
+            radius: Theme.radiusXs
+            color: Theme.surface1
+            border.width: 1
+            border.color: Theme.componentDivider
+
+            RowLayout {
+                id: backendHintRow
+                anchors.fill: parent
+                anchors.leftMargin: Theme.spaceXxs
+                anchors.rightMargin: Theme.spaceXxs
+                spacing: Theme.spaceXxs
+
+                Icon {
+                    icon: "info"
+                    size: 14
+                    color: Theme.accent
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: {
+                        const missing = [];
+                        if (!Wallpapers.hasVideoBackend) missing.push("qtmultimedia");
+                        if (!Wallpapers.hasWebpPlugin) missing.push("qtimageformats");
+                        return "Fallback mode active — wrap Quickshell with " + missing.join(" & ") + " (docs/NIXOS_NOTES.md) for full-framerate video/APNG & animated WebP.";
+                    }
+                    font.pixelSize: 10
+                    color: Theme.textDim
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
+        // Local discovered videos / APNGs / WebPs / GIFs
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 132
@@ -568,7 +613,7 @@ ColumnLayout {
                 delegate: ListItem {
                     required property var modelData
                     width: animFileList.width
-                    icon: modelData.isGif ? "gif_box" : "movie"
+                    icon: (modelData.isGif || modelData.isWebp) ? "gif_box" : modelData.isApng ? "animation" : "movie"
                     text: modelData.name
                     subtext: modelData.dir
                     highlighted: Wallpapers.normalizePath(modelData.path) === Wallpapers.normalizePath(Wallpapers.animatedFilePath)
@@ -587,7 +632,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
-                    text: "No GIF or video loops found in ~/Videos or ~/Pictures — click Browse… to pick a .gif, .mp4, or .webm"
+                    text: "No animated files found in ~/Videos or ~/Pictures — click Browse… to pick a .mp4, .webm, .apng, .webp, or .gif"
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.textDim
                 }

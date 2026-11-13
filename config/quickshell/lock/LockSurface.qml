@@ -27,7 +27,8 @@ Item {
     readonly property string wallpaperMode: String(wallpaperInfo.mode ?? "folder")
     readonly property bool useSceneBackdrop: controller.wallpaperReady && (
         wallpaperMode === "solid"
-        || (wallpaperMode === "animated" && String(wallpaperInfo.animatedKind ?? "scene") === "scene")
+        || wallpaperMode === "animated"
+        || (wallpaperMode === "image" && (Boolean(wallpaperInfo.singleImageIsApng) || Wallpapers.isApngPath(wallpaperUrl)) && Wallpapers.hasVideoBackend)
     )
     readonly property string wallpaperUrl: !controller.wallpaperReady ? ""
         : (controller.wallpaperFor(screenName) || Wallpapers.urlForScreen(screenName))
@@ -103,7 +104,11 @@ Item {
             sourceComponent: WallpaperScene {
                 readonly property var info: stage.wallpaperInfo
                 mode: String(info.mode ?? "solid")
+                imageUrl: stage.wallpaperUrl
+                fitMode: String(info.fitMode ?? "crop")
                 animatedKind: String(info.animatedKind ?? "scene")
+                isApngMedia: (mode === "animated" && Boolean(info.animatedFileIsApng))
+                          || (mode === "image" && Boolean(info.singleImageIsApng))
                 sceneId: String(info.sceneId ?? "aurora")
                 paletteBg: info.paletteBg ?? "#111114"
                 paletteC1: info.paletteC1 ?? "#FFAD00"

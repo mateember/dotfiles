@@ -290,9 +290,9 @@ ColumnLayout {
                         }
                     }
 
-                    // Top-left GIF tag
+                    // Top-left format tag
                     Rectangle {
-                        visible: Boolean(modelData.isGif)
+                        visible: Boolean(modelData.isGif || modelData.isWebp)
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.margins: 4
@@ -304,7 +304,7 @@ ColumnLayout {
                         StyledText {
                             id: gifLbl
                             anchors.centerIn: parent
-                            text: "GIF"
+                            text: modelData.isGif ? "GIF" : "WEBP"
                             font.pixelSize: 9
                             font.weight: Font.Bold
                             color: Theme.accent
