@@ -29,6 +29,10 @@ Item {
     property bool kenBurns: Wallpapers.kenBurns
     property real dimAmount: Wallpapers.dimAmount
     property real blurAmount: Wallpapers.blurAmount
+    property string overlayEffect: Wallpapers.overlayEffect
+    property real overlayIntensity: Wallpapers.overlayIntensity
+    property real overlaySpeed: Wallpapers.overlaySpeed
+    property bool showOverlay: !staticPreviewOnly
     property bool paused: false
     property bool staticPreviewOnly: false
     property bool isApngMedia: false
@@ -42,6 +46,7 @@ Item {
     readonly property bool isShaderMode: mode === "animated" && animatedKind === "scene"
     readonly property bool isSolidMode: mode === "solid"
     readonly property bool useVideoLayer: isMediaMode && !staticPreviewOnly && isVideoUrl(imageUrl) && imageUrl !== ""
+    readonly property bool useOverlayShader: showOverlay && overlayEffect !== "none" && Wallpapers.overlayEffects.some(e => e.id === overlayEffect)
 
     readonly property int resolvedFillMode: {
         if (fitMode === "fit") return Image.PreserveAspectFit;
@@ -377,6 +382,32 @@ Item {
                 duration: 1200
                 easing.type: Easing.InOutQuad
                 onFinished: if (root.backSlot) root.backSlot.opacity = 0
+            }
+        }
+
+        // Atmospheric Overlay Shader (e.g. falling snow over any wallpaper mode)
+        Loader {
+            id: overlayLoader
+            anchors.fill: parent
+            active: root.useOverlayShader
+            sourceComponent: Item {
+                id: overlayHost
+                anchors.fill: parent
+
+                property real animTime: 24.0
+
+                FrameAnimation {
+                    running: root.useOverlayShader && !root.paused
+                    onTriggered: overlayHost.animTime += frameTime * root.overlaySpeed
+                }
+
+                ShaderEffect {
+                    anchors.fill: parent
+                    property real u_time: overlayHost.animTime
+                    property real u_intensity: root.overlayIntensity
+                    property vector2d u_resolution: Qt.vector2d(Math.max(1, width), Math.max(1, height))
+                    fragmentShader: Qt.resolvedUrl("shaders/" + root.overlayEffect + ".frag.qsb")
+                }
             }
         }
     }

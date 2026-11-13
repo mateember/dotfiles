@@ -99,6 +99,7 @@ ColumnLayout {
                         imageUrl: (root.popupOpen && root.isCurrentPage) ? Wallpapers.resolvedSingleImageUrl : ""
                         blurAmount: 0
                         dimAmount: 0
+                        showOverlay: false
                         decodeWidth: 160
                         decodeHeight: 90
                         paused: true

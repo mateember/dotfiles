@@ -125,6 +125,12 @@ BarButton {
                 }
 
                 IconButton {
+                    icon: "ac_unit"
+                    highlighted: Wallpapers.overlayEffect === "snow"
+                    onClicked: Wallpapers.toggleSnow()
+                }
+
+                IconButton {
                     icon: "tune"
                     highlighted: pop.showEffects
                     onClicked: pop.showEffects = !pop.showEffects

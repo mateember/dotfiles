@@ -146,6 +146,82 @@ ColumnLayout {
         }
     }
 
+    // ---- Atmospheric Overlay Shader ----
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: overlayCardCol.implicitHeight + Theme.spaceXs * 2
+        radius: Theme.radiusS
+        color: Theme.surface1
+        border.width: 1
+        border.color: Theme.componentDivider
+
+        ColumnLayout {
+            id: overlayCardCol
+            anchors.fill: parent
+            anchors.margins: Theme.spaceXs
+            spacing: Theme.spaceXxs
+
+            OptionPills {
+                Layout.fillWidth: true
+                label: "Atmosphere"
+                options: [
+                    { value: "none", label: "None" },
+                    { value: "snow", label: "Snow" }
+                ]
+                currentValue: Wallpapers.overlayEffect
+                onPicked: val => Wallpapers.setOverlayEffect(val)
+            }
+
+            RowLayout {
+                visible: Wallpapers.overlayEffect !== "none"
+                Layout.fillWidth: true
+                spacing: Theme.spaceXs
+
+                StyledText { text: "Density"; font.pixelSize: Theme.fontSizeSmall; color: Theme.textDim; Layout.preferredWidth: 50 }
+                StyledSlider {
+                    Layout.fillWidth: true
+                    from: 0.2
+                    to: 1.5
+                    wheelStep: 0.05
+                    value: Wallpapers.overlayIntensity
+                    onMoved: v => Wallpapers.setOverlayIntensity(v)
+                }
+                StyledText {
+                    text: Math.round(Wallpapers.overlayIntensity * 100) + "%"
+                    font.pixelSize: 11
+                    font.family: Theme.monoFamily
+                    color: Theme.text
+                    Layout.preferredWidth: 40
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+
+            RowLayout {
+                visible: Wallpapers.overlayEffect !== "none"
+                Layout.fillWidth: true
+                spacing: Theme.spaceXs
+
+                StyledText { text: "Speed"; font.pixelSize: Theme.fontSizeSmall; color: Theme.textDim; Layout.preferredWidth: 50 }
+                StyledSlider {
+                    Layout.fillWidth: true
+                    from: 0.25
+                    to: 2.0
+                    wheelStep: 0.1
+                    value: Wallpapers.overlaySpeed
+                    onMoved: v => Wallpapers.setOverlaySpeed(v)
+                }
+                StyledText {
+                    text: Wallpapers.overlaySpeed.toFixed(2) + "x"
+                    font.pixelSize: 11
+                    font.family: Theme.monoFamily
+                    color: Theme.text
+                    Layout.preferredWidth: 40
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+        }
+    }
+
     // ---- Two-Click Destructive Reset ----
     Rectangle {
         Layout.fillWidth: true

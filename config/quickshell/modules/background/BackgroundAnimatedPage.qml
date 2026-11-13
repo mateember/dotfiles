@@ -172,6 +172,7 @@ ColumnLayout {
                         animIntensity: Wallpapers.animIntensity
                         blurAmount: 0
                         dimAmount: 0
+                        showOverlay: false
                         paused: !root.popupOpen || !root.isCurrentPage || Wallpapers.animatedKind !== "scene"
                     }
 
@@ -465,6 +466,7 @@ ColumnLayout {
                                 ? Wallpapers.resolvedAnimatedFileUrl : ""
                             blurAmount: 0
                             dimAmount: 0
+                            showOverlay: false
                             decodeWidth: 160
                             decodeHeight: 90
                             paused: true

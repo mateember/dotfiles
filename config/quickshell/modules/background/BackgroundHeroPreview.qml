@@ -36,16 +36,17 @@ ColumnLayout {
     }
 
     readonly property string modeSummary: {
+        const snowSuffix = Wallpapers.overlayEffect === "snow" ? " • Snow" : "";
         if (Wallpapers.mode === "folder") {
             const timing = Wallpapers.slideshowPaused ? "Paused" : intervalLabel(Wallpapers.intervalSec);
-            return "Folder • " + timing + " • " + Wallpapers.count + (Wallpapers.count === 1 ? " image" : " images");
+            return "Folder • " + timing + " • " + Wallpapers.count + (Wallpapers.count === 1 ? " image" : " images") + snowSuffix;
         }
         if (Wallpapers.mode === "image") {
             let kind = "Single Image";
             if (Wallpapers.isGifPath(Wallpapers.singleImagePath)) kind = "Animated GIF";
             else if (Wallpapers.isApngPath(Wallpapers.singleImagePath) || Wallpapers.singleImageIsApng) kind = "Animated PNG";
             else if (Wallpapers.isWebpPath(Wallpapers.singleImagePath)) kind = "WebP Image";
-            return kind + (Wallpapers.kenBurns ? " • Ken Burns" : "");
+            return kind + (Wallpapers.kenBurns ? " • Ken Burns" : "") + snowSuffix;
         }
         if (Wallpapers.mode === "animated") {
             let kind = "Live Shader";
@@ -57,9 +58,9 @@ ColumnLayout {
                 else kind = "Loop";
             }
             const state = Wallpapers.animatedPaused ? "Paused" : "Playing";
-            return kind + " • " + state;
+            return kind + " • " + state + snowSuffix;
         }
-        return Wallpapers.solidVignette ? "Solid • Subtle Vignette" : "Solid Backdrop";
+        return (Wallpapers.solidVignette ? "Solid • Subtle Vignette" : "Solid Backdrop") + snowSuffix;
     }
 
     readonly property string titleSummary: {

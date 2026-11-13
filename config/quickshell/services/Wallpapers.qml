@@ -32,6 +32,9 @@ Singleton {
     property real dimAmount: 0.0                  // 0.0 .. 0.70
     property real blurAmount: 0.0                 // 0.0 .. 1.0
     property bool syncScreens: false              // true = same image across all monitors
+    property string overlayEffect: "none"         // "none" | "snow"
+    property real overlayIntensity: 0.85          // 0.20 .. 1.50
+    property real overlaySpeed: 1.0               // 0.25 .. 2.00
 
     // ---- Folder Slideshow ----
     property string folderPath: Config.wallpaperDir
@@ -96,6 +99,11 @@ Singleton {
     signal refreshTriggered()
 
     // ---- Catalogs ----
+    readonly property var overlayEffects: [
+        { id: "none", name: "None", icon: "block" },
+        { id: "snow", name: "Snow", icon: "ac_unit" }
+    ]
+
     readonly property var scenes: [
         { id: "aurora", name: "Aurora Silk",  subtitle: "Flowing northern light ribbons",   icon: "auto_awesome" },
         { id: "orbs",   name: "Ambient Orbs", subtitle: "Soft drifting luminous bokeh",     icon: "blur_on" },
@@ -655,6 +663,26 @@ Singleton {
         scheduleSave();
     }
 
+    function setOverlayEffect(id: string): void {
+        if (!root.overlayEffects.some(e => e.id === id)) return;
+        root.overlayEffect = id;
+        scheduleSave();
+    }
+
+    function toggleSnow(): void {
+        setOverlayEffect(root.overlayEffect === "snow" ? "none" : "snow");
+    }
+
+    function setOverlayIntensity(v: real): void {
+        root.overlayIntensity = Math.round(Math.max(0.2, Math.min(1.5, v)) * 20) / 20;
+        scheduleSave();
+    }
+
+    function setOverlaySpeed(v: real): void {
+        root.overlaySpeed = Math.round(Math.max(0.25, Math.min(2.0, v)) * 20) / 20;
+        scheduleSave();
+    }
+
     function reset(): void {
         root.mode = "folder";
         root.lastStaticMode = "folder";
@@ -665,6 +693,9 @@ Singleton {
         root.dimAmount = 0.0;
         root.blurAmount = 0.0;
         root.syncScreens = false;
+        root.overlayEffect = "none";
+        root.overlayIntensity = 0.85;
+        root.overlaySpeed = 1.0;
         root.folderPath = Config.wallpaperDir;
         root.includeSubfolders = false;
         root.order = "random";
@@ -1117,6 +1148,9 @@ Singleton {
             dimAmount: root.dimAmount,
             blurAmount: root.blurAmount,
             syncScreens: root.syncScreens,
+            overlayEffect: root.overlayEffect,
+            overlayIntensity: root.overlayIntensity,
+            overlaySpeed: root.overlaySpeed,
             folderPath: root.folderPath,
             includeSubfolders: root.includeSubfolders,
             order: root.order,
@@ -1163,6 +1197,12 @@ Singleton {
             if (typeof d.dimAmount === "number") root.dimAmount = Math.max(0, Math.min(0.7, d.dimAmount));
             if (typeof d.blurAmount === "number") root.blurAmount = Math.max(0, Math.min(1.0, d.blurAmount));
             if (typeof d.syncScreens === "boolean") root.syncScreens = d.syncScreens;
+            if (typeof d.overlayEffect === "string" && root.overlayEffects.some(e => e.id === d.overlayEffect))
+                root.overlayEffect = d.overlayEffect;
+            if (typeof d.overlayIntensity === "number")
+                root.overlayIntensity = Math.max(0.2, Math.min(1.5, d.overlayIntensity));
+            if (typeof d.overlaySpeed === "number")
+                root.overlaySpeed = Math.max(0.25, Math.min(2.0, d.overlaySpeed));
 
             if (typeof d.folderPath === "string" && d.folderPath.trim()) root.folderPath = normalizePath(d.folderPath);
             if (typeof d.includeSubfolders === "boolean") root.includeSubfolders = d.includeSubfolders;
@@ -1235,6 +1275,10 @@ Singleton {
         function setScene(id: string): void { root.setScene(id); }
         function setPalette(id: string): void { root.setPalette(id); }
         function setSolidColor(hex: string): void { root.setSolidColor(hex); }
+        function setOverlay(id: string): void { root.setOverlayEffect(id); }
+        function toggleSnow(): void { root.toggleSnow(); }
+        function setOverlayIntensity(v: real): void { root.setOverlayIntensity(v); }
+        function setOverlaySpeed(v: real): void { root.setOverlaySpeed(v); }
         function screenUrls(): string {
             const pal = root.activePalette();
             return JSON.stringify({
@@ -1257,7 +1301,10 @@ Singleton {
                 singleImageIsApng: root.singleImageIsApng,
                 targetFps: Hypr.targetFps,
                 solidColor: root.solidColor,
-                solidVignette: root.solidVignette
+                solidVignette: root.solidVignette,
+                overlayEffect: root.overlayEffect,
+                overlayIntensity: root.overlayIntensity,
+                overlaySpeed: root.overlaySpeed
             });
         }
     }

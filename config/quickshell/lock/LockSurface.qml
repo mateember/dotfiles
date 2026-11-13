@@ -28,6 +28,7 @@ Item {
     readonly property bool useSceneBackdrop: controller.wallpaperReady && (
         wallpaperMode === "solid"
         || wallpaperMode === "animated"
+        || String(wallpaperInfo.overlayEffect ?? "none") !== "none"
         || (wallpaperMode === "image" && (Boolean(wallpaperInfo.singleImageIsApng) || Wallpapers.isApngPath(wallpaperUrl)) && Wallpapers.hasVideoBackend)
     )
     readonly property string wallpaperUrl: !controller.wallpaperReady ? ""
@@ -118,6 +119,9 @@ Item {
                 animIntensity: Number(info.animIntensity ?? 1.0)
                 solidColor: String(info.solidColor ?? "#1B1B1B")
                 solidVignette: info.solidVignette !== undefined ? Boolean(info.solidVignette) : true
+                overlayEffect: String(info.overlayEffect ?? "none")
+                overlayIntensity: Number(info.overlayIntensity ?? 0.85)
+                overlaySpeed: Number(info.overlaySpeed ?? 1.0)
                 blurAmount: 0
                 dimAmount: 0
                 paused: stage.controller.sleeping
