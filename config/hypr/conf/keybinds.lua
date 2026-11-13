@@ -21,7 +21,7 @@ hl.config({
 local mainMod = "SUPER"
 local browser = "brave-origin"
 local term = "kitty"
-local filemanager = "nautilus"
+local filemanager = "nautilus --new-window"
 
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(term))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())

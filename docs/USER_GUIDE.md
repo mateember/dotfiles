@@ -97,7 +97,7 @@ qs -p ~/.config/quickshell/lock.qml ipc call lock <lock|lockForSleep|wakeFromSle
 | `SUPER + CTRL + L` | **Power Menu** | Session controls: Lock, Suspend, Log out, Restart, Shut down (keyboard navigable). |
 | `SUPER + SHIFT + R` | **Restart Shell** | Restarts Quickshell and reloads Hyprland config. |
 | `SUPER + C` | Terminal | Launches `kitty`. |
-| `SUPER + E` | File Manager | Launches `nautilus`. |
+| `SUPER + E` | File Manager | Launches a new `nautilus` window (`nautilus --new-window`). |
 | `SUPER + B` | Web Browser | Launches `brave-origin`. |
 | `SUPER + SHIFT + F23` | Right Control | Sends `Control_R` via `wtype`. |
 
