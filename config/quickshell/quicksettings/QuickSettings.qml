@@ -62,6 +62,7 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
             readonly property int maxPanelHeight: Math.max(200, (screen?.height ?? 900) - margins.top - Theme.spaceL)
+            property bool allowHeightAnim: false
             implicitWidth: 400
             implicitHeight: maxPanelHeight
 
@@ -78,11 +79,20 @@ Scope {
             Connections {
                 target: QuickSettingsState
                 function onOpenChanged() {
-                    if (QuickSettingsState.open)
-                        Qt.callLater(() => card.forceActiveFocus());
+                    if (QuickSettingsState.open) {
+                        Qt.callLater(() => {
+                            card.forceActiveFocus();
+                            if (root.open && !QuickSettingsState.asWindow) win.allowHeightAnim = true;
+                        });
+                    } else {
+                        win.allowHeightAnim = false;
+                    }
                 }
             }
-            Component.onCompleted: if (root.open) Qt.callLater(() => card.forceActiveFocus())
+            Component.onCompleted: if (root.open) Qt.callLater(() => {
+                card.forceActiveFocus();
+                if (root.open && !QuickSettingsState.asWindow) win.allowHeightAnim = true;
+            })
 
             HyprlandFocusGrab {
                 active: root.open && !QuickSettingsState.asWindow
@@ -113,6 +123,10 @@ Scope {
                 height: QuickSettingsState.asWindow
                     ? (parent ? parent.height : floatWin.targetH)
                     : Math.min(Math.ceil(implicitHeight), win.maxPanelHeight)
+                Behavior on height {
+                    enabled: !QuickSettingsState.asWindow && win.allowHeightAnim
+                    NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic }
+                }
                 implicitHeight: col.implicitHeight + 2 * Theme.spaceS
                 radius: QuickSettingsState.asWindow ? 0 : Theme.radiusM
                 color: Theme.popupBg

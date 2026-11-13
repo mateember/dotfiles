@@ -33,6 +33,7 @@ PanelWindow {
     property bool latchedFromQs: false
     property bool latchedCanGoBack: false
     property int latchedLeft: Theme.panelMargin
+    property bool allowHeightAnim: false
 
     readonly property var barWindow: anchorItem.QsWindow.window
     readonly property string popupId: name + "@" + (barWindow?.screen?.name ?? "")
@@ -95,7 +96,12 @@ PanelWindow {
             latchedFromQs = Popups.fromQuickSettings;
             latchedCanGoBack = WidgetHistory.canGoBack;
             latchedLeft = liveLeft;
-            Qt.callLater(() => root.ensureFocus());
+            Qt.callLater(() => {
+                root.ensureFocus();
+                if (root.openDropdown) root.allowHeightAnim = true;
+            });
+        } else {
+            allowHeightAnim = false;
         }
     }
 
@@ -174,6 +180,10 @@ PanelWindow {
         height: root.effectiveAsWindow
             ? (parent ? parent.height : floatWin.targetH)
             : Math.min(Math.ceil(body.implicitHeight) + 2 * root.padding, root.maxDropdownHeight)
+        Behavior on height {
+            enabled: !root.effectiveAsWindow && root.allowHeightAnim
+            NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic }
+        }
         radius: root.effectiveAsWindow ? 0 : Theme.radiusM
         color: root.name === "notifications" ? Theme.notificationsBg : Theme.widgetsBg
         border.color: Theme.popupBorder
