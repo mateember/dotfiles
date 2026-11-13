@@ -288,9 +288,8 @@ BarButton {
             return false;
         }
 
-        onOpenChanged: {
-            if (!open) page = "";
-        }
+        onOpenChanged: if (open) page = ""
+        onVisibleChanged: if (!visible && !open) page = ""
 
         Rectangle {
             visible: pop.page === ""

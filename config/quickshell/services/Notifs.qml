@@ -12,7 +12,8 @@ Singleton {
     id: root
 
     readonly property bool dnd: persist.dnd
-    readonly property var history: (loader.item?.trackedNotifications.values ?? []).slice().reverse()   // newest first
+    property bool _clearing: false
+    readonly property var history: _clearing ? [] : (loader.item?.trackedNotifications.values ?? []).slice().reverse()   // newest first
     property var toasts: []
     property var arrival: ({})   // notification id → Date
 
@@ -33,7 +34,13 @@ Singleton {
         n.dismiss();
     }
     function clearAll() {
-        for (const n of root.history) n.dismiss();
+        const list = root.history;
+        root._clearing = true;
+        try {
+            for (const n of list) n.dismiss();
+        } finally {
+            root._clearing = false;
+        }
         root.toasts = [];
     }
 

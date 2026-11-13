@@ -80,13 +80,15 @@ BarButton {
 
         onOpenChanged: {
             if (open) {
-                if (pendingInitialPage !== "") {
-                    page = pendingInitialPage;
-                    pageStack = [];
-                    pendingInitialPage = "";
-                }
+                page = pendingInitialPage;
+                pageStack = [];
+                pendingInitialPage = "";
                 Weather.refresh();
-            } else {
+            }
+        }
+
+        onVisibleChanged: {
+            if (!visible && !open) {
                 page = "";
                 pageStack = [];
                 pendingInitialPage = "";

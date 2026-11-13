@@ -126,16 +126,22 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
+    readonly property int maxDropdownHeight: Math.max(120, (screen?.height ?? 1000) - margins.top - Theme.spaceL)
+
     implicitWidth: popupWidth
-    // Never taller than the screen below the bar.
-    implicitHeight: Math.min(body.implicitHeight + 2 * padding,
-                             (screen?.height ?? 1000) - margins.top - Theme.spaceL)
+    // Keep the layer surface at fixed max height so shrinking popup content does not
+    // resize zwlr_layer_surface_v1 (which triggers a compositor ghost/blur flash on Hyprland).
+    implicitHeight: maxDropdownHeight
 
     WlrLayershell.namespace: "hcs-popup"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: !openDropdown ? WlrKeyboardFocus.None
         : grabKeyboard ? WlrKeyboardFocus.Exclusive
         : WlrKeyboardFocus.OnDemand
+
+    mask: !effectiveAsWindow && (openDropdown || bg.opacity > 0) ? bgMask : emptyMask
+    Region { id: emptyMask }
+    Region { id: bgMask; item: bg }
 
     HyprlandFocusGrab {
         active: root.openDropdown
@@ -162,7 +168,12 @@ PanelWindow {
     Rectangle {
         id: bg
         parent: root.effectiveAsWindow ? floatWin.contentItem : root.contentItem
-        anchors.fill: parent
+        x: 0
+        y: 0
+        width: parent ? parent.width : root.popupWidth
+        height: root.effectiveAsWindow
+            ? (parent ? parent.height : floatWin.targetH)
+            : Math.min(Math.ceil(body.implicitHeight) + 2 * root.padding, root.maxDropdownHeight)
         radius: root.effectiveAsWindow ? 0 : Theme.radiusM
         color: root.name === "notifications" ? Theme.notificationsBg : Theme.widgetsBg
         border.color: Theme.popupBorder

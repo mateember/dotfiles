@@ -61,12 +61,17 @@ Scope {
             margins.right: Theme.panelMargin
             exclusionMode: ExclusionMode.Ignore
             exclusiveZone: 0
+            readonly property int maxPanelHeight: Math.max(200, (screen?.height ?? 900) - margins.top - Theme.spaceL)
             implicitWidth: 400
-            implicitHeight: Math.min(card.implicitHeight, (screen?.height ?? 900) - margins.top - Theme.spaceL)
+            implicitHeight: maxPanelHeight
 
             WlrLayershell.namespace: "hcs-quicksettings"
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.keyboardFocus: (root.open && !QuickSettingsState.asWindow) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+            mask: !QuickSettingsState.asWindow && (root.open || root.cardOpacity > 0) ? cardMask : emptyMask
+            Region { id: emptyMask }
+            Region { id: cardMask; item: card }
 
             readonly property string screenName: screen?.name ?? ""
 
@@ -102,7 +107,12 @@ Scope {
             Rectangle {
                 id: card
                 parent: QuickSettingsState.asWindow ? floatWin.contentItem : win.contentItem
-                anchors.fill: parent
+                x: 0
+                y: 0
+                width: parent ? parent.width : 400
+                height: QuickSettingsState.asWindow
+                    ? (parent ? parent.height : floatWin.targetH)
+                    : Math.min(Math.ceil(implicitHeight), win.maxPanelHeight)
                 implicitHeight: col.implicitHeight + 2 * Theme.spaceS
                 radius: QuickSettingsState.asWindow ? 0 : Theme.radiusM
                 color: Theme.popupBg

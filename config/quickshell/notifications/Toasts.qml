@@ -24,14 +24,22 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
     implicitWidth: 380
-    implicitHeight: Math.max(1, column.implicitHeight)
+    // Keep the layer surface at fixed max height so dismissing one toast while others
+    // stay does not shrink zwlr_layer_surface_v1 (ghost/blur flash on Hyprland).
+    implicitHeight: Math.max(120, (screen?.height ?? 900) - margins.top - Theme.spaceL)
 
     WlrLayershell.namespace: "hcs-toast"
     WlrLayershell.layer: WlrLayer.Overlay
 
+    mask: visible ? toastMask : emptyMask
+    Region { id: emptyMask }
+    Region { id: toastMask; item: column }
+
     ColumnLayout {
         id: column
-        width: parent.width
+        x: 0
+        y: 0
+        width: root.width
         spacing: Theme.spaceXs
 
         Repeater {
