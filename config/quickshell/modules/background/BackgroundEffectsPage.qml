@@ -163,6 +163,8 @@ ColumnLayout {
 
             OptionPills {
                 Layout.fillWidth: true
+                enabled: Wallpapers.overlayAllowed
+                opacity: Wallpapers.overlayAllowed ? 1.0 : 0.45
                 label: "Atmosphere"
                 options: [
                     { value: "none", label: "None" },
@@ -170,6 +172,54 @@ ColumnLayout {
                 ]
                 currentValue: Wallpapers.overlayEffect
                 onPicked: val => Wallpapers.setOverlayEffect(val)
+            }
+
+            RowLayout {
+                visible: !Wallpapers.overlayAllowed
+                Layout.fillWidth: true
+                spacing: Theme.spaceXxs
+
+                Icon {
+                    icon: "bolt"
+                    size: 14
+                    color: Wallpapers.resumeOverlayOnPerf ? Theme.accent : Theme.textDim
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Wallpapers.resumeOverlayOnPerf
+                        ? "Snow paused (" + PowerProfile.label + ") — resumes on Performance"
+                        : "Snow requires Performance power mode"
+                    font.pixelSize: 11
+                    color: Theme.textDim
+                    elide: Text.ElideRight
+                }
+
+                Rectangle {
+                    implicitHeight: 20
+                    implicitWidth: snowPerfLbl.implicitWidth + 12
+                    radius: Theme.radiusXl
+                    color: snowPerfMouse.containsMouse ? Theme.accentHover : Theme.component
+                    border.width: 1
+                    border.color: Theme.componentDivider
+
+                    StyledText {
+                        id: snowPerfLbl
+                        anchors.centerIn: parent
+                        text: "Performance"
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        color: Theme.text
+                    }
+
+                    MouseArea {
+                        id: snowPerfMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: PowerProfile.setMode("performance")
+                    }
+                }
             }
 
             RowLayout {

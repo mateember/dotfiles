@@ -36,7 +36,9 @@ ColumnLayout {
     }
 
     readonly property string modeSummary: {
-        const snowSuffix = Wallpapers.overlayEffect === "snow" ? " • Snow" : "";
+        const snowSuffix = Wallpapers.overlayEffect === "snow"
+            ? " • Snow"
+            : (Wallpapers.resumeOverlayOnPerf && !Wallpapers.overlayAllowed ? " • Snow paused" : "");
         if (Wallpapers.mode === "folder") {
             const timing = Wallpapers.slideshowPaused ? "Paused" : intervalLabel(Wallpapers.intervalSec);
             return "Folder • " + timing + " • " + Wallpapers.count + (Wallpapers.count === 1 ? " image" : " images") + snowSuffix;

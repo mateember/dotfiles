@@ -126,6 +126,7 @@ BarButton {
 
                 IconButton {
                     icon: "ac_unit"
+                    enabled: Wallpapers.overlayAllowed || Wallpapers.overlayEffect !== "none"
                     highlighted: Wallpapers.overlayEffect === "snow"
                     onClicked: Wallpapers.toggleSnow()
                 }
@@ -216,7 +217,7 @@ BarButton {
                     }
                 }
 
-                // Performance-mode requirement hint when Animated is unavailable
+                // Performance-mode requirement hint when Animated / Snow overlays are unavailable
                 Rectangle {
                     visible: !Wallpapers.animatedAllowed
                     Layout.fillWidth: true
@@ -236,14 +237,20 @@ BarButton {
                         Icon {
                             icon: "bolt"
                             size: 14
-                            color: Wallpapers.resumeAnimatedOnPerf ? Theme.accent : Theme.textDim
+                            color: (Wallpapers.resumeAnimatedOnPerf || Wallpapers.resumeOverlayOnPerf) ? Theme.accent : Theme.textDim
                         }
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: Wallpapers.resumeAnimatedOnPerf
-                                ? "Animated paused (" + PowerProfile.label + ") — resumes on Performance"
-                                : "Animated requires Performance power mode"
+                            text: {
+                                if (Wallpapers.resumeAnimatedOnPerf && Wallpapers.resumeOverlayOnPerf)
+                                    return "Animated & Snow paused (" + PowerProfile.label + ") — resumes on Performance";
+                                if (Wallpapers.resumeAnimatedOnPerf)
+                                    return "Animated paused (" + PowerProfile.label + ") — resumes on Performance";
+                                if (Wallpapers.resumeOverlayOnPerf)
+                                    return "Snow paused (" + PowerProfile.label + ") — resumes on Performance";
+                                return "Animated & Snow require Performance power mode";
+                            }
                             font.pixelSize: 11
                             color: Theme.textDim
                             elide: Text.ElideRight

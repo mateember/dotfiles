@@ -33,6 +33,8 @@ Singleton {
     property real blurAmount: 0.0                 // 0.0 .. 1.0
     property bool syncScreens: false              // true = same image across all monitors
     property string overlayEffect: "none"         // "none" | "snow"
+    property string lastOverlayEffect: "none"     // overlay effect to restore when returning to Performance
+    property bool resumeOverlayOnPerf: false      // true when overlay auto-disabled on non-Performance mode
     property real overlayIntensity: 0.85          // 0.20 .. 1.50
     property real overlaySpeed: 1.0               // 0.25 .. 2.00
 
@@ -90,8 +92,9 @@ Singleton {
         catch (e) { return {}; }
     }
 
-    // Animated wallpapers are only enabled when PowerProfile is in Performance mode.
+    // Animated wallpapers and atmospheric shader overlays are only enabled in Performance mode.
     readonly property bool animatedAllowed: PowerProfile.mode === "performance"
+    readonly property bool overlayAllowed: animatedAllowed
 
     // Signals sent to Wallpaper.qml instances
     signal tick()                                 // advance folder slideshow
@@ -413,19 +416,34 @@ Singleton {
 
     function syncPowerMode(): void {
         if (root.passiveMode || !root.ready || !PowerProfile.ready) return;
+        let changed = false;
         if (PowerProfile.mode !== "performance") {
             if (root.mode === "animated") {
                 root.resumeAnimatedOnPerf = true;
                 root.mode = resolveStaticFallback();
-                scheduleSave();
+                changed = true;
+            }
+            if (root.overlayEffect !== "none") {
+                root.lastOverlayEffect = root.overlayEffect;
+                root.resumeOverlayOnPerf = true;
+                root.overlayEffect = "none";
+                changed = true;
             }
         } else {
             if (root.resumeAnimatedOnPerf) {
                 root.resumeAnimatedOnPerf = false;
                 root.mode = "animated";
-                scheduleSave();
+                changed = true;
+            }
+            if (root.resumeOverlayOnPerf) {
+                root.resumeOverlayOnPerf = false;
+                if (root.lastOverlayEffect !== "none" && root.overlayEffects.some(e => e.id === root.lastOverlayEffect)) {
+                    root.overlayEffect = root.lastOverlayEffect;
+                }
+                changed = true;
             }
         }
+        if (changed) scheduleSave();
     }
 
     Connections {
@@ -665,12 +683,21 @@ Singleton {
 
     function setOverlayEffect(id: string): void {
         if (!root.overlayEffects.some(e => e.id === id)) return;
+        if (id !== "none") {
+            if (!root.overlayAllowed) return;
+            root.lastOverlayEffect = id;
+            root.resumeOverlayOnPerf = false;
+        } else {
+            root.lastOverlayEffect = "none";
+            root.resumeOverlayOnPerf = false;
+        }
         root.overlayEffect = id;
         scheduleSave();
     }
 
     function toggleSnow(): void {
-        setOverlayEffect(root.overlayEffect === "snow" ? "none" : "snow");
+        if (root.overlayEffect === "snow") setOverlayEffect("none");
+        else if (root.overlayAllowed) setOverlayEffect("snow");
     }
 
     function setOverlayIntensity(v: real): void {
@@ -694,6 +721,8 @@ Singleton {
         root.blurAmount = 0.0;
         root.syncScreens = false;
         root.overlayEffect = "none";
+        root.lastOverlayEffect = "none";
+        root.resumeOverlayOnPerf = false;
         root.overlayIntensity = 0.85;
         root.overlaySpeed = 1.0;
         root.folderPath = Config.wallpaperDir;
@@ -1149,6 +1178,8 @@ Singleton {
             blurAmount: root.blurAmount,
             syncScreens: root.syncScreens,
             overlayEffect: root.overlayEffect,
+            lastOverlayEffect: root.lastOverlayEffect,
+            resumeOverlayOnPerf: root.resumeOverlayOnPerf,
             overlayIntensity: root.overlayIntensity,
             overlaySpeed: root.overlaySpeed,
             folderPath: root.folderPath,
@@ -1199,6 +1230,10 @@ Singleton {
             if (typeof d.syncScreens === "boolean") root.syncScreens = d.syncScreens;
             if (typeof d.overlayEffect === "string" && root.overlayEffects.some(e => e.id === d.overlayEffect))
                 root.overlayEffect = d.overlayEffect;
+            if (typeof d.lastOverlayEffect === "string" && root.overlayEffects.some(e => e.id === d.lastOverlayEffect))
+                root.lastOverlayEffect = d.lastOverlayEffect;
+            if (typeof d.resumeOverlayOnPerf === "boolean")
+                root.resumeOverlayOnPerf = d.resumeOverlayOnPerf;
             if (typeof d.overlayIntensity === "number")
                 root.overlayIntensity = Math.max(0.2, Math.min(1.5, d.overlayIntensity));
             if (typeof d.overlaySpeed === "number")
