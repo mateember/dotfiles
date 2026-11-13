@@ -105,8 +105,26 @@ case "$cmd" in
             rm -f "$tmp_file"
             notify-send -a "Screenshot" -i camera-photo "Screenshot saved & copied" "$dest" 2>/dev/null || true
         elif [ "$action" = "annotate" ]; then
+            satty_bin=$(find_bin satty || true)
             swappy_bin=$(find_bin swappy || true)
-            if [ -n "$swappy_bin" ]; then
+            if [ -n "$satty_bin" ]; then
+                satty_args=(
+                    --filename "$tmp_file"
+                    --output-filename "$shot_dir/Screenshot_${ts}.png"
+                    --copy-command wl-copy
+                    --early-exit
+                    --actions-on-enter save-to-clipboard
+                    --actions-on-escape exit
+                    --font-family "Fira Sans"
+                )
+                if [ "$mode" = "output" ]; then
+                    satty_args+=(--fullscreen current-screen --initial-tool crop)
+                else
+                    satty_args+=(--resize smart --initial-tool crop)
+                fi
+                "$satty_bin" "${satty_args[@]}" < /dev/null
+                rm -f "$tmp_file"
+            elif [ -n "$swappy_bin" ]; then
                 "$swappy_bin" -f "$tmp_file" -o "$shot_dir/Screenshot_${ts}.png" < /dev/null
                 rm -f "$tmp_file"
             else

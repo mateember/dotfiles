@@ -13,7 +13,7 @@ rule({ match = { class = "^(StardewModdingAPI)$" }, float = true })
 rule({ match = { class = "^(grub-customizer)$" }, float = true })
 
 -- Portals, pickers, system tools
-rule({ match = { class = "^(swappy)$" }, float = true, center = true })
+rule({ match = { class = [[^(com\.gabm\.satty)$]] }, float = true, center = true })
 rule({ match = { class = [[^(xdg-desktop-portal-.*|org\.freedesktop\.impl\.portal\.desktop\..*)$]] }, float = true, center = true, stay_focused = true })
 rule({ match = { class = [[^(\.?hyprland-share-picker.*|org\.hyprland\.xdg-desktop-portal-hyprland)$]] }, float = true, center = true, stay_focused = true })
 rule({ match = { title = "^(Select what to share|MainPicker)$" }, float = true, center = true, stay_focused = true })
