@@ -12,3 +12,6 @@ set -gx PATH $PATH /home/mate/.lmstudio/bin
 # End of LM Studio CLI section
 
 
+ if test "$TERM_PROGRAM" = "kiro"
+        . (kiro --locate-shell-integration-path fish)
+ end
