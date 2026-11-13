@@ -12,6 +12,7 @@ Singleton {
     id: root
 
     property string mode: "balanced"
+    property bool manual: false
     property bool ready: false
     readonly property string script: (Quickshell.env("HOME") ?? "") + "/dotfiles/scripts/tlpmodes.sh"
 
@@ -29,19 +30,30 @@ Singleton {
 
     function refresh() {
         prof.reload();
+        manualFile.reload();
+    }
+
+    function _runScript(args) {
+        const nextCmd = [root.script].concat(args);
+        if (runProc.running) {
+            runProc.pendingCmd = nextCmd;
+            return;
+        }
+        runProc.cmd = nextCmd;
+        runProc.running = true;
     }
 
     function setMode(m: string) {
-        if (runProc.running) return;
         const arg = m === "low-power" ? "low" : m === "performance" ? "power" : "balanced";
-        runProc.cmd = [root.script, arg];
-        runProc.running = true;
+        _runScript([arg]);
+    }
+
+    function setAuto() {
+        _runScript(["auto"]);
     }
 
     function cycle() {
-        if (runProc.running) return;
-        runProc.cmd = [root.script];
-        runProc.running = true;
+        _runScript([]);
     }
 
     FileView {
@@ -49,13 +61,23 @@ Singleton {
         path: "/sys/firmware/acpi/platform_profile"
         watchChanges: true
         printErrors: false
-        onFileChanged: reload()
+        onFileChanged: root.refresh()
         onLoaded: {
             const v = text().trim();
             if (v) root.mode = v;
             root.ready = true;
         }
         onLoadFailed: root.ready = true
+    }
+
+    FileView {
+        id: manualFile
+        path: "/run/tlp/manual_mode"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.manual = text().trim().length > 0
+        onLoadFailed: root.manual = false
     }
 
     // Re-check immediately (and after a short settle delay) when AC charger changes
@@ -67,7 +89,7 @@ Singleton {
         repeat: true
         running: remaining > 0
         onTriggered: {
-            prof.reload();
+            root.refresh();
             remaining = Math.max(0, remaining - 1);
         }
     }
@@ -75,11 +97,11 @@ Singleton {
     Connections {
         target: Battery
         function onChargingChanged() {
-            prof.reload();
+            root.refresh();
             acSettleTimer.remaining = 3;
         }
         function onOnBatteryChanged() {
-            prof.reload();
+            root.refresh();
             acSettleTimer.remaining = 3;
         }
     }
@@ -87,8 +109,18 @@ Singleton {
     Process {
         id: runProc
         property var cmd: []
+        property var pendingCmd: null
         command: cmd
-        onExited: prof.reload()
+        function drainPending() {
+            if (running || pendingCmd === null) return;
+            cmd = pendingCmd;
+            pendingCmd = null;
+            running = true;
+        }
+        onExited: {
+            root.refresh();
+            if (pendingCmd !== null) Qt.callLater(drainPending);
+        }
     }
 
     // Low-frequency fallback reload (in-process FileView read, zero subprocesses)
@@ -96,15 +128,16 @@ Singleton {
         interval: 30000
         running: true
         repeat: true
-        onTriggered: prof.reload()
+        onTriggered: root.refresh()
     }
 
-    // qs ipc call powerprofile cycle | saver | balanced | performance
+    // qs ipc call powerprofile cycle | saver | balanced | performance | auto
     IpcHandler {
         target: "powerprofile"
         function cycle(): void { root.cycle(); }
         function saver(): void { root.setMode("low-power"); }
         function balanced(): void { root.setMode("balanced"); }
         function performance(): void { root.setMode("performance"); }
+        function auto(): void { root.setAuto(); }
     }
 }

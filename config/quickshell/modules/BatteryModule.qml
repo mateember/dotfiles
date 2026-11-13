@@ -60,9 +60,59 @@ BarButton {
 
         Separator {}
 
-        StyledText {
-            text: "Power mode"
-            font.weight: Font.DemiBold
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Theme.spaceXxs
+
+            StyledText {
+                text: "Power mode"
+                font.weight: Font.DemiBold
+                Layout.fillWidth: true
+            }
+
+            StyledText {
+                visible: PowerProfile.manual
+                text: "Manual"
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.textDim
+            }
+
+            Rectangle {
+                id: autoPill
+                readonly property bool active: !PowerProfile.manual
+                implicitWidth: autoRow.implicitWidth + 2 * Theme.spaceXxs
+                implicitHeight: 26
+                radius: height / 2
+                color: active ? Theme.accent
+                     : autoMouse.containsMouse ? Theme.componentHover
+                     : Theme.button
+
+                RowLayout {
+                    id: autoRow
+                    anchors.centerIn: parent
+                    spacing: Theme.spaceXxxs
+                    Icon {
+                        icon: "hdr_auto"
+                        size: 15
+                        color: autoPill.active ? Theme.fgOnAccent : Theme.text
+                    }
+                    StyledText {
+                        text: "Auto"
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.weight: Font.Medium
+                        color: autoPill.active ? Theme.fgOnAccent : Theme.text
+                    }
+                }
+
+                MouseArea {
+                    id: autoMouse
+                    anchors.fill: parent
+                    enabled: PowerProfile.manual
+                    hoverEnabled: PowerProfile.manual
+                    cursorShape: PowerProfile.manual ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: PowerProfile.setAuto()
+                }
+            }
         }
 
         Repeater {

@@ -21,6 +21,12 @@ set_performance() {
     notify-send -i preferences-system-power "Power Mode" "Switched to Performance (AC Mode)"
 }
 
+set_auto() {
+    sudo tlp start > /dev/null
+    active=$(cat /sys/firmware/acpi/platform_profile 2>/dev/null | tr -d '[:space:]')
+    notify-send -i preferences-system-power "Power Mode" "Switched to Automatic (${active:-tlp})"
+}
+
 target_mode=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 case "$target_mode" in
@@ -32,6 +38,9 @@ case "$target_mode" in
         ;;
     power|p|perf|performance|ac)
         set_performance
+        ;;
+    auto|a|reset)
+        set_auto
         ;;
     "")
         current_mode=$(cat /sys/firmware/acpi/platform_profile 2>/dev/null | tr -d '[:space:]')
@@ -48,8 +57,8 @@ case "$target_mode" in
         esac
         ;;
     *)
-        notify-send -i dialog-error "Power Mode" "Invalid argument: '$1'\nValid: low (l), balanced (b), power (p)"
-        echo "Usage: $0 [low|l | balanced|b | power|p]" >&2
+        notify-send -i dialog-error "Power Mode" "Invalid argument: '$1'\nValid: low (l), balanced (b), power (p), auto (a)"
+        echo "Usage: $0 [low|l | balanced|b | power|p | auto|a]" >&2
         exit 1
         ;;
 esac

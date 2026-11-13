@@ -205,7 +205,10 @@ Scope {
                         QuickTile {
                             icon: PowerProfile.icon
                             title: "Power mode"
-                            subtitle: PowerProfile.label
+                            readonly property string modeTag: PowerProfile.mode === "low-power" ? "Saver"
+                                                            : PowerProfile.mode === "performance" ? "Perf"
+                                                            : "Bal"
+                            subtitle: (PowerProfile.manual ? "Manual · " : "Auto · ") + modeTag
                             checked: PowerProfile.mode === "performance"
                             detail: true
                             onClicked: PowerProfile.cycle()

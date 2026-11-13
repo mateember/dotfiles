@@ -65,7 +65,7 @@ Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method
 - **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar back` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `background`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
 - **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>`
 - **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
-- **System & appearance**: `wallpaper next|prev|togglePause|setMode <m>|setFolder <p>|setImage <p>|setScene <id>|setPalette <id>|setSolidColor <hex>|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
+- **System & appearance**: `wallpaper next|prev|togglePause|setMode <m>|setFolder <p>|setImage <p>|setScene <id>|setPalette <id>|setSolidColor <hex>|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance|auto`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
 - **Settings windows**: `barsettings toggle|open|close|reset`, `opacity toggle|open|close|reset`
 - **Weather**: `weather refresh`, `weather open [settings|location|bar|popup|units]`
 
@@ -187,7 +187,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | **Volume** | Open audio mixer | Middle: Toggle mute. Scroll: volume | Output/input device selector, per-app PipeWire sliders, and `pavucontrol` shortcut. |
 | **Bluetooth** | Open Bluetooth menu | Middle: Toggle Bluetooth | Paired devices (with battery % and 2-click right-click forget) plus collapsible scan list. |
 | **Network & VPN** | Open network menu | — | Ethernet status, NetworkManager VPN/WireGuard manager (with inline password prompt), and Wi-Fi list. |
-| **Battery** | Open battery menu | — | Charge/health status, TLP power mode selector (`Power Saver` / `Balanced` / `Performance`), `60/120 Hz` toggle, and session-only blur toggle. |
+| **Battery** | Open battery menu | — | Charge/health status, TLP power mode selector (`Power Saver` / `Balanced` / `Performance`) with `Auto` reset pill, `60/120 Hz` toggle, and session-only blur toggle. |
 | **Notifications** | Open notification center | Middle: Toggle Do Not Disturb | Notification history, Clear All, DND switch, and media card. |
 | **Quick Settings** | Open Quick Settings | — | Equivalent to `SUPER + ,`. |
 | **Power Menu** | Open power menu | — | Equivalent to `SUPER + CTRL + L` (two-click confirm for Log out / Restart / Shut down). |
