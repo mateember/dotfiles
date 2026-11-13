@@ -497,8 +497,10 @@ ColumnLayout {
                             text: Wallpapers.animatedFilePath
                                 ? Wallpapers.displayPath(Wallpapers.animatedFilePath)
                                 : (Wallpapers.hasVideoBackend
-                                    ? "Native 60fps MP4/WebM/MKV, APNG, WebP & GIF"
-                                    : "Supports APNG, WebP, GIF & video (GIF fallback active)")
+                                    ? `Native up to ${Hypr.targetFps}fps MP4/WebM/MKV, APNG, WebP & GIF`
+                                    : (Wallpapers.hasWebpPlugin
+                                        ? `Supports APNG, WebP, GIF & video (${Hypr.targetFps}fps WebP fallback)`
+                                        : `Supports APNG, WebP, GIF & video (${Math.min(50, Hypr.targetFps)}fps GIF fallback)`))
                             font.pixelSize: 11
                             color: Theme.textDim
                             elide: Text.ElideMiddle
@@ -583,7 +585,7 @@ ColumnLayout {
                         const missing = [];
                         if (!Wallpapers.hasVideoBackend) missing.push("qtmultimedia");
                         if (!Wallpapers.hasWebpPlugin) missing.push("qtimageformats");
-                        return "Fallback mode active — wrap Quickshell with " + missing.join(" & ") + " (docs/NIXOS_NOTES.md) for full-framerate video/APNG & animated WebP.";
+                        return "Fallback mode active — wrap Quickshell with " + missing.join(" & ") + " (docs/NIXOS_NOTES.md) for native " + Hypr.targetFps + "fps video/APNG & animated WebP.";
                     }
                     font.pixelSize: 10
                     color: Theme.textDim

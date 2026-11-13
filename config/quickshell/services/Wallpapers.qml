@@ -790,29 +790,46 @@ Singleton {
             return;
         }
         const job = root.convertQueue.shift();
-        const suffix = !job.asGif ? ".png" : (job.isApng ? "-apng-hq.gif" : "-clip-hq.gif");
+        const hyprFps = Hypr.targetFps;
+        const useWebpLoop = job.asGif && root.hasWebpPlugin;
+        const targetFps = useWebpLoop ? hyprFps : Math.min(50, hyprFps);
+        const suffix = !job.asGif ? ".png"
+            : useWebpLoop ? ((job.isApng ? "-apng-" : "-clip-") + targetFps + "fps.webp")
+                          : ((job.isApng ? "-apng-" : "-clip-") + targetFps + "fps.gif");
         const outPath = root.cacheDir + "/" + hashString(job.srcPath) + suffix;
         convertProc.pendingSlot = job.slot;
         convertProc.pendingSrc = job.srcPath;
         convertProc.pendingOut = outPath;
         if (job.asGif) {
-            if (job.isApng) {
-                // Fallback when QtMultimedia is absent: preserve APNG duration and up to 50fps / 1920px
+            if (useWebpLoop) {
+                // Fallback when QtMultimedia is absent but qtimageformats WebP is present: supports up to Hyprland's full Hz (e.g. 120fps)
+                const trim = job.isApng ? "" : "-t 20 ";
+                const q = job.isApng ? "85" : "80";
                 convertProc.command = [
                     "sh", "-c",
                     'mkdir -p "$3"; ' +
                     'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                    '  ffmpeg -y -v error -i "$1" -vf "fps=\'min(50,source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
+                    '  ffmpeg -y -v error ' + trim + '-i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos" -c:v libwebp_anim -loop 0 -preset default -q:v ' + q + ' "$2"; ' +
+                    'fi',
+                    "sh", job.srcPath, outPath, root.cacheDir
+                ];
+            } else if (job.isApng) {
+                // Pure GIF fallback when neither QtMultimedia nor qtimageformats is available (50fps max for Qt GIF delay compatibility)
+                convertProc.command = [
+                    "sh", "-c",
+                    'mkdir -p "$3"; ' +
+                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
+                    '  ffmpeg -y -v error -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
                     'fi',
                     "sh", job.srcPath, outPath, root.cacheDir
                 ];
             } else {
-                // Fallback video clip loop when QtMultimedia is absent (up to 20s, 30fps, 1280px)
+                // Pure GIF fallback video clip loop (up to 20s, 50fps max for Qt GIF delay compatibility, 1280px)
                 convertProc.command = [
                     "sh", "-c",
                     'mkdir -p "$3"; ' +
                     'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                    '  ffmpeg -y -v error -t 20 -i "$1" -vf "fps=30,scale=\'min(1280,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=224[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
+                    '  ffmpeg -y -v error -t 20 -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1280,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=224[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
                     'fi',
                     "sh", job.srcPath, outPath, root.cacheDir
                 ];
@@ -1238,9 +1255,21 @@ Singleton {
                 animatedFileUrl: root.resolvedAnimatedFileUrl,
                 animatedFileIsApng: root.animatedFileIsApng,
                 singleImageIsApng: root.singleImageIsApng,
+                targetFps: Hypr.targetFps,
                 solidColor: root.solidColor,
                 solidVignette: root.solidVignette
             });
+        }
+    }
+
+    Connections {
+        target: Hypr
+        function onTargetFpsChanged() {
+            if (!root.ready || root.passiveMode || root.hasVideoBackend) return;
+            if (root.singleImagePath && (root.isApngPath(root.singleImagePath) || root.singleImageIsApng || root.isVideoPath(root.singleImagePath)))
+                root.resolveSingleMedia(root.singleImagePath);
+            if (root.animatedFilePath && (root.isApngPath(root.animatedFilePath) || root.animatedFileIsApng || root.isVideoPath(root.animatedFilePath)))
+                root.resolveAnimatedMedia(root.animatedFilePath);
         }
     }
 
@@ -1260,12 +1289,14 @@ Singleton {
         const finishProbe = () => {
             if (probe.status === Image.Ready) {
                 root.hasWebpPlugin = true;
-                if (root.ready) {
-                    if (root.singleImagePath && root.isWebpPath(root.singleImagePath))
+                if (root.ready && !root.passiveMode) {
+                    if (root.singleImagePath && (root.isWebpPath(root.singleImagePath)
+                            || (!root.hasVideoBackend && (root.isApngPath(root.singleImagePath) || root.singleImageIsApng || root.isVideoPath(root.singleImagePath)))))
                         root.resolveSingleMedia(root.singleImagePath);
-                    if (root.animatedFilePath && root.isWebpPath(root.animatedFilePath))
+                    if (root.animatedFilePath && (root.isWebpPath(root.animatedFilePath)
+                            || (!root.hasVideoBackend && (root.isApngPath(root.animatedFilePath) || root.animatedFileIsApng || root.isVideoPath(root.animatedFilePath)))))
                         root.resolveAnimatedMedia(root.animatedFilePath);
-                    if (!root.passiveMode) root.refreshFolderFiles();
+                    root.refreshFolderFiles();
                 }
             }
             if (probe.status !== Image.Loading) probe.destroy();

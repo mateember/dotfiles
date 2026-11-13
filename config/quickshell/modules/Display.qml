@@ -172,7 +172,7 @@ BarButton {
                 required property HyprlandMonitor modelData
                 icon: modelData.name.startsWith("eDP") ? "laptop" : "monitor"
                 text: modelData.description || modelData.name
-                subtext: `${modelData.name} · ${modelData.width}×${modelData.height} · ${Math.round(modelData.refreshRate)} Hz · scale ${modelData.scale}`
+                subtext: `${modelData.name} · ${modelData.width}×${modelData.height} · ${Hypr.fpsFor(modelData.name)} Hz · scale ${modelData.scale}`
                 highlighted: modelData.focused
             }
         }

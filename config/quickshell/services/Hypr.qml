@@ -16,6 +16,24 @@ Singleton {
     property string layout: "dwindle"
     property bool blurEnabled: true
     readonly property var layouts: ["dwindle", "master", "scrolling", "monocle"]
+
+    // Live monitor refresh rates synced with Hyprland (`hyprctl monitors -j`).
+    property var monitorRefreshRates: ({})
+    property real activeRefreshRate: 120
+    property real maxRefreshRate: 120
+    readonly property int targetFps: Math.max(24, Math.round(maxRefreshRate > 0 ? maxRefreshRate : 60))
+
+    function refreshRateFor(screenName: string): real {
+        if (screenName && typeof root.monitorRefreshRates[screenName] === "number"
+                && root.monitorRefreshRates[screenName] > 0) {
+            return root.monitorRefreshRates[screenName];
+        }
+        return root.activeRefreshRate > 0 ? root.activeRefreshRate : 60;
+    }
+
+    function fpsFor(screenName: string): int {
+        return Math.max(24, Math.round(refreshRateFor(screenName)));
+    }
     property bool overviewOpen: false
     property bool overviewSwiping: false
     property real overviewProgress: 0.0
@@ -347,6 +365,16 @@ Singleton {
     function refreshLayout() {
         getLayout.running = true;
         getBlur.running = true;
+        refreshMonitors();
+    }
+
+    function refreshMonitors() {
+        getMonitors.running = false;
+        getMonitors.running = true;
+    }
+
+    function scheduleMonitorsRefresh() {
+        monitorsRefreshTimer.restart();
     }
 
     // Session-only runtime blur toggle (does not write config/state, so logout/reboot resets it).
@@ -390,12 +418,45 @@ Singleton {
             }
         }
     }
+    Process {
+        id: getMonitors
+        command: ["hyprctl", "monitors", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const arr = JSON.parse(text);
+                    if (!Array.isArray(arr) || arr.length === 0) return;
+                    const map = {};
+                    let maxRate = 0;
+                    let focusedRate = 0;
+                    for (const m of arr) {
+                        if (!m || m.disabled) continue;
+                        const r = Number(m.refreshRate);
+                        if (!isFinite(r) || r <= 0) continue;
+                        if (m.name) map[m.name] = r;
+                        if (r > maxRate) maxRate = r;
+                        if (m.focused) focusedRate = r;
+                    }
+                    root.monitorRefreshRates = map;
+                    if (maxRate > 0) root.maxRefreshRate = maxRate;
+                    if (focusedRate > 0) root.activeRefreshRate = focusedRate;
+                    else if (maxRate > 0) root.activeRefreshRate = maxRate;
+                } catch (e) {}
+            }
+        }
+    }
+    Timer { id: monitorsRefreshTimer; interval: 180; onTriggered: root.refreshMonitors() }
     Timer { id: refreshTimer; interval: 300; onTriggered: root.refreshLayout() }
 
     Connections {
         target: Hyprland
         function onRawEvent(event) {
             if (event.name === "configreloaded") root.refreshLayout();
+            else if (event.name === "monitoradded" || event.name === "monitoraddedv2"
+                  || event.name === "monitorremoved" || event.name === "monitorremovedv2"
+                  || event.name === "focusedmon" || event.name === "focusedmonv2") {
+                root.scheduleMonitorsRefresh();
+            }
             if (event.name === "custom" && event.data.startsWith("hcs_overview:")) {
                 const parts = event.data.split(":");
                 const phase = parts[1];

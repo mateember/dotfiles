@@ -86,6 +86,7 @@ Singleton {
             "hyprctl", "eval",
             `hl.monitor({ output = "eDP-1", mode = "2880x1800@${target}", position = "0x0", scale = 2, vrr = 1 })`
         ]);
+        Hypr.scheduleMonitorsRefresh();
     }
 
     function toggleRefreshRate() {
