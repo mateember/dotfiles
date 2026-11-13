@@ -2,7 +2,7 @@
 
 System-level NixOS configuration required by this dotfiles setup (configured in `~/Nix`).
 
-## 1. Hyprland UWSM Session & `TZDIR`
+## 1. Hyprland UWSM Session, `hypridle` & `TZDIR`
 
 Enable Hyprland with UWSM so `graphical-session.target` starts and `xdg-desktop-portal` (screen sharing, file pickers, `xdg-open`) works properly:
 
@@ -10,33 +10,37 @@ Enable Hyprland with UWSM so `graphical-session.target` starts and `xdg-desktop-
 programs.hyprland = {
   enable = true;
   withUWSM = true;
+  xwayland.enable = true;
 };
 ```
 
 - Because NixOS wraps `Hyprland` with `cap_sys_nice`, glibc strips `TZDIR` from its environment. [`config/hypr/conf/environment.lua`](file:///home/mate/dotfiles/config/hypr/conf/environment.lua) restores `TZDIR=/etc/zoneinfo` for child processes.
-- `hypridle` runs as a systemd user service (`services.hypridle`) rather than from `autostart.lua`.
-- UWSM runs XDG autostart entries; hide `nm-applet` and `polkit-gnome` in Hyprland (`NotShowIn=Hyprland;` or `~/.config/autostart/*.desktop` with `Hidden=true`) so they do not conflict with Quickshell's Network widget and Polkit agent.
+- `hypridle` runs as a systemd user service (`services.hypridle.enable = true`, scoped to `XDG_CURRENT_DESKTOP=Hyprland`) rather than from [`autostart.lua`](file:///home/mate/dotfiles/config/hypr/conf/autostart.lua). Add the system and user profile paths (`/run/current-system/sw`, `/etc/profiles/per-user/<user>`) to `systemd.user.services.hypridle.path` because [`hypridle.conf`](file:///home/mate/dotfiles/config/hypr/hypridle.conf) and [`lock.sh`](file:///home/mate/dotfiles/config/hypr/scripts/lock.sh) invoke `qs`, `systemd-run`, `hyprctl`, `playerctl`, and `systemctl`.
+- UWSM runs XDG autostart entries; hide `polkit-gnome` (and `nm-applet` if present) in Hyprland (`NotShowIn=Hyprland;` or `ConditionEnvironment=!XDG_CURRENT_DESKTOP=Hyprland`) so they do not conflict with Quickshell's built-in Polkit agent ([`PolkitPrompt.qml`](file:///home/mate/dotfiles/config/quickshell/polkit/PolkitPrompt.qml)) and Network widget.
 
 ## 2. Lock Screen PAM Services & Howdy
 
-[`LockScreen.qml`](file:///home/mate/dotfiles/config/quickshell/lock/LockScreen.qml) runs two parallel `PamContext` conversations:
+[`LockScreen.qml`](file:///home/mate/dotfiles/config/quickshell/lock/LockScreen.qml) runs two parallel `PamContext` conversations via transient unit `hcs-lock.service`:
 - `qs-lock`: pure `pam_unix` password authentication (unlocks immediately without waiting on biometric timeouts).
 - `qs-lock-face`: Howdy IR facial recognition (`pam_howdy.so`) when Howdy is installed, enabled, the camera exists, and the user has an enrolled model.
 
-Both PAM services must be defined under `security.pam.services` in the NixOS configuration.
+Define both PAM services under `security.pam.services` in NixOS (`qs-lock = {};` and `qs-lock-face.howdy.enable = true;`), and keep `security.pam.howdy.enable = false` globally so greeter login still requires a password and unlocks KWallet. If using an integrated IR camera, also enable `services.howdy` and `services.linux-enable-ir-emitter`.
 
-## 3. External Monitor Brightness (DDC/CI)
+## 3. Display, External Monitor Brightness (DDC/CI) & Cursors
 
-Required by the Display widget's external monitor slider:
+- Laptop backlight and keyboard backlight controls in [`Brightness.qml`](file:///home/mate/dotfiles/config/quickshell/services/Brightness.qml) require `brightnessctl`.
+- External monitor brightness sliders require `ddcutil` plus I2C access:
 
 ```nix
 hardware.i2c.enable = true;
 users.users.mate.extraGroups = [ "i2c" ];
 ```
 
+- Hardware cursors are kept enabled in [`looks.lua`](file:///home/mate/dotfiles/config/hypr/conf/looks.lua); [`reassert-cursor.sh`](file:///home/mate/dotfiles/config/hypr/scripts/reassert-cursor.sh) re-applies `BreezeX-Black` after DPMS wake.
+
 ## 4. Power Mode (`tlpmodes.sh`) Sudo Rules
 
-Quickshell's `PowerProfile` service and [`scripts/tlpmodes.sh`](file:///home/mate/dotfiles/scripts/tlpmodes.sh) require `NOPASSWD` sudo rules for:
+Quickshell's [`PowerProfile.qml`](file:///home/mate/dotfiles/config/quickshell/services/PowerProfile.qml) service and [`scripts/tlpmodes.sh`](file:///home/mate/dotfiles/scripts/tlpmodes.sh) require `NOPASSWD` sudo rules for:
 - `tlp`
 - `tee /sys/firmware/acpi/platform_profile`
 - `tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`
@@ -44,12 +48,29 @@ Quickshell's `PowerProfile` service and [`scripts/tlpmodes.sh`](file:///home/mat
 
 ## 5. Desktop Shell Dependencies
 
-- **Calendar Events**: `hcs-calendar-events` wrapper providing Python + PyGObject with `EDataServer-1.2`, `ECal-2.0`, `ICalGLib-3.0`, GLib, libxml2, libsoup, and json-glib typelibs to run [`config/quickshell/scripts/calendar-events.py`](file:///home/mate/dotfiles/config/quickshell/scripts/calendar-events.py) against `evolution-data-server`.
-- **Emoji Picker**: `HCS_EMOJI_FILE` environment variable pointing to Unicode's `emoji-test.txt`, plus `wtype` and `wl-clipboard`.
-- **Capture & Recording**: `grim`, `slurp`, `satty` (with `swappy` fallback), `wf-recorder` / `wl-screenrec`, `hyprpicker`.
-- **Removable Storage**: `services.udisks2.enable = true` (`udisksctl`, `lsblk`, `udevadm`).
-- **Background Selector & Animated Loops**: `zenity` (native folder/media pickers), `ffmpeg` / `ffprobe` (APNG detection and fallback animated WebP/GIF conversion matching Hyprland's monitor refresh rate), and `qt6.qtshadertools` (`qsb`, only needed when recompiling [GLSL fragment shaders](file:///home/mate/dotfiles/config/quickshell/wallpaper/shaders/compile.sh)).
-- **Native High-Framerate (up to 120+ fps) Video, APNG & Animated WebP Wallpapers**: Upstream `quickshell` only wraps `qtbase`, `qtsvg`, `qtdeclarative`, and `qtwayland`. Wrap `quickshell` with `qt6.qtmultimedia` and `qt6.qtimageformats` (without rebuilding Quickshell from source) so Qt's FFmpeg media backend plays full-framerate/resolution `.mp4`/`.webm`/`.mkv`/`.mov` and `.apng`/animated `.png` wallpapers natively via [`VideoLayer.qml`](file:///home/mate/dotfiles/config/quickshell/wallpaper/VideoLayer.qml) matching Hyprland's output refresh rate (e.g. `120 Hz` on `eDP-1`), and `libqwebp.so` decodes static & animated `.webp` directly in QML (and enables `libwebp_anim` fallback at Hyprland's refresh rate instead of GIF's 50 fps Qt limit):
+- **COSMIC-Style Freeze/Crop Overlay, Capture & Recording** ([`Snip.qml`](file:///home/mate/dotfiles/config/quickshell/services/Snip.qml), [`SnipOverlay.qml`](file:///home/mate/dotfiles/config/quickshell/bar/SnipOverlay.qml), [`capture.sh`](file:///home/mate/dotfiles/config/quickshell/scripts/capture.sh)):
+  - `grim`: freezes monitors at native DPI (`grim -l 0 -o ...`) for the interactive `Rectangle`/`Window`/`Screen` overlay and takes quick direct shots (`CTRL+Print`, `CTRL+SHIFT+Print`).
+  - `ffmpeg`: crops frozen monitor frames cleanly at physical pixel coordinates in `capture.sh commit`.
+  - `slurp`: quick region/window geometry fallback in `capture.sh shot`.
+  - `satty` (preferred, with `swappy` fallback): screenshot annotation editor (`--copy-command wl-copy`).
+  - `jq`, `wl-clipboard` (`wl-copy`), and `libnotify` (`notify-send`).
+  - `wf-recorder` or `wl-screenrec` (plus PipeWire PulseAudio compat `pactl`) for screen recording with optional system/mic audio.
+  - `hyprpicker`: color picker (`SUPER + SHIFT + P`, Capture Studio, and Theme/Background eyedroppers).
+- **Hardware, Privacy, VPN & Storage Helpers** ([`hardware-status.py`](file:///home/mate/dotfiles/config/quickshell/scripts/hardware-status.py)):
+  - `python3`
+  - **Privacy Indicator**: `pipewire` (`pw-dump`) for active mic, camera, and screenshare streams.
+  - **Removable Drives**: `services.udisks2.enable = true` (`udisksctl`, `lsblk`, `udevadm`, `xdg-open`).
+  - **Network & VPN**: `networkmanager` (`nmcli` for Wi-Fi, VPN/WireGuard state & inline password prompts) and `networkmanagerapplet` (`nm-connection-editor` fallback).
+  - **Bluetooth & Power**: `bluez`, `services.upower.enable = true` (`upower -d` for Bluetooth device battery percentages).
+- **Calendar Events & Weather**:
+  - **Calendar**: `hcs-calendar-events` wrapper providing Python + `pygobject3` with `evolution-data-server`, `libical`, `glib`, `gobject-introspection`, `libsoup_3`, and `json-glib` typelibs to run [`calendar-events.py`](file:///home/mate/dotfiles/config/quickshell/scripts/calendar-events.py) against `services.gnome.evolution-data-server.enable = true` (plus `gnome-online-accounts` and `gnome-calendar`).
+  - **Weather**: [`hungaromet.py`](file:///home/mate/dotfiles/config/quickshell/scripts/hungaromet.py) uses `python3` stdlib only.
+- **Launcher, Clipboard & System Monitor**:
+  - `HCS_EMOJI_FILE` environment variable pointing to Unicode's `emoji-test.txt` (`unicode-emoji`), plus `wtype` and `wl-clipboard` for the `:name` / `SUPER + .` emoji picker.
+  - `libqalculate` (`qalc`) for inline launcher math, `cliphist` + `wl-paste` (started in [`autostart.lua`](file:///home/mate/dotfiles/config/hypr/conf/autostart.lua)) for clipboard history, and `kitty` + `btop` (or `cosmic-observatory` / `gnome-system-monitor`) for terminal commands and the System Stats monitor button.
+- **Background Selector, Bing Fetcher & Animated Wallpapers**:
+  - `zenity` (native folder/media pickers), `curl` & `jq` ([`bingpaper.sh`](file:///home/mate/dotfiles/scripts/bingpaper.sh)), `ffmpeg` / `ffprobe` (APNG detection and animated WebP/GIF fallback conversion matching Hyprland's refresh rate), and `qt6.qtshadertools` (`qsb`, only needed when recompiling [GLSL fragment shaders](file:///home/mate/dotfiles/config/quickshell/wallpaper/shaders/compile.sh)).
+  - **Native High-Framerate (up to 120+ fps) Video, APNG & Animated WebP Wallpapers**: Upstream `quickshell` only wraps `qtbase`, `qtsvg`, `qtdeclarative`, and `qtwayland`. Wrap `quickshell` with `qt6.qtmultimedia` and `qt6.qtimageformats` (without rebuilding Quickshell from source) so Qt's FFmpeg media backend plays full-framerate/resolution `.mp4`/`.webm`/`.mkv`/`.mov` and `.apng`/animated `.png` wallpapers natively via [`VideoLayer.qml`](file:///home/mate/dotfiles/config/quickshell/wallpaper/VideoLayer.qml) matching Hyprland's output refresh rate (e.g. `120 Hz` on `eDP-1`), and `libqwebp.so` decodes static & animated `.webp` directly in QML (and enables `libwebp_anim` fallback at Hyprland's refresh rate instead of GIF's 50 fps Qt limit):
 
 ```nix
 let
@@ -69,9 +90,11 @@ in {
   environment.systemPackages = [ qsWithMedia /* ... */ ];
 }
 ```
-- **System Controls & Icons**: `hyprsunset`, `brightnessctl`, `ddcutil`, `playerctl`, `cliphist`, `libqalculate` (`qalc`), `pavucontrol`, `networkmanagerapplet`, `gnome-calendar`, `kdePackages.kdeconnect-kde`, `pop-icon-theme`, and fonts (`material-symbols`, `fira-sans`, `noto-fonts-color-emoji`).
+- **System Controls, Qt Theming, Icons & Fonts**:
+  - `hyprsunset`, `playerctl`, `pavucontrol`, `cosmic-settings` (settings shortcuts in Display, Network, Bluetooth, Battery, Night Light, Clock, and Quick Settings), `kdePackages.kdeconnect-kde` (`kdeconnect-indicator`), `qt6ct` / `qt5ct` / Kvantum (`QT_QPA_PLATFORMTHEME=qt6ct`).
+  - Themes & fonts: `pop-icon-theme` (`QS_ICON_THEME=Pop`), `BreezeX-Black` cursor theme, `material-symbols`, `fira-sans`, and `noto-fonts-color-emoji` / `openmoji-color`.
 
-## 6. KWallet & Secret Portal
+## 6. Portals, KWallet & Secret Portal
 
-- Greeter/login PAM KWallet unlock (`security.pam.services.<greeter>.kwallet.enable`) plus a Hyprland-only `pam_kwallet_init` user service unlocks `kdewallet` at login.
-- Set `org.freedesktop.impl.portal.Secret = kwallet` in `xdg.portal.config.hyprland` so Flatpak and portal-aware apps read secrets from KWallet.
+- Configure `xdg.portal` (`xdgOpenUsePortal = true`, `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-cosmic` for `org.freedesktop.impl.portal.FileChooser`, and `org.freedesktop.impl.portal.Secret = kwallet`) so screen sharing, COSMIC file pickers, and Flatpak secret access work in Hyprland.
+- Enable greeter/login PAM KWallet unlock (`security.pam.services.<greeter>.enableKwallet = true`) plus a Hyprland-only `pam_kwallet_init` systemd user service (`XDG_CURRENT_DESKTOP=Hyprland`) to unlock `kdewallet` at login.
