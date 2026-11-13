@@ -824,14 +824,14 @@ Scope {
                                 height: parent.height
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 radius: Theme.radiusL
-                                color: (wsRowItem.isDropTargetRow && win.dropMode === "workspace") ? Qt.rgba(1, 0.68, 0, 0.16)
-                                     : (wsRowItem.isDropTargetRow ? Qt.rgba(1, 0.68, 0, 0.12)
-                                     : (wsRowItem.isSelected ? Qt.rgba(1, 0.68, 0, 0.11)
-                                     : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.05)
+                                color: (wsRowItem.isDropTargetRow && win.dropMode === "workspace") ? Theme.alpha(Theme.accent, 0.16)
+                                     : (wsRowItem.isDropTargetRow ? Theme.alpha(Theme.accent, 0.12)
+                                     : (wsRowItem.isSelected ? Theme.alpha(Theme.accent, 0.11)
+                                     : (wsRowItem.isCurrentHypr ? Theme.alpha(Theme.accent, 0.05)
                                      : (wsBgHover.containsMouse ? Theme.componentHover : Theme.overviewBg))))
                                 border.width: (wsRowItem.isDropTargetRow || wsRowItem.isSelected) ? 2 : 1
                                 border.color: (wsRowItem.isDropTargetRow || wsRowItem.isSelected) ? Theme.accent
-                                            : (wsRowItem.isCurrentHypr ? Qt.rgba(1, 0.68, 0, 0.48) : Theme.panelBorder)
+                                            : (wsRowItem.isCurrentHypr ? Theme.alpha(Theme.accent, 0.48) : Theme.panelBorder)
 
                                 Behavior on color { ColorAnimation { duration: Theme.animFast } }
                                 Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
@@ -976,11 +976,11 @@ Scope {
                                                                 Layout.fillHeight: true
                                                                 radius: Theme.radiusM
                                                                 opacity: isDraggedCard ? 0.32 : 1.0
-                                                                color: isSwapTarget ? Qt.rgba(1, 0.68, 0, 0.18)
+                                                                color: isSwapTarget ? Theme.alpha(Theme.accent, 0.18)
                                                                      : (isWinSelected ? Qt.rgba(0.22, 0.22, 0.25, 0.94) : Qt.rgba(0.10, 0.10, 0.12, 0.92))
                                                                 border.width: (isSwapTarget || isWinSelected) ? 2 : 1
                                                                 border.color: (isSwapTarget || isWinSelected) ? Theme.accent
-                                                                            : (winHover.containsMouse && !win.isDragging ? Qt.rgba(1, 1, 1, 0.42) : Theme.panelBorder)
+                                                                            : (winHover.containsMouse && !win.isDragging ? Theme.alpha(Theme.text, 0.42) : Theme.panelBorder)
 
                                                                 Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
                                                                 Behavior on border.color { ColorAnimation { duration: Theme.animFast } }

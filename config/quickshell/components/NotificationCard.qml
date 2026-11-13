@@ -19,7 +19,7 @@ Rectangle {
     implicitHeight: layout.implicitHeight + 2 * Theme.spaceXs
     radius: Theme.radiusS
     color: root.toast ? Theme.notificationsBg : (hover.hovered ? Theme.componentHover : Theme.component)
-    border.width: root.toast ? 1 : 0
+    border.width: root.toast ? Theme.popupBorderWidth : 0
     border.color: root.critical ? Theme.destructive : Theme.popupBorder
 
     HoverHandler { id: hover }

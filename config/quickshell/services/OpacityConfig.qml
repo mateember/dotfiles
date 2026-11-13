@@ -15,6 +15,8 @@ Singleton {
     id: root
 
     property bool settingsOpen: false
+    property bool ready: false
+    property bool loadedFromFile: false
 
     readonly property string stateFile: Quickshell.statePath("opacity-config.json")
 
@@ -68,24 +70,45 @@ Singleton {
         onTriggered: root.saveNow()
     }
 
+    function notifyThemeConfig() {
+        ThemeConfig.syncOpacityFromExternal(
+            root.widgetsOpacity,
+            root.barOpacity,
+            root.notificationsOpacity,
+            root.osdOpacity
+        );
+    }
+
+    function syncFromTheme(widgets: real, bar: real, notifications: real, osd: real) {
+        root.widgetsOpacity = clamp(widgets);
+        root.barOpacity = clamp(bar);
+        root.notificationsOpacity = clamp(notifications);
+        root.osdOpacity = clamp(osd);
+        scheduleSave();
+    }
+
     function setWidgets(v: real) {
         root.widgetsOpacity = clamp(v);
         scheduleSave();
+        notifyThemeConfig();
     }
 
     function setBar(v: real) {
         root.barOpacity = clamp(v);
         scheduleSave();
+        notifyThemeConfig();
     }
 
     function setNotifications(v: real) {
         root.notificationsOpacity = clamp(v);
         scheduleSave();
+        notifyThemeConfig();
     }
 
     function setOsd(v: real) {
         root.osdOpacity = clamp(v);
         scheduleSave();
+        notifyThemeConfig();
     }
 
     function applyPreset(widgets: real, bar: real, notifications: real, osd: real) {
@@ -94,6 +117,7 @@ Singleton {
         root.notificationsOpacity = clamp(notifications);
         root.osdOpacity = clamp(osd);
         saveNow();
+        notifyThemeConfig();
     }
 
     function reset() {
@@ -107,14 +131,20 @@ Singleton {
         onLoaded: {
             try {
                 const saved = JSON.parse(text());
-                if (!saved || typeof saved !== "object") return;
-                if (saved.widgets !== undefined) root.widgetsOpacity = root.clamp(saved.widgets);
-                if (saved.bar !== undefined) root.barOpacity = root.clamp(saved.bar);
-                if (saved.notifications !== undefined) root.notificationsOpacity = root.clamp(saved.notifications);
-                if (saved.osd !== undefined) root.osdOpacity = root.clamp(saved.osd);
-                root.applyToTheme();
+                if (saved && typeof saved === "object") {
+                    if (saved.widgets !== undefined) root.widgetsOpacity = root.clamp(saved.widgets);
+                    if (saved.bar !== undefined) root.barOpacity = root.clamp(saved.bar);
+                    if (saved.notifications !== undefined) root.notificationsOpacity = root.clamp(saved.notifications);
+                    if (saved.osd !== undefined) root.osdOpacity = root.clamp(saved.osd);
+                    root.loadedFromFile = true;
+                    root.applyToTheme();
+                    if (ThemeConfig.ready && !ThemeConfig.loadedFromFile)
+                        root.notifyThemeConfig();
+                }
             } catch (e) {}
+            root.ready = true;
         }
+        onLoadFailed: root.ready = true
     }
 
     IpcHandler {

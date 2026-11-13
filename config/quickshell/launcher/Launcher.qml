@@ -52,6 +52,7 @@ Scope {
             root.pendingShellId = "";
             if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
             else if (id === "qs:opacity-settings") { WidgetHistory.opacityFromBarSettings = false; OpacityConfig.settingsOpen = true; }
+            else if (id === "qs:theme-settings") WidgetHistory.openThemeStandalone();
             else if (id === "qs:overview") Hypr.openOverview();
             else if (id === "qs:capture") Recorder.openOverlay("shot");
             else if (id === "qs:record") Recorder.openOverlay("record");
@@ -119,6 +120,7 @@ Scope {
                 { id: "qs:popup:privacy",       name: "Privacy Status",        comment: "Apps currently using your microphone, camera or screen",      icon: "shield",              keywords: ["privacy", "microphone", "camera", "webcam", "screenshare"] },
                 { id: "qs:bar-settings",        name: "Bar Settings",          comment: "Toggle bar items on/off, reorder and move between sections", icon: "view_agenda",         keywords: ["bar", "panel", "customize", "modules", "order", "toggle"] },
                 { id: "qs:opacity-settings",    name: "Opacity & Transparency", comment: "Separate opacity sliders for widgets, bar, notifications & OSD toast", icon: "opacity",      keywords: ["opacity", "transparency", "alpha", "appearance", "glass", "bar", "widgets", "notifications", "toast", "osd"] },
+                { id: "qs:theme-settings",      name: "Theme & Profiles",      comment: "Customize colors, opacity, radii, bar sizing, fonts & saved profiles", icon: "palette",      keywords: ["theme", "profile", "profiles", "colors", "accent", "font", "dark", "light", "appearance", "style"] },
                 { id: "qs:popup:stats",         name: "System Monitor (Minimon)", comment: "CPU, temperature, memory, network, disk & GPU graphs and settings", icon: "monitoring",   keywords: ["minimon", "cpu", "ram", "memory", "gpu", "network", "disk", "stats"] },
                 { id: "qs:quicksettings",       name: "Quick Settings",        comment: "Toggles, volume/brightness sliders, media and power mode",   icon: "tune",                keywords: ["control", "toggles", "sliders", "tlp"] },
                 { id: "qs:popup:calendar",      name: "Calendar & Events",     comment: "Month calendar, agenda and Nextcloud / Google / Neptun",     icon: "calendar_month",      keywords: ["date", "time", "clock", "agenda", "nextcloud", "events"] },
@@ -266,7 +268,7 @@ Scope {
                 radius: Theme.radiusM
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
-                border.width: 1
+                border.width: Theme.popupBorderWidth
 
                 // Swallow clicks so they don't reach the close-area behind.
                 MouseArea { anchors.fill: parent }

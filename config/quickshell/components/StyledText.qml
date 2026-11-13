@@ -14,6 +14,10 @@ Text {
 
     // Set imperatively (a binding on font.styleName that reads font.weight is a binding loop).
     function syncStyle() {
+        if (font.family !== "Fira Sans") {
+            if (font.styleName !== "") font.styleName = "";
+            return;
+        }
         const w = font.weight;
         const style = w >= Font.ExtraBold ? "ExtraBold" : w >= Font.Bold ? "Bold" : w >= Font.DemiBold ? "SemiBold"
                     : w >= Font.Medium ? "Medium" : w <= Font.Light ? "Light" : "Regular";

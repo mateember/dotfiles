@@ -86,6 +86,32 @@ Scope {
                             }
                         }
                         Rectangle {
+                            implicitWidth: themeBtnRow.implicitWidth + 2 * Theme.spaceXs
+                            implicitHeight: 30
+                            radius: 15
+                            color: themeBtnMouse.pressed ? Theme.componentPressed
+                                 : themeBtnMouse.containsMouse ? Theme.componentHover
+                                 : Theme.component
+                            RowLayout {
+                                id: themeBtnRow
+                                anchors.centerIn: parent
+                                spacing: 4
+                                Icon { icon: "palette"; size: 15; color: Theme.accent }
+                                StyledText {
+                                    text: "Theme"
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.text
+                                }
+                            }
+                            MouseArea {
+                                id: themeBtnMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: WidgetHistory.openThemeFromOpacitySettings()
+                            }
+                        }
+                        Rectangle {
                             implicitWidth: resetLabel.implicitWidth + 2 * Theme.spaceXs
                             implicitHeight: 30
                             radius: 15

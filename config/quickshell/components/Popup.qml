@@ -166,7 +166,7 @@ PanelWindow {
         radius: root.effectiveAsWindow ? 0 : Theme.radiusM
         color: root.name === "notifications" ? Theme.notificationsBg : Theme.widgetsBg
         border.color: Theme.popupBorder
-        border.width: root.effectiveAsWindow ? 0 : 1
+        border.width: root.effectiveAsWindow ? 0 : Theme.popupBorderWidth
         clip: true
         focus: true
         Keys.onPressed: e => { if (root.keyHandler) root.keyHandler(e); }

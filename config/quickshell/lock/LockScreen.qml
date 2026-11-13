@@ -538,6 +538,7 @@ Scope {
 
     Component.onCompleted: {
         Wallpapers.passiveMode = true;
+        ThemeConfig.passiveMode = true;
         root.refreshPamProbe();
         wallpaperProc.running = true;
         if (persist.locked) {

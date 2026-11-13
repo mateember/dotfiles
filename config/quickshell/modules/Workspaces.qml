@@ -48,7 +48,7 @@ Row {
             Rectangle {
                 id: circle
                 anchors.centerIn: parent
-                width: Theme.workspaceCircle
+                width: Math.min(Theme.workspaceCircle, Math.max(16, Theme.barHeight - 4))
                 height: width
                 radius: width / 2
                 color: ws.isActive ? Theme.accent

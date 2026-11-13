@@ -16,6 +16,7 @@ Singleton {
     readonly property bool canGoBack: stack.length > 0
 
     property bool opacityFromBarSettings: false
+    property string themeOrigin: ""   // "" | "barsettings" | "opacity"
 
     function push(entry: var) {
         if (!entry) return;
@@ -72,5 +73,37 @@ Singleton {
     function closeOpacitySettings() {
         root.opacityFromBarSettings = false;
         OpacityConfig.settingsOpen = false;
+    }
+
+    function openThemeStandalone() {
+        root.themeOrigin = "";
+        ThemeConfig.settingsOpen = true;
+    }
+
+    function openThemeFromBarSettings() {
+        root.themeOrigin = "barsettings";
+        BarConfig.settingsOpen = false;
+        ThemeConfig.settingsOpen = true;
+    }
+
+    function openThemeFromOpacitySettings() {
+        root.themeOrigin = "opacity";
+        OpacityConfig.settingsOpen = false;
+        ThemeConfig.settingsOpen = true;
+    }
+
+    function backFromThemeSettings() {
+        const origin = root.themeOrigin;
+        root.themeOrigin = "";
+        ThemeConfig.settingsOpen = false;
+        if (origin === "barsettings")
+            BarConfig.settingsOpen = true;
+        else if (origin === "opacity")
+            OpacityConfig.settingsOpen = true;
+    }
+
+    function closeThemeSettings() {
+        root.themeOrigin = "";
+        ThemeConfig.settingsOpen = false;
     }
 }

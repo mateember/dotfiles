@@ -41,8 +41,10 @@ PanelWindow {
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: Math.min(Theme.radiusXl, height / 2)
+        radius: Math.min(Theme.barRadius, height / 2)
         color: Theme.barBg
+        border.width: Theme.barBorderWidth
+        border.color: Theme.panelBorder
     }
 
     Component { id: compWorkspaces; Workspaces { screen: root.screen } }

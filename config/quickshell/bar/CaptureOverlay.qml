@@ -55,7 +55,7 @@ Scope {
                 radius: Recorder.fromQuickSettings ? Theme.radiusM : Theme.radiusL
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
-                border.width: 1
+                border.width: Theme.popupBorderWidth
 
                 MouseArea { anchors.fill: parent }
 

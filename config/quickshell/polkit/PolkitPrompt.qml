@@ -55,7 +55,7 @@ Scope {
                 radius: Theme.radiusM
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
-                border.width: 1
+                border.width: Theme.popupBorderWidth
 
                 SequentialAnimation {
                     id: shake

@@ -333,9 +333,9 @@ BarButton {
             Layout.fillWidth: true
             implicitHeight: mainCol.implicitHeight + 8
             radius: Theme.radiusM
-            color: Qt.rgba(1, 1, 1, 0.04)
+            color: Theme.surface0
             border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.06)
+            border.color: Theme.alpha(Theme.surfaceTint, 0.06 * Theme.surfaceStrength)
 
             ColumnLayout {
                 id: mainCol
@@ -472,9 +472,9 @@ BarButton {
                 Layout.fillWidth: true
                 implicitHeight: genSettingsCol.implicitHeight + 2 * Theme.spaceS
                 radius: Theme.radiusM
-                color: Qt.rgba(1, 1, 1, 0.04)
+                color: Theme.surface0
                 border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.06)
+                border.color: Theme.alpha(Theme.surfaceTint, 0.06 * Theme.surfaceStrength)
 
                 ColumnLayout {
                     id: genSettingsCol
@@ -673,9 +673,9 @@ BarButton {
                 Layout.fillWidth: true
                 implicitHeight: sensorCtrlCol.implicitHeight + 2 * Theme.spaceS
                 radius: Theme.radiusM
-                color: Qt.rgba(1, 1, 1, 0.04)
+                color: Theme.surface0
                 border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.06)
+                border.color: Theme.alpha(Theme.surfaceTint, 0.06 * Theme.surfaceStrength)
 
                 ColumnLayout {
                     id: sensorCtrlCol

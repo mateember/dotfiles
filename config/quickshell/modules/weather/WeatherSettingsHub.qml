@@ -40,7 +40,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: navCol.implicitHeight + 8
         radius: Theme.radiusM
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.surface0
         border.width: 1
         border.color: Theme.divider
 
@@ -99,7 +99,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: srcCol.implicitHeight + 2 * Theme.spaceXs
         radius: Theme.radiusM
-        color: Qt.rgba(1, 1, 1, 0.04)
+        color: Theme.surface0
         border.width: 1
         border.color: Theme.divider
 

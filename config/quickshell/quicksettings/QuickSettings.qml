@@ -107,7 +107,7 @@ Scope {
                 radius: QuickSettingsState.asWindow ? 0 : Theme.radiusM
                 color: Theme.popupBg
                 border.color: Theme.popupBorder
-                border.width: QuickSettingsState.asWindow ? 0 : 1
+                border.width: QuickSettingsState.asWindow ? 0 : Theme.popupBorderWidth
                 clip: true
                 focus: true
                 Keys.onEscapePressed: root.dismiss()

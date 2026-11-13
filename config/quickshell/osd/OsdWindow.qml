@@ -32,7 +32,7 @@ PanelWindow {
         radius: height / 2
         color: Theme.osdBg
         border.color: Theme.popupBorder
-        border.width: 1
+        border.width: Theme.popupBorderWidth
         opacity: Osd.visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.animNormal } }
 
