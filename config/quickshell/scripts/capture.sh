@@ -61,9 +61,12 @@ case "$cmd" in
     shot)
         mode="${1:-region}"       # region | window | output
         action="${2:-copy}"       # copy | save | annotate
-        delay="${3:-0}"           # seconds
+        delay="${3:-0}"           # seconds (after selection)
+        pre_wait="${4:-0.25}"     # seconds before capture (let overlay close)
         pkill -x slurp 2>/dev/null || true
-        sleep 0.25                # let overlay close
+        if [ "$pre_wait" != "0" ] && [ "$pre_wait" != "0.0" ]; then
+            sleep "$pre_wait"
+        fi
 
         geom=""
         mon=""
@@ -102,8 +105,20 @@ case "$cmd" in
             rm -f "$tmp_file"
             notify-send -a "Screenshot" -i camera-photo "Screenshot saved & copied" "$dest" 2>/dev/null || true
         elif [ "$action" = "annotate" ]; then
+            satty_bin=$(find_bin satty || true)
             swappy_bin=$(find_bin swappy || true)
-            if [ -n "$swappy_bin" ]; then
+            if [ -n "$satty_bin" ]; then
+                "$satty_bin" \
+                    --filename "$tmp_file" \
+                    --output-filename "$shot_dir/Screenshot_${ts}.png" \
+                    --copy-command wl-copy \
+                    --early-exit \
+                    --actions-on-enter save-to-clipboard \
+                    --resize smart \
+                    --font-family "Fira Sans" \
+                    < /dev/null
+                rm -f "$tmp_file"
+            elif [ -n "$swappy_bin" ]; then
                 "$swappy_bin" -f "$tmp_file" -o "$shot_dir/Screenshot_${ts}.png" < /dev/null
                 rm -f "$tmp_file"
             else

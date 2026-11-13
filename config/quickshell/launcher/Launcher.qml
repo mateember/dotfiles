@@ -114,7 +114,7 @@ Scope {
 
             readonly property var shellApps: [
                 { id: "qs:overview",            name: "Overview",              comment: "KDE Plasma-style workspaces & live window previews (SUPER+Tab)", icon: "grid_view",        keywords: ["workspaces", "desktops", "expose", "windows", "plasma"] },
-                { id: "qs:capture",             name: "Screenshot & Capture",  comment: "Interactive region/window/screen capture, timer & annotation (SUPER+Print)", icon: "photo_camera", keywords: ["screenshot", "snip", "swappy", "annotate", "capture"] },
+                { id: "qs:capture",             name: "Screenshot & Capture",  comment: "Interactive region/window/screen capture, timer & annotation (SUPER+Print)", icon: "photo_camera", keywords: ["screenshot", "snip", "satty", "swappy", "annotate", "capture"] },
                 { id: "qs:record",              name: "Screen Recorder",       comment: "Record screen, region or window with system/mic audio",       icon: "videocam",            keywords: ["record", "video", "screenrec", "wf-recorder", "capture"] },
                 { id: "qs:popup:storage",       name: "Removable Drives",      comment: "Mount, open and safely eject USB & SD drives",               icon: "usb",                 keywords: ["usb", "drives", "storage", "eject", "mount", "sd"] },
                 { id: "qs:popup:privacy",       name: "Privacy Status",        comment: "Apps currently using your microphone, camera or screen",      icon: "shield",              keywords: ["privacy", "microphone", "camera", "webcam", "screenshare"] },

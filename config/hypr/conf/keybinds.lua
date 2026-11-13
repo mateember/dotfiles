@@ -22,6 +22,7 @@ local mainMod = "SUPER"
 local browser = "brave-origin"
 local term = "kitty"
 local filemanager = "nautilus --new-window"
+local capture = os.getenv("HOME") .. "/.config/quickshell/scripts/capture.sh"
 
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(term))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
@@ -50,9 +51,11 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 
-hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"))
-hl.bind("ALT + PRINT", hl.dsp.exec_cmd("hyprshot -m window --clipboard-only"))
-hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
+hl.bind("PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot output copy 0 0"))
+hl.bind("ALT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot window copy 0 0"))
+hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot region copy 0 0"))
+hl.bind("CTRL + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot output annotate 0 0"))
+hl.bind("CTRL + SHIFT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot region annotate 0 0"))
 
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"), { repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%-"), { repeating = true })
