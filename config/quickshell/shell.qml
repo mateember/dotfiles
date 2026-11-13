@@ -17,7 +17,7 @@ import qs.services
 ShellRoot {
     // Singletons are created lazily; touch the ones that own IPC targets or system hooks
     // so they exist from startup (picker, wallpaper, notifications server, weather).
-    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, ThemeConfig, WeatherConfig, Weather, Hypr, Recorder, Privacy, Storage, WidgetHistory]
+    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, ThemeConfig, WeatherConfig, Weather, Hypr, Recorder, Snip, Privacy, Storage, WidgetHistory]
 
     // Wallpaper slideshow, one surface per screen (background layer).
     Variants {
@@ -36,6 +36,7 @@ ShellRoot {
     Launcher {}
     Overview {}
     CaptureOverlay {}
+    SnipOverlay {}
     BarSettingsWindow {}
     OpacitySettingsWindow {}
     ThemeSettingsWindow {}

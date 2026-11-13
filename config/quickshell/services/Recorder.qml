@@ -83,10 +83,10 @@ Singleton {
     function takeScreenshot(mode: string) {
         const m = mode || "region";
         const act = root.shotAction;
-        const dly = String(root.shotDelay);
+        const dly = root.shotDelay;
         WidgetHistory.clear();
         root.hideOverlay();
-        Quickshell.execDetached(["bash", root.scriptPath, "shot", m, act, dly]);
+        Snip.start(m, act, dly, true);
     }
 
     function startRecording(mode: string, audio: string) {
@@ -161,8 +161,9 @@ Singleton {
         function toggle(): void { root.toggleOverlay("shot"); }
         function open(): void { root.openOverlay("shot"); }
         function recordMenu(): void { root.openOverlay("record"); }
-        function close(): void { root.closeOverlay(); }
+        function close(): void { root.closeOverlay(); Snip.cancel(); }
         function shot(mode: string): void { root.takeScreenshot(mode || "region"); }
+        function snip(mode: string): void { Snip.start(mode || "region", "copy", 0, false); }
         function recordToggle(): void { root.toggleRecording("screen"); }
         function recordStop(): void { root.stopRecording(); }
     }

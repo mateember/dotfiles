@@ -26,7 +26,7 @@ BarButton {
         // Close first and wait, so the popup isn't in the screenshot.
         function shot(mode: string) {
             pop.close();
-            Quickshell.execDetached(["bash", Recorder.scriptPath, "shot", mode, "copy", "0", "0.4"]);
+            Snip.start(mode || "region", "copy", 0, true);
         }
 
         PopupHeader {

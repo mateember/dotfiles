@@ -63,7 +63,7 @@ The shell is built with **Qt 6 / QML** via Quickshell and styled after **COSMIC 
 Invoke `IpcHandler` targets on the main shell with `qs ipc call <target> <method> [args]`:
 
 - **Bar popups**: `bar toggle <name>` / `bar openWindow <name>` / `bar back` / `bar close` (e.g. `volume`, `network`, `bluetooth`, `clipboard`, `weather`, `calendar`, `background`, `display`, `layout`, `media`, `battery`, `stats`, `nightlight`, `caffeine`, `storage`, `privacy`, `notifications`, `power`)
-- **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>`
+- **Overlays & panels**: `launcher toggle|emoji|shell|open|close`, `overview toggle|open|close`, `quicksettings toggle|open|close`, `capture toggle|open|recordMenu|close|shot <mode>|snip <mode>`
 - **Shortcut targets**: `clipboard toggle`, `notifications toggle`, `power toggle`, `picker color`
 - **System & appearance**: `wallpaper next|prev|togglePause|setMode <m>|setFolder <p>|setImage <p>|setScene <id>|setPalette <id>|setSolidColor <hex>|screenUrls`, `nightlight toggle|auto|on|off`, `powerprofile cycle|saver|balanced|performance|auto`, `kbd cycle|toggle|set <level>`, `workspaces focus <selector>`
 - **Settings windows**: `barsettings toggle|open|close|reset`, `opacity toggle|open|close|reset`, `theme toggle|open|close|reset|profile <name>|saveProfile <name>|deleteProfile <name>|listProfiles`
@@ -149,9 +149,9 @@ Hyprland uses the built-in `scrolling` layout by default: windows open as column
 
 | Key / Event | Action |
 |---|---|
-| `Print` | Screenshot focused output and open in `satty` (fullscreen crop & annotate). |
-| `ALT + Print` | Pick window and open in `satty` (crop & annotate). |
-| `SHIFT + Print` | Select region and open in `satty` (crop & annotate). |
+| `Print` | Open COSMIC-style freeze & capture overlay in **Screen** mode (`qs ipc call capture snip output`). |
+| `ALT + Print` | Open COSMIC-style freeze & capture overlay in **Window** mode (click a window, then resize handles outward/inward or copy/save/annotate). |
+| `SHIFT + Print` | Open COSMIC-style freeze & capture overlay in **Rectangle** mode (draw and freely resize/move selection before copying/saving/annotating). |
 | `CTRL + Print` | Quick screenshot focused output straight to clipboard (`grim`). |
 | `CTRL + SHIFT + Print` | Quick screenshot selected region straight to clipboard (`slurp` + `grim`). |
 | `XF86AudioRaiseVolume` / `LowerVolume` | Adjusts output volume by ±5% (capped at 150%) + OSD toast. |

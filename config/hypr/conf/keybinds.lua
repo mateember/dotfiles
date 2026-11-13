@@ -51,9 +51,9 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 
-hl.bind("PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot output annotate 0 0"))
-hl.bind("ALT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot window annotate 0 0"))
-hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot region annotate 0 0"))
+hl.bind("PRINT", hl.dsp.exec_cmd(HCS_QS .. " ipc call capture snip output"))
+hl.bind("ALT + PRINT", hl.dsp.exec_cmd(HCS_QS .. " ipc call capture snip window"))
+hl.bind("SHIFT + PRINT", hl.dsp.exec_cmd(HCS_QS .. " ipc call capture snip region"))
 hl.bind("CTRL + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot output copy 0 0"))
 hl.bind("CTRL + SHIFT + PRINT", hl.dsp.exec_cmd("bash " .. capture .. " shot region copy 0 0"))
 
