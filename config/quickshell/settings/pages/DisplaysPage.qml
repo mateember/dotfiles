@@ -223,8 +223,13 @@ ColumnLayout {
                     readonly property var sz: root.logicalSize(modelData)
                     readonly property bool selected: root.selectedMonitorName === modelData.name
 
-                    x: Math.round(arrangeCanvas.originX + modelData.x * arrangeCanvas.scaleFactor)
-                    y: Math.round(arrangeCanvas.originY + modelData.y * arrangeCanvas.scaleFactor)
+                    property bool dragging: false
+                    property int previewMonX: modelData.x
+                    property int previewMonY: modelData.y
+
+                    x: Math.round(arrangeCanvas.originX + (dragging ? previewMonX : modelData.x) * arrangeCanvas.scaleFactor)
+                    y: Math.round(arrangeCanvas.originY + (dragging ? previewMonY : modelData.y) * arrangeCanvas.scaleFactor)
+                    z: dragging ? 10 : (selected ? 2 : 1)
                     width: Math.max(76, Math.round(sz.w * arrangeCanvas.scaleFactor))
                     height: Math.max(48, Math.round(sz.h * arrangeCanvas.scaleFactor))
                     radius: Theme.radiusS
@@ -267,6 +272,7 @@ ColumnLayout {
                         property real startGlobalY: 0
                         property real startMonX: 0
                         property real startMonY: 0
+                        property bool moved: false
 
                         onPressed: e => {
                             root.selectedMonitorName = monBox.modelData.name;
@@ -274,18 +280,38 @@ ColumnLayout {
                             startGlobalY = e.y + monBox.y;
                             startMonX = monBox.modelData.x;
                             startMonY = monBox.modelData.y;
+                            monBox.previewMonX = monBox.modelData.x;
+                            monBox.previewMonY = monBox.modelData.y;
+                            monBox.dragging = true;
+                            moved = false;
                             cursorShape = Qt.ClosedHandCursor;
                         }
                         onPositionChanged: e => {
-                            if (!pressed) return;
+                            if (!pressed || !monBox.dragging) return;
                             const curX = e.x + monBox.x;
                             const curY = e.y + monBox.y;
                             const dx = (curX - startGlobalX) / Math.max(0.01, arrangeCanvas.scaleFactor);
                             const dy = (curY - startGlobalY) / Math.max(0.01, arrangeCanvas.scaleFactor);
                             const snapped = root.snapPosition(monBox.modelData.name, Math.round(startMonX + dx), Math.round(startMonY + dy));
-                            root.updateDraft(monBox.modelData.name, { x: snapped.x, y: snapped.y, mirror: "" });
+                            monBox.previewMonX = snapped.x;
+                            monBox.previewMonY = snapped.y;
+                            moved = true;
                         }
-                        onReleased: cursorShape = Qt.OpenHandCursor
+                        onReleased: {
+                            cursorShape = Qt.OpenHandCursor;
+                            const wasMoved = moved;
+                            const finalX = monBox.previewMonX;
+                            const finalY = monBox.previewMonY;
+                            const name = monBox.modelData.name;
+                            monBox.dragging = false;
+                            if (wasMoved) {
+                                root.updateDraft(name, { x: finalX, y: finalY, mirror: "" });
+                            }
+                        }
+                        onCanceled: {
+                            cursorShape = Qt.OpenHandCursor;
+                            monBox.dragging = false;
+                        }
                     }
                 }
             }

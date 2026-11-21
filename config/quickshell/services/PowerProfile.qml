@@ -34,7 +34,7 @@ Singleton {
     }
 
     function _runScript(args) {
-        const nextCmd = [root.script].concat(args);
+        const nextCmd = ["timeout", "10", root.script].concat(args);
         if (runProc.running) {
             runProc.pendingCmd = nextCmd;
             return;

@@ -131,6 +131,52 @@ ColumnLayout {
         title: "Available Wi-Fi Networks"
         description: "Tap a network to connect or disconnect"
 
+        // Password prompt kept outside the Repeater so periodic Wi-Fi scans
+        // rebuilding delegates never wipe in-progress password input.
+        RowLayout {
+            visible: root.pendingWifi !== null
+            Layout.fillWidth: true
+            Layout.margins: Theme.spaceXs
+            spacing: Theme.spaceXxs
+
+            TextField {
+                id: pskField
+                Layout.fillWidth: true
+                implicitHeight: 38
+                placeholder: "Wi-Fi password for " + (root.pendingWifi?.name ?? "")
+                echoMode: TextInput.Password
+                onVisibleChanged: {
+                    text = "";
+                    if (visible) focusInput();
+                }
+                onAccepted: {
+                    const target = root.pendingWifi;
+                    const pw = text;
+                    text = "";
+                    root.pendingWifi = null;
+                    if (target) target.connectWithPsk(pw);
+                }
+            }
+            SettingsActionButton {
+                variant: "accent"
+                text: "Connect"
+                onClicked: {
+                    const target = root.pendingWifi;
+                    const pw = pskField.text;
+                    pskField.text = "";
+                    root.pendingWifi = null;
+                    if (target) target.connectWithPsk(pw);
+                }
+            }
+            SettingsActionButton {
+                text: "Cancel"
+                onClicked: {
+                    pskField.text = "";
+                    root.pendingWifi = null;
+                }
+            }
+        }
+
         Repeater {
             model: Net.wifiEnabled ? Net.wifiNetworks.slice(0, 18) : []
             delegate: ColumnLayout {
@@ -142,7 +188,7 @@ ColumnLayout {
                 SettingsRow {
                     icon: Net.strengthIcon(wifiEntry.modelData.signalStrength)
                     iconFilled: true
-                    highlighted: wifiEntry.modelData.connected
+                    highlighted: wifiEntry.modelData.connected || root.pendingWifi === wifiEntry.modelData
                     clickable: true
                     title: wifiEntry.modelData.name || "(Hidden network)"
                     subtitle: wifiEntry.modelData.stateChanging ? "Connecting…"
@@ -161,41 +207,6 @@ ColumnLayout {
                         visible: wifiEntry.modelData.connected
                         text: "Disconnect"
                         onClicked: wifiEntry.modelData.disconnect()
-                    }
-                }
-
-                // Inline Password Input
-                RowLayout {
-                    visible: root.pendingWifi === wifiEntry.modelData
-                    Layout.fillWidth: true
-                    Layout.leftMargin: Theme.spaceM
-                    Layout.rightMargin: Theme.spaceXs
-                    Layout.bottomMargin: 6
-                    spacing: Theme.spaceXxs
-
-                    TextField {
-                        id: pskField
-                        Layout.fillWidth: true
-                        implicitHeight: 38
-                        placeholder: "Wi-Fi password for " + wifiEntry.modelData.name
-                        echoMode: TextInput.Password
-                        onVisibleChanged: if (visible) { text = ""; focusInput(); }
-                        onAccepted: {
-                            wifiEntry.modelData.connectWithPsk(text);
-                            root.pendingWifi = null;
-                        }
-                    }
-                    SettingsActionButton {
-                        variant: "accent"
-                        text: "Connect"
-                        onClicked: {
-                            wifiEntry.modelData.connectWithPsk(pskField.text);
-                            root.pendingWifi = null;
-                        }
-                    }
-                    SettingsActionButton {
-                        text: "Cancel"
-                        onClicked: root.pendingWifi = null
                     }
                 }
 
@@ -248,6 +259,15 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.margins: Theme.spaceXs
             spacing: Theme.spaceXxs
+            onVisibleChanged: if (!visible) hiddenPass.text = ""
+
+            function submitHidden() {
+                if (Net.hiddenBusy || hiddenSsid.text.trim() === "") return;
+                const ssid = hiddenSsid.text;
+                const pw = hiddenPass.text;
+                hiddenPass.text = "";
+                Net.connectHiddenWifi(ssid, pw);
+            }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -264,12 +284,13 @@ ColumnLayout {
                     implicitHeight: 38
                     placeholder: "Password (optional)"
                     echoMode: TextInput.Password
+                    onAccepted: parent.parent.submitHidden()
                 }
                 SettingsActionButton {
                     variant: "accent"
                     text: Net.hiddenBusy ? "Joining…" : "Join"
                     buttonEnabled: !Net.hiddenBusy && hiddenSsid.text.trim() !== ""
-                    onClicked: Net.connectHiddenWifi(hiddenSsid.text, hiddenPass.text)
+                    onClicked: parent.parent.submitHidden()
                 }
             }
 

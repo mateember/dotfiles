@@ -119,7 +119,7 @@ Item {
         if (ms <= 0) {
             fade.stop();
             slot.opacity = 1;
-            root.backSlot.opacity = 0;
+            root.backSlot.unload();
             root.shownOnce = true;
         } else {
             root.shownOnce = true;
@@ -133,7 +133,13 @@ Item {
         if (isMediaMode && imageUrl !== "" && !useVideoLayer) loadUrl(imageUrl);
     }
     onIsMediaModeChanged: {
-        if (isMediaMode && imageUrl !== "" && !useVideoLayer) loadUrl(imageUrl);
+        if (!isMediaMode) {
+            fade.stop();
+            slotA.unload();
+            slotB.unload();
+        } else if (imageUrl !== "" && !useVideoLayer) {
+            loadUrl(imageUrl);
+        }
     }
     onUseVideoLayerChanged: {
         if (useVideoLayer) {
@@ -381,7 +387,7 @@ Item {
                 to: 1
                 duration: 1200
                 easing.type: Easing.InOutQuad
-                onFinished: if (root.backSlot) root.backSlot.opacity = 0
+                onFinished: if (root.backSlot && root.backSlot !== root.frontSlot) root.backSlot.unload()
             }
         }
 

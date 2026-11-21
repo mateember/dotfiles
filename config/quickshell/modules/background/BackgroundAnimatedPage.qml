@@ -159,21 +159,25 @@ ColumnLayout {
                                 : cardMouse.containsMouse ? Theme.componentBorder
                                 : Theme.componentDivider
 
-                    WallpaperScene {
+                    Loader {
                         anchors.fill: parent
-                        mode: "animated"
-                        animatedKind: "scene"
-                        sceneId: modelData.id
-                        paletteBg: root.activePal.bg
-                        paletteC1: root.activePal.c1
-                        paletteC2: root.activePal.c2
-                        paletteC3: root.activePal.c3
-                        animSpeed: Wallpapers.animSpeed
-                        animIntensity: Wallpapers.animIntensity
-                        blurAmount: 0
-                        dimAmount: 0
-                        showOverlay: false
-                        paused: !root.popupOpen || !root.isCurrentPage || Wallpapers.animatedKind !== "scene"
+                        active: root.popupOpen && root.isCurrentPage && Wallpapers.animatedKind === "scene"
+                        sourceComponent: WallpaperScene {
+                            anchors.fill: parent
+                            mode: "animated"
+                            animatedKind: "scene"
+                            sceneId: modelData.id
+                            paletteBg: root.activePal.bg
+                            paletteC1: root.activePal.c1
+                            paletteC2: root.activePal.c2
+                            paletteC3: root.activePal.c3
+                            animSpeed: Wallpapers.animSpeed
+                            animIntensity: Wallpapers.animIntensity
+                            blurAmount: 0
+                            dimAmount: 0
+                            showOverlay: false
+                            paused: !root.popupOpen || !root.isCurrentPage || Wallpapers.animatedKind !== "scene"
+                        }
                     }
 
                     Rectangle {

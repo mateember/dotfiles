@@ -28,6 +28,7 @@ Singleton {
 
     property bool _ignoreNextFileChange: false
     property int _revision: 0
+    readonly property int revision: _revision
 
     function defaultSettings(): var {
         return {

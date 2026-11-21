@@ -40,11 +40,49 @@ users.users.mate.extraGroups = [ "i2c" ];
 
 ## 4. Power Mode (`tlpmodes.sh`) Sudo Rules
 
-Quickshell's [`PowerProfile.qml`](file:///home/mate/dotfiles/config/quickshell/services/PowerProfile.qml) service and [`scripts/tlpmodes.sh`](file:///home/mate/dotfiles/scripts/tlpmodes.sh) require `NOPASSWD` sudo rules for:
-- `tlp`
-- `tee /sys/firmware/acpi/platform_profile`
-- `tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`
-- `/home/mate/dotfiles/scripts/tlpmodes.sh`
+Quickshell's [`PowerProfile.qml`](file:///home/mate/dotfiles/config/quickshell/services/PowerProfile.qml) invokes [`scripts/tlpmodes.sh`](file:///home/mate/dotfiles/scripts/tlpmodes.sh) as your regular user. **Do not** grant `NOPASSWD` sudo on a user-writable script (`~/dotfiles/scripts/tlpmodes.sh`) or wildcard `tee /sys/devices/system/cpu/cpu*/...` rules (in `sudoers`, `*` matches spaces and `/`, allowing arbitrary root file overwrites).
+
+Instead, expose a single immutable, root-owned `/nix/store` helper (`hcs-tlp-mode`) that validates its single mode argument and performs the `tlp` + sysfs writes internally (`tlpmodes.sh` automatically delegates to `sudo -n hcs-tlp-mode` when present):
+
+```nix
+let
+  hcsTlpMode = pkgs.writeShellScriptBin "hcs-tlp-mode" ''
+    set -euo pipefail
+    case "''${1:-}" in
+      low)
+        ${pkgs.tlp}/bin/tlp bat >/dev/null
+        printf 'low-power\n' > /sys/firmware/acpi/platform_profile
+        ;;
+      balanced)
+        ${pkgs.tlp}/bin/tlp bat >/dev/null
+        printf 'balanced\n' > /sys/firmware/acpi/platform_profile
+        for epp in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
+          [ -f "$epp" ] && printf 'balance_performance\n' > "$epp" || true
+        done
+        ;;
+      performance)
+        ${pkgs.tlp}/bin/tlp ac >/dev/null
+        printf 'performance\n' > /sys/firmware/acpi/platform_profile
+        ;;
+      auto)
+        ${pkgs.tlp}/bin/tlp start >/dev/null
+        ;;
+      *)
+        exit 2
+        ;;
+    esac
+  '';
+in {
+  environment.systemPackages = [ hcsTlpMode ];
+  security.sudo.extraRules = [{
+    users = [ "mate" ];
+    commands = [{
+      command = "${hcsTlpMode}/bin/hcs-tlp-mode";
+      options = [ "NOPASSWD" ];
+    }];
+  }];
+}
+```
 
 ## 5. Desktop Shell Dependencies
 

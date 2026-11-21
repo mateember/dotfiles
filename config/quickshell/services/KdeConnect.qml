@@ -71,53 +71,76 @@ Singleton {
         onTriggered: root.refresh()
     }
 
-    // Enumerate devices via kdeconnect-cli + fetch battery via busctl for reachable ones
+    // Enumerate devices directly over D-Bus (immune to untrusted LAN device name spoofing
+    // and locale/flag parsing bugs in `kdeconnect-cli -l`).
     Process {
         id: listProc
         command: [
-            "sh", "-c",
-            "command -v kdeconnect-cli >/dev/null 2>&1 || exit 127; " +
-            "timeout 4 kdeconnect-cli -l 2>/dev/null | while IFS= read -r line; do " +
-            "  case \"$line\" in '- '*) " +
-            "    rest=${line#- }; " +
-            "    name=${rest%%: *}; " +
-            "    after=${rest#*: }; " +
-            "    id=${after%% *}; " +
-            "    flags=${after#* }; " +
-            "    bat=-1; chg=0; " +
-            "    if echo \"$flags\" | grep -q 'reachable'; then " +
-            "      b=$(timeout 1 busctl --user get-property org.kde.kdeconnect \"/modules/kdeconnect/devices/$id/battery\" org.kde.kdeconnect.device.battery charge 2>/dev/null | awk '{print $2}'); " +
-            "      c=$(timeout 1 busctl --user get-property org.kde.kdeconnect \"/modules/kdeconnect/devices/$id/battery\" org.kde.kdeconnect.device.battery isCharging 2>/dev/null | awk '{print $2}'); " +
-            "      [ -n \"$b\" ] && bat=$b; [ \"$c\" = \"true\" ] && chg=1; " +
-            "    fi; " +
-            "    printf '%s\\t%s\\t%s\\t%s\\t%s\\n' \"$id\" \"$name\" \"$flags\" \"$bat\" \"$chg\"; " +
-            "  ;; esac; " +
-            "done"
+            "python3", "-c",
+            `
+import json, re, shutil, subprocess, sys
+
+if not shutil.which("kdeconnect-cli") and not shutil.which("busctl"):
+    sys.exit(127)
+
+def busctl_json(args, timeout=2):
+    r = subprocess.run(["busctl", "--user", "--json=short"] + args, capture_output=True, text=True, timeout=timeout)
+    if r.returncode != 0:
+        return None
+    return json.loads(r.stdout)
+
+try:
+    res = busctl_json(["call", "org.kde.kdeconnect", "/modules/kdeconnect", "org.kde.kdeconnect.daemon", "devices", "bb", "false", "false"], timeout=3)
+except Exception:
+    sys.exit(127 if not shutil.which("kdeconnect-cli") else 1)
+
+if res is None:
+    sys.exit(127 if not shutil.which("kdeconnect-cli") else 1)
+
+raw_ids = (res.get("data") or [[]])[0]
+if not isinstance(raw_ids, list):
+    raw_ids = []
+
+id_re = re.compile(r"^[A-Za-z0-9_.-]+$")
+out = []
+for dev_id in raw_ids:
+    if not isinstance(dev_id, str) or not id_re.match(dev_id):
+        continue
+    base = f"/modules/kdeconnect/devices/{dev_id}"
+    try:
+        name_r = busctl_json(["get-property", "org.kde.kdeconnect", base, "org.kde.kdeconnect.device", "name"], timeout=1)
+        paired_r = busctl_json(["get-property", "org.kde.kdeconnect", base, "org.kde.kdeconnect.device", "isPaired"], timeout=1)
+        reach_r = busctl_json(["get-property", "org.kde.kdeconnect", base, "org.kde.kdeconnect.device", "isReachable"], timeout=1)
+    except Exception:
+        continue
+    name = str((name_r or {}).get("data") or dev_id)
+    paired = bool((paired_r or {}).get("data", False))
+    reachable = bool((reach_r or {}).get("data", False))
+    bat = -1
+    chg = False
+    if reachable:
+        try:
+            b_r = busctl_json(["get-property", "org.kde.kdeconnect", f"{base}/battery", "org.kde.kdeconnect.device.battery", "charge"], timeout=1)
+            c_r = busctl_json(["get-property", "org.kde.kdeconnect", f"{base}/battery", "org.kde.kdeconnect.device.battery", "isCharging"], timeout=1)
+            if b_r and isinstance(b_r.get("data"), (int, float)):
+                bat = int(b_r["data"])
+            if c_r:
+                chg = bool(c_r.get("data", False))
+        except Exception:
+            pass
+    out.append({"id": dev_id, "name": name, "paired": paired, "reachable": reachable, "battery": bat, "charging": chg})
+
+out.sort(key=lambda d: (not d["reachable"], not d["paired"], d["name"].lower()))
+print(json.dumps(out))
+`
         ]
         stdout: StdioCollector {
             onStreamFinished: {
                 root.loading = false;
-                const lines = text.trim().split("\n").filter(Boolean);
-                const out = [];
-                for (const line of lines) {
-                    const cols = line.split("\t");
-                    if (cols.length < 3) continue;
-                    const id = cols[0].trim();
-                    const name = cols[1].trim();
-                    const flags = cols[2].toLowerCase();
-                    const bat = parseInt(cols[3] ?? "-1");
-                    const chg = (cols[4] ?? "0").trim() === "1";
-                    out.push({
-                        id: id,
-                        name: name,
-                        paired: flags.includes("paired"),
-                        reachable: flags.includes("reachable"),
-                        battery: isNaN(bat) ? -1 : bat,
-                        charging: chg
-                    });
-                }
-                out.sort((a, b) => (b.reachable - a.reachable) || (b.paired - a.paired) || a.name.localeCompare(b.name));
-                root.devices = out;
+                try {
+                    const parsed = JSON.parse(text.trim());
+                    if (Array.isArray(parsed)) root.devices = parsed;
+                } catch (e) {}
             }
         }
         onExited: code => {

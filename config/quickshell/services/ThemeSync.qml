@@ -60,8 +60,14 @@ Singleton {
         ]);
     }
 
+    property bool _qtPending: false
+
     function applyQt() {
-        if (qtProc.running) return;
+        ThemeConfig.saveNow();
+        if (qtProc.running) {
+            root._qtPending = true;
+            return;
+        }
         root.syncing = true;
         qtProc.running = true;
     }
@@ -115,7 +121,7 @@ Singleton {
         root.extractingAccent = false;
         if (!hex || !hex.startsWith("#")) return;
         root.lastExtractedHex = hex;
-        ThemeConfig.setColor("accent", hex);
+        ThemeConfig.setSetting("accent", hex);
         root.lastSyncStatus = "Accent matched to wallpaper (" + hex.toUpperCase() + ")";
     }
 
@@ -136,7 +142,7 @@ Singleton {
 
     Connections {
         target: ThemeConfig
-        function on_RevisionChanged() {
+        function onRevisionChanged() {
             if (!ThemeConfig.ready) return;
             if (root.syncHyprland || root.syncGtk || root.syncQt)
                 syncDebounce.restart();
@@ -177,6 +183,10 @@ Singleton {
             root.syncing = false;
             if (code === 0)
                 root.lastSyncStatus = "Qt/KDE/Kvantum updated at " + Qt.formatTime(new Date(), "HH:mm:ss");
+            if (root._qtPending) {
+                root._qtPending = false;
+                Qt.callLater(() => root.applyQt());
+            }
         }
     }
 

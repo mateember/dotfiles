@@ -188,18 +188,36 @@ for cl in clients:
     if best_addr:
         break
 
-if best_addr:
+if best_addr and re.fullmatch(r"0x[0-9a-fA-F]+", str(best_addr)):
     subprocess.run(["hyprctl", "dispatch", f'hl.dsp.focus({{ window = "address:{best_addr}" }})'], timeout=2)
     sys.exit(0)
 
-# 2. If notification body/summary has an existing local path (e.g. Screenshot / Recording / USB), open it
-for text in (body, summary):
-    m = re.search(r"(/home/[^\\s()\"'<>]+|/run/media/[^\\s()\"'<>]+)", text)
-    if m:
-        p = m.group(1)
-        if os.path.exists(p):
-            subprocess.Popen(["xdg-open", p])
-            sys.exit(0)
+# 2. Only auto-open local file paths from trusted internal shell/system notification sources,
+#    canonicalized via realpath and confined to media/screenshot/removable-drive directories.
+trusted_senders = {"screenshot", "screen recorder", "removable storage", "capture"}
+if app_name.lower().strip() in trusted_senders:
+    home_real = os.path.realpath(os.path.expanduser("~"))
+    user = os.environ.get("USER") or ""
+    allowed_roots = [
+        os.path.realpath(os.path.join(home_real, "Pictures")),
+        os.path.realpath(os.path.join(home_real, "Videos")),
+    ]
+    if user:
+        allowed_roots.append(os.path.realpath(os.path.join("/run/media", user)))
+    path_re = re.compile(r'(/home/[^\\s()<>"\\x27]+|/run/media/[^\\s()<>"\\x27]+)')
+    blocked_ext = {".desktop", ".sh", ".bash", ".zsh", ".fish", ".py", ".pl", ".rb", ".exe", ".appimage"}
+    for text in (body, summary):
+        m = path_re.search(text)
+        if not m:
+            continue
+        real_p = os.path.realpath(m.group(1))
+        if not os.path.exists(real_p):
+            continue
+        if any(real_p == r or real_p.startswith(r + os.sep) for r in allowed_roots):
+            _, ext = os.path.splitext(real_p.lower())
+            if ext not in blocked_ext:
+                subprocess.Popen(["xdg-open", real_p])
+                sys.exit(0)
 `,
             entry, appName, icon, summary, body
         ]);

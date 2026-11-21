@@ -2,7 +2,10 @@
 # Helper for Quickshell screenshot & screen recording (services/Recorder.qml).
 set -u
 
-PIDFILE="/tmp/hcs_recorder.pid"
+CAPTURE_DIR="${XDG_RUNTIME_DIR:-/tmp}/hcs-capture"
+mkdir -p -m 0700 "$CAPTURE_DIR"
+chmod 0700 "$CAPTURE_DIR" 2>/dev/null || true
+PIDFILE="$CAPTURE_DIR/recorder.pid"
 
 find_bin() {
     local name="$1"
@@ -38,11 +41,14 @@ get_window_geometry() {
 
 stop_active_recorder() {
     pkill -x slurp 2>/dev/null || true
-    if [ -f "$PIDFILE" ]; then
-        local pid
-        pid=$(cat "$PIDFILE" 2>/dev/null || true)
-        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-            kill -INT "$pid" 2>/dev/null || true
+    if [ -f "$PIDFILE" ] && [ ! -L "$PIDFILE" ]; then
+        local pid comm
+        pid=$(tr -d '[:space:]' < "$PIDFILE" 2>/dev/null || true)
+        if [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null; then
+            comm=$(cat "/proc/$pid/comm" 2>/dev/null || true)
+            if [ "$comm" = "wf-recorder" ] || [ "$comm" = "wl-screenrec" ]; then
+                kill -INT "$pid" 2>/dev/null || true
+            fi
         fi
         rm -f "$PIDFILE"
     fi
@@ -113,8 +119,9 @@ case "$cmd" in
 
     freeze)
         session_dir="${1:-}"
-        [ -z "$session_dir" ] && exit 1
-        mkdir -p "$session_dir"
+        [[ "$session_dir" =~ ^${CAPTURE_DIR}/snip_[0-9]+$ ]] || exit 1
+        [ ! -L "$session_dir" ] || exit 1
+        mkdir -p -m 0700 "$session_dir"
 
         monitors_json=$(hyprctl monitors -j 2>/dev/null || echo '[]')
         clients_json=$(hyprctl clients -j 2>/dev/null || echo '[]')
@@ -205,23 +212,30 @@ case "$cmd" in
         action="${7:-copy}"
         session_dir="${8:-}"
 
-        tmp_file="/tmp/hcs_screenshot_$(date +%Y-%m-%d_%H-%M-%S)_$$.png"
+        tmp_file=$(mktemp -p "$CAPTURE_DIR" hcs_screenshot_XXXXXX.png) || exit 1
+        chmod 0600 "$tmp_file"
         if [ -f "$src_png" ]; then
             if [ "$is_full" = "1" ]; then
-                cp "$src_png" "$tmp_file" || exit 1
+                cp "$src_png" "$tmp_file" || { rm -f "$tmp_file"; exit 1; }
             else
+                if ! [[ "$px" =~ ^[0-9]+$ && "$py" =~ ^[0-9]+$ && "$pw" =~ ^[0-9]+$ && "$ph" =~ ^[0-9]+$ ]]; then
+                    rm -f "$tmp_file"
+                    exit 1
+                fi
                 ffmpeg_bin=$(find_bin ffmpeg || true)
                 if [ -n "$ffmpeg_bin" ]; then
-                    "$ffmpeg_bin" -y -loglevel error -i "$src_png" -vf "crop=${pw}:${ph}:${px}:${py}" -frames:v 1 "$tmp_file" || exit 1
+                    "$ffmpeg_bin" -y -loglevel error -i "$src_png" -vf "crop=${pw}:${ph}:${px}:${py}" -frames:v 1 "$tmp_file" || { rm -f "$tmp_file"; exit 1; }
                 else
-                    cp "$src_png" "$tmp_file" || exit 1
+                    rm -f "$tmp_file"
+                    notify-send -a "Screenshot" -u critical "Screenshot crop failed" "ffmpeg is required to crop region screenshots" 2>/dev/null || true
+                    exit 1
                 fi
             fi
         fi
 
-        case "$session_dir" in
-            /tmp/hcs_snip_*) rm -rf "$session_dir" ;;
-        esac
+        if [[ "$session_dir" =~ ^${CAPTURE_DIR}/snip_[0-9]+$ ]] && [ ! -L "$session_dir" ]; then
+            rm -rf "$session_dir"
+        fi
 
         [ -f "$tmp_file" ] || exit 1
         finalize_shot "$tmp_file" "$action" "cropped"
@@ -253,7 +267,8 @@ case "$cmd" in
             sleep "$delay"
         fi
 
-        tmp_file="/tmp/hcs_screenshot_$(date +%Y-%m-%d_%H-%M-%S)_$$.png"
+        tmp_file=$(mktemp -p "$CAPTURE_DIR" hcs_screenshot_XXXXXX.png) || exit 1
+        chmod 0600 "$tmp_file"
 
         if [ -n "$geom" ]; then
             grim -g "$geom" "$tmp_file" || exit 1

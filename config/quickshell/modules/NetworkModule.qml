@@ -70,7 +70,7 @@ BarButton {
             pop.error = "";
             if (n.connected) n.disconnect();
             else if (n.known || !Net.isSecure(n)) n.connect();
-            else { pop.pending = n; psk.text = ""; psk.focusInput(); }
+            else pop.pending = n;
         }
 
         PopupHeader {
@@ -99,7 +99,7 @@ BarButton {
             }
             StyledText {
                 Layout.fillWidth: true
-                text: Net.vpnConnected ? ("VPN · " + Net.activeVpn.name) : "VPN"
+                text: Net.vpnConnected ? ("VPN · " + (Net.activeVpn?.name ?? "")) : "VPN"
                 font.weight: Font.DemiBold
                 color: Net.vpnConnected ? Theme.accent : Theme.text
                 elide: Text.ElideRight
@@ -302,6 +302,10 @@ BarButton {
                         Layout.fillWidth: true
                         placeholder: "Password"
                         echoMode: TextInput.Password
+                        onVisibleChanged: {
+                            text = "";
+                            if (visible) focusInput();
+                        }
                         onAccepted: connectBtn.clicked()
                         input.Keys.onEscapePressed: pop.back()
                     }
@@ -310,7 +314,9 @@ BarButton {
                         icon: "arrow_forward"
                         highlighted: true
                         onClicked: {
-                            entry.modelData.connectWithPsk(psk.text);
+                            const pw = psk.text;
+                            psk.text = "";
+                            entry.modelData.connectWithPsk(pw);
                             pop.pending = null;
                         }
                     }

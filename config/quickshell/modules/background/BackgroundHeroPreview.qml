@@ -140,14 +140,18 @@ ColumnLayout {
         border.width: 1
         border.color: Theme.componentDivider
 
-        WallpaperScene {
+        Loader {
             anchors.fill: parent
-            imageUrl: root.activeUrl
-            transitionMs: Math.min(280, Wallpapers.transitionMs)
-            instantTransitions: !root.popupOpen
-            paused: !root.popupOpen || (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
-            decodeWidth: 640
-            decodeHeight: 360
+            active: root.popupOpen
+            sourceComponent: WallpaperScene {
+                anchors.fill: parent
+                imageUrl: root.activeUrl
+                transitionMs: Math.min(280, Wallpapers.transitionMs)
+                instantTransitions: !root.popupOpen
+                paused: !root.popupOpen || (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
+                decodeWidth: 640
+                decodeHeight: 360
+            }
         }
 
         // Bottom contrast scrim

@@ -91,7 +91,11 @@ def write_qt6ct():
 
 
 # ---- KDE colour scheme ----
-def kde_group(background, alternate, foreground=fg, inactive=fg_dim):
+def kde_group(background, alternate, foreground=None, inactive=None):
+    if foreground is None:
+        foreground = fg
+    if inactive is None:
+        inactive = fg_dim
     return {
         "BackgroundNormal": rgb(background),
         "BackgroundAlternate": rgb(alternate),

@@ -124,6 +124,35 @@ Singleton {
         scheduleSave();
     }
 
+    function _reloadAfterSave(refreshDevs: bool, refreshMons: bool) {
+        saveNow();
+        reloadProc.wantDevs = refreshDevs;
+        reloadProc.wantMons = refreshMons;
+        // Wait briefly for atomic FileView writes to land before `hyprctl reload`.
+        reloadDelay.restart();
+    }
+
+    Timer {
+        id: reloadDelay
+        interval: 80
+        onTriggered: {
+            reloadProc.running = false;
+            reloadProc.running = true;
+        }
+    }
+
+    Process {
+        id: reloadProc
+        property bool wantDevs: false
+        property bool wantMons: false
+        command: ["timeout", "5", "hyprctl", "reload"]
+        onExited: {
+            root.refreshLiveOptions();
+            if (wantDevs) root.refreshDevices();
+            if (wantMons) root.refreshMonitors();
+        }
+    }
+
     function resetVisualOverrides() {
         const keys = [
             "gaps_in", "gaps_out", "border_size", "rounding",
@@ -133,9 +162,7 @@ Singleton {
         const next = Object.assign({}, root.overrides);
         for (const k of keys) delete next[k];
         root.overrides = next;
-        saveNow();
-        Quickshell.execDetached(["hyprctl", "reload"]);
-        Qt.callLater(() => refreshLiveOptions());
+        _reloadAfterSave(false, false);
     }
 
     function resetInputOverrides() {
@@ -147,67 +174,72 @@ Singleton {
         const next = Object.assign({}, root.overrides);
         for (const k of keys) delete next[k];
         root.overrides = next;
-        saveNow();
-        Quickshell.execDetached(["hyprctl", "reload"]);
-        Qt.callLater(() => { refreshLiveOptions(); refreshDevices(); });
+        _reloadAfterSave(true, false);
     }
 
-    function hyprKeyword(k: string, v: string) {
-        Quickshell.execDetached(["hyprctl", "keyword", k, v]);
+    function hyprSet(luaExpr: string, k: string, v: string) {
+        if (Hypr.lua) {
+            Quickshell.execDetached(["hyprctl", "eval", luaExpr]);
+        } else {
+            Quickshell.execDetached(["hyprctl", "keyword", k, v]);
+        }
     }
 
     function setGapsIn(v: int) {
         root.gapsIn = Math.max(0, Math.min(32, v));
-        hyprKeyword("general:gaps_in", String(root.gapsIn));
+        hyprSet(`hl.config({ general = { gaps_in = ${root.gapsIn} } })`, "general:gaps_in", String(root.gapsIn));
         setOverride("gaps_in", root.gapsIn);
     }
 
     function setGapsOut(v: int) {
         root.gapsOut = Math.max(0, Math.min(48, v));
-        hyprKeyword("general:gaps_out", String(root.gapsOut));
+        hyprSet(`hl.config({ general = { gaps_out = ${root.gapsOut} } })`, "general:gaps_out", String(root.gapsOut));
         setOverride("gaps_out", root.gapsOut);
     }
 
     function setBorderSize(v: int) {
         root.borderSize = Math.max(0, Math.min(8, v));
-        hyprKeyword("general:border_size", String(root.borderSize));
+        hyprSet(`hl.config({ general = { border_size = ${root.borderSize} } })`, "general:border_size", String(root.borderSize));
         setOverride("border_size", root.borderSize);
     }
 
     function setRounding(v: int) {
         root.rounding = Math.max(0, Math.min(24, v));
-        hyprKeyword("decoration:rounding", String(root.rounding));
+        hyprSet(`hl.config({ decoration = { rounding = ${root.rounding} } })`, "decoration:rounding", String(root.rounding));
         setOverride("rounding", root.rounding);
     }
 
     function setInactiveOpacity(v: real) {
         root.inactiveOpacity = Math.round(Math.max(0.35, Math.min(1.0, v)) * 100) / 100;
-        hyprKeyword("decoration:inactive_opacity", root.inactiveOpacity.toFixed(2));
+        const f = root.inactiveOpacity.toFixed(2);
+        hyprSet(`hl.config({ decoration = { inactive_opacity = ${f} } })`, "decoration:inactive_opacity", f);
         setOverride("inactive_opacity", root.inactiveOpacity);
     }
 
     function setBlurEnabled(on: bool) {
         root.blurEnabled = on;
         Hypr.blurEnabled = on;
-        hyprKeyword("decoration:blur:enabled", on ? "true" : "false");
+        const b = on ? "true" : "false";
+        hyprSet(`hl.config({ decoration = { blur = { enabled = ${b} } } })`, "decoration:blur:enabled", b);
         setOverride("blur_enabled", on);
     }
 
     function setBlurSize(v: int) {
         root.blurSize = Math.max(1, Math.min(16, v));
-        hyprKeyword("decoration:blur:size", String(root.blurSize));
+        hyprSet(`hl.config({ decoration = { blur = { size = ${root.blurSize} } } })`, "decoration:blur:size", String(root.blurSize));
         setOverride("blur_size", root.blurSize);
     }
 
     function setBlurPasses(v: int) {
         root.blurPasses = Math.max(1, Math.min(5, v));
-        hyprKeyword("decoration:blur:passes", String(root.blurPasses));
+        hyprSet(`hl.config({ decoration = { blur = { passes = ${root.blurPasses} } } })`, "decoration:blur:passes", String(root.blurPasses));
         setOverride("blur_passes", root.blurPasses);
     }
 
     function setAnimationsEnabled(on: bool) {
         root.animationsEnabled = on;
-        hyprKeyword("animations:enabled", on ? "true" : "false");
+        const b = on ? "true" : "false";
+        hyprSet(`hl.config({ animations = { enabled = ${b} } })`, "animations:enabled", b);
         setOverride("animations_enabled", on);
     }
 
@@ -220,8 +252,12 @@ Singleton {
         const act1 = hexToHyprRgba(accentHex, "ee");
         const act2 = hexToHyprRgba(secondaryHex, "dd");
         const inact = hexToHyprRgba(inactiveHex, "aa");
-        hyprKeyword("general:col.active_border", act1 + " " + act2 + " 45deg");
-        hyprKeyword("general:col.inactive_border", inact);
+        hyprSet(
+            `hl.config({ general = { col = { active_border = { colors = { ${luaStr(act1)}, ${luaStr(act2)} }, angle = 45 }, inactive_border = ${luaStr(inact)} } } })`,
+            "general:col.active_border",
+            act1 + " " + act2 + " 45deg"
+        );
+        if (!Hypr.lua) hyprSet("", "general:col.inactive_border", inact);
         setOverride("active_border", [act1, act2]);
         setOverride("inactive_border", inact);
         if (roundingVal >= 0) {
@@ -233,40 +269,45 @@ Singleton {
 
     function setMouseSensitivity(v: real) {
         root.mouseSensitivity = Math.round(Math.max(-1.0, Math.min(1.0, v)) * 100) / 100;
-        hyprKeyword("input:sensitivity", root.mouseSensitivity.toFixed(2));
+        const f = root.mouseSensitivity.toFixed(2);
+        hyprSet(`hl.config({ input = { sensitivity = ${f} } })`, "input:sensitivity", f);
         setOverride("mouse_sensitivity", root.mouseSensitivity);
     }
 
     function setMouseAccelProfile(p: string) {
         root.mouseAccelProfile = (p === "adaptive") ? "adaptive" : "flat";
-        hyprKeyword("input:accel_profile", root.mouseAccelProfile);
+        hyprSet(`hl.config({ input = { accel_profile = ${luaStr(root.mouseAccelProfile)} } })`, "input:accel_profile", root.mouseAccelProfile);
         setOverride("mouse_accel", root.mouseAccelProfile);
     }
 
     function setMouseNaturalScroll(on: bool) {
         root.mouseNaturalScroll = on;
-        hyprKeyword("input:natural_scroll", on ? "true" : "false");
+        const b = on ? "true" : "false";
+        hyprSet(`hl.config({ input = { natural_scroll = ${b} } })`, "input:natural_scroll", b);
         setOverride("mouse_natural_scroll", on);
     }
 
     function setTouchpadSensitivity(v: real) {
         root.touchpadSensitivity = Math.round(Math.max(-1.0, Math.min(1.0, v)) * 100) / 100;
+        const f = root.touchpadSensitivity.toFixed(2);
         if (root.touchpadName)
-            hyprKeyword("device[" + root.touchpadName + "]:sensitivity", root.touchpadSensitivity.toFixed(2));
+            hyprSet(`hl.device({ name = ${luaStr(root.touchpadName)}, sensitivity = ${f} })`, "device[" + root.touchpadName + "]:sensitivity", f);
         setOverride("touchpad_sensitivity", root.touchpadSensitivity);
     }
 
     function setTouchpadNaturalScroll(on: bool) {
         root.touchpadNaturalScroll = on;
-        hyprKeyword("input:touchpad:natural_scroll", on ? "true" : "false");
+        const b = on ? "true" : "false";
+        hyprSet(`hl.config({ input = { touchpad = { natural_scroll = ${b} } } })`, "input:touchpad:natural_scroll", b);
         if (root.touchpadName)
-            hyprKeyword("device[" + root.touchpadName + "]:natural_scroll", on ? "true" : "false");
+            hyprSet(`hl.device({ name = ${luaStr(root.touchpadName)}, natural_scroll = ${b} })`, "device[" + root.touchpadName + "]:natural_scroll", b);
         setOverride("touchpad_natural_scroll", on);
     }
 
     function setTouchpadTapToClick(on: bool) {
         root.touchpadTapToClick = on;
-        hyprKeyword("input:touchpad:tap-to-click", on ? "true" : "false");
+        const b = on ? "true" : "false";
+        hyprSet(`hl.config({ input = { touchpad = { ["tap-to-click"] = ${b} } } })`, "input:touchpad:tap-to-click", b);
         setOverride("touchpad_tap_to_click", on);
     }
 
@@ -275,7 +316,7 @@ Singleton {
         if (cleaned.length === 0) return;
         root.kbLayouts = cleaned;
         const csv = cleaned.join(",");
-        hyprKeyword("input:kb_layout", csv);
+        hyprSet(`hl.config({ input = { kb_layout = ${luaStr(csv)} } })`, "input:kb_layout", csv);
         setOverride("kb_layout", csv);
         Qt.callLater(() => refreshDevices());
     }
@@ -298,7 +339,7 @@ Singleton {
         const parts = root.kbOptions.split(",").map(s => s.trim()).filter(s => s && !s.startsWith("grp:"));
         if (grpOpt) parts.push(grpOpt);
         root.kbOptions = parts.join(",");
-        hyprKeyword("input:kb_options", root.kbOptions);
+        hyprSet(`hl.config({ input = { kb_options = ${luaStr(root.kbOptions)} } })`, "input:kb_options", root.kbOptions);
         setOverride("kb_options", root.kbOptions);
     }
 
@@ -387,9 +428,10 @@ Singleton {
 
     function clearMonitorOverrides() {
         confirmMonitors();
-        clearOverride("monitors");
-        Quickshell.execDetached(["hyprctl", "reload"]);
-        monRefreshDelay.restart();
+        const next = Object.assign({}, root.overrides);
+        delete next.monitors;
+        root.overrides = next;
+        _reloadAfterSave(false, true);
     }
 
     // ---- Sunshine Headless Virtual Display ----

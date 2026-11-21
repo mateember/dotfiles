@@ -12,12 +12,25 @@
 # safe while locked: only the bar instance is matched and restarted.
 set -u
 
-pids() { pgrep -af '^/nix/store/[^ ]*/bin/quickshell( -p [^ ]*)?$' | grep -v '/lock\.qml$' | cut -d' ' -f1; }
+pids() {
+    pgrep -u "$(id -u)" -af '^/nix/store/[^ ]*/bin/\.?(quickshell|qs)(-wrapped)?( -p [^ ]*)?$' \
+        | grep -v '/lock\.qml$' \
+        | cut -d' ' -f1
+}
 
 timeout 3 qs kill >/dev/null 2>&1
 for _ in $(seq 20); do [ -z "$(pids)" ] && break; sleep 0.1; done
-[ -n "$(pids)" ] && kill $(pids) 2>/dev/null && sleep 0.5
-[ -n "$(pids)" ] && kill -9 $(pids) 2>/dev/null
+p="$(pids)"
+if [ -n "$p" ]; then
+    # shellcheck disable=SC2086
+    kill $p 2>/dev/null
+    sleep 0.5
+fi
+p="$(pids)"
+if [ -n "$p" ]; then
+    # shellcheck disable=SC2086
+    kill -9 $p 2>/dev/null
+fi
 
 [ "${1:-}" = "--reload-hyprland" ] && timeout 5 hyprctl reload >/dev/null
 timeout 5 hyprctl dispatch 'hl.dsp.exec_cmd("qs")' >/dev/null

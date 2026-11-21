@@ -45,7 +45,10 @@ Item {
     Keys.onPressed: event => {
         if (!passwordInput.activeFocus) {
             passwordInput.forceActiveFocus();
-            if (event.text && event.text.length > 0 && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Escape) {
+            const hasMod = (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) !== 0;
+            if (!hasMod && event.text && event.text.length > 0
+                && !/[\x00-\x1f\x7f]/.test(event.text)
+                && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Escape) {
                 passwordInput.insert(passwordInput.cursorPosition, event.text);
                 stage.controller.clearError();
                 stage.controller.notifyUserActivity();
@@ -408,7 +411,10 @@ Item {
                             echoMode: stage.showPassword ? TextInput.Normal : TextInput.Password
                             passwordCharacter: "•"
                             clip: true
+                            selectByMouse: false
                             readOnly: stage.controller.submittingPassword
+
+                            onActiveFocusChanged: if (!activeFocus) stage.showPassword = false
 
                             onTextEdited: {
                                 stage.controller.clearError();
@@ -416,6 +422,18 @@ Item {
                             }
 
                             Keys.onPressed: event => {
+                                // Block clipboard paste/copy/cut on the lock screen to prevent
+                                // clipboard exfiltration while locked or leaking the password to cliphist.
+                                const isCtrlShiftV = (event.modifiers & Qt.ControlModifier) && (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_V;
+                                const isShiftIns = (event.modifiers & Qt.ShiftModifier) && event.key === Qt.Key_Insert;
+                                if (event.matches(StandardKey.Paste)
+                                    || event.matches(StandardKey.Copy)
+                                    || event.matches(StandardKey.Cut)
+                                    || isCtrlShiftV
+                                    || isShiftIns) {
+                                    event.accepted = true;
+                                    return;
+                                }
                                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                     event.accepted = true;
                                     if (!event.isAutoRepeat && !stage.controller.submittingPassword) {
@@ -425,13 +443,27 @@ Item {
                                     event.accepted = true;
                                     if (stage.controller.submittingPassword) {
                                         stage.controller.cancelSubmit();
-                                    } else if (passwordInput.text.length > 0) {
-                                        passwordInput.text = "";
-                                        stage.showPassword = false;
+                                    } else {
+                                        stage.controller.clearInputs();
                                     }
                                     stage.controller.clearError();
                                 }
                             }
+
+                            // Swallow middle-click primary-selection paste without blocking left clicks.
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.MiddleButton
+                                onPressed: mouse => mouse.accepted = true
+                            }
+                        }
+
+                        Timer {
+                            id: showPasswordTimer
+                            interval: 5000
+                            repeat: false
+                            running: stage.showPassword
+                            onTriggered: stage.showPassword = false
                         }
 
                         StyledText {

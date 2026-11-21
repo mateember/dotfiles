@@ -19,6 +19,41 @@ Rectangle {
     readonly property bool hovered: hover.hovered
     readonly property bool critical: notification.urgency === NotificationUrgency.Critical
 
+    // Sanitize notification body to the safe Freedesktop markup subset (b, i, u, br, http(s)/mailto links).
+    // Strips <img> (prevents remote tracking / local file reads) and escapes any other tags.
+    function sanitizeBody(raw: string): string {
+        const s = String(raw ?? "").replace(/[\uE000\uE001]/g, "");
+        if (!s) return "";
+        const saved = [];
+        let out = s.replace(/<\/?[a-zA-Z][^>]*>/g, tag => {
+            if (/^<\/?(b|i|u)\s*>$/i.test(tag)) {
+                saved.push(tag.replace(/\s+/g, "").toLowerCase());
+                return "\uE000" + (saved.length - 1) + "\uE001";
+            }
+            if (/^<br\s*\/?>$/i.test(tag)) {
+                saved.push("<br/>");
+                return "\uE000" + (saved.length - 1) + "\uE001";
+            }
+            if (/^<\/a\s*>$/i.test(tag)) {
+                saved.push("</a>");
+                return "\uE000" + (saved.length - 1) + "\uE001";
+            }
+            const am = tag.match(/^<a\s[^>]*href\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>$/i);
+            if (am) {
+                const href = (am[1] ?? am[2] ?? "").trim();
+                if (/^(https?:\/\/|mailto:)/i.test(href) && !/[<>"'\s]/.test(href)) {
+                    saved.push('<a href="' + href.replace(/&(?!amp;)/g, "&amp;") + '">');
+                    return "\uE000" + (saved.length - 1) + "\uE001";
+                }
+                return "";
+            }
+            if (/^<img\b/i.test(tag)) return "";
+            return tag;
+        });
+        out = out.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return out.replace(/\uE000(\d+)\uE001/g, (_, idx) => saved[Number(idx)] ?? "");
+    }
+
     implicitHeight: layout.implicitHeight + 2 * Theme.spaceXs + (showProgress ? 3 : 0)
     radius: Theme.radiusS
     color: root.toast ? Theme.notificationsBg : (hover.hovered ? Theme.componentHover : Theme.component)
@@ -116,14 +151,16 @@ Rectangle {
             StyledText {
                 Layout.fillWidth: true
                 visible: text !== ""
-                text: root.notification.body
+                text: root.sanitizeBody(root.notification.body)
                 color: Theme.textDim
                 wrapMode: Text.Wrap
                 maximumLineCount: root.toast ? 4 : 8
                 elide: Text.ElideRight
                 textFormat: Text.StyledText
                 linkColor: Theme.accent
-                onLinkActivated: link => Qt.openUrlExternally(link)
+                onLinkActivated: link => {
+                    if (/^(https?:\/\/|mailto:)/i.test(link)) Qt.openUrlExternally(link);
+                }
             }
 
             // Action buttons + Inline Reply toggle

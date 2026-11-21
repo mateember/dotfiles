@@ -151,11 +151,42 @@ Singleton {
         if (!s || root.hiddenBusy) return;
         root.hiddenBusy = true;
         root.hiddenError = "";
-        if (password && password.length > 0) {
-            hiddenProc.command = ["nmcli", "--wait", "20", "device", "wifi", "connect", s, "password", password, "hidden", "yes"];
-        } else {
-            hiddenProc.command = ["nmcli", "--wait", "20", "device", "wifi", "connect", s, "hidden", "yes"];
-        }
+        hiddenProc.command = [
+            "python3", "-c",
+            "import os, subprocess, sys, tempfile\n" +
+            "ssid = sys.argv[1]\n" +
+            "pw = sys.stdin.readline().rstrip('\\r\\n')\n" +
+            "add_cmd = ['nmcli', '-g', 'UUID', 'connection', 'add', 'type', 'wifi', 'con-name', ssid, 'ssid', ssid, 'wifi.hidden', 'yes']\n" +
+            "if pw:\n" +
+            "    add_cmd += ['wifi-sec.key-mgmt', 'wpa-psk']\n" +
+            "r_add = subprocess.run(add_cmd, text=True, capture_output=True)\n" +
+            "if r_add.returncode != 0:\n" +
+            "    sys.stderr.write(r_add.stderr or r_add.stdout)\n" +
+            "    sys.exit(r_add.returncode)\n" +
+            "uuid = r_add.stdout.strip().splitlines()[-1].strip()\n" +
+            "path = None\n" +
+            "try:\n" +
+            "    up_cmd = ['nmcli', '--wait', '20', 'connection', 'up', 'uuid', uuid]\n" +
+            "    if pw:\n" +
+            "        rdir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'\n" +
+            "        fd, path = tempfile.mkstemp(prefix='hcs-wifi-', dir=rdir)\n" +
+            "        os.chmod(path, 0o600)\n" +
+            "        with os.fdopen(fd, 'w') as f:\n" +
+            "            f.write('802-11-wireless-security.psk:' + pw + '\\n')\n" +
+            "        up_cmd += ['passwd-file', path]\n" +
+            "    r_up = subprocess.run(up_cmd, text=True, capture_output=True)\n" +
+            "    if r_up.returncode != 0:\n" +
+            "        subprocess.run(['nmcli', 'connection', 'delete', 'uuid', uuid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "        sys.stderr.write(r_up.stderr or r_up.stdout)\n" +
+            "        sys.exit(r_up.returncode)\n" +
+            "finally:\n" +
+            "    if path:\n" +
+            "        try: os.unlink(path)\n" +
+            "        except OSError: pass\n",
+            s
+        ];
+        hiddenStdin.text = password || "";
+        hiddenProc.stdinEnabled = true;
         hiddenProc.running = true;
     }
 
@@ -222,18 +253,45 @@ Singleton {
         }
     }
 
+    QtObject {
+        id: hiddenStdin
+        property string text: ""
+    }
+
     Process {
         id: hiddenProc
+        property string errBuf: ""
+        property bool procExited: false
+        property bool errDone: false
+        property int exitCode: 0
+        function maybeFinish() {
+            if (!procExited || !errDone) return;
+            root.hiddenBusy = false;
+            if (exitCode === 0) root.hiddenError = "";
+            else root.hiddenError = (errBuf || "Could not connect to hidden network").replace(/^Error:\s*/i, "");
+            hiddenStdin.text = "";
+            command = [];
+            root.refreshDetails();
+        }
+        onStarted: {
+            errBuf = "";
+            procExited = false;
+            errDone = false;
+            write(hiddenStdin.text + "\n");
+            hiddenStdin.text = "";
+        }
         stderr: StdioCollector {
             onStreamFinished: {
-                const e = text.trim();
-                if (e) root.hiddenError = e.replace(/^Error:\s*/i, "");
+                hiddenProc.errBuf = text.trim();
+                hiddenProc.errDone = true;
+                hiddenProc.maybeFinish();
             }
         }
         onExited: code => {
-            root.hiddenBusy = false;
-            if (code === 0) root.hiddenError = "";
-            root.refreshDetails();
+            hiddenProc.exitCode = code;
+            hiddenProc.procExited = true;
+            hiddenStdin.text = "";
+            hiddenProc.maybeFinish();
         }
     }
 

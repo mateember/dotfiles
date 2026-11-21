@@ -48,8 +48,14 @@ Singleton {
         const dp = diskPath || path;
         Quickshell.execDetached([
             "sh", "-c",
-            'udisksctl unmount -b "$1" --no-user-interaction >/dev/null 2>&1 || true; ' +
-            'udisksctl power-off -b "$2" --no-user-interaction >/dev/null 2>&1 || true; ' +
+            'if findmnt -rn -S "$1" >/dev/null 2>&1; then ' +
+            '  if ! udisksctl unmount -b "$1" --no-user-interaction >/dev/null 2>&1; then ' +
+            '    notify-send -u critical -a "Removable Storage" -i dialog-error "Cannot Eject Drive" "$1 is busy or in use — do not unplug"; exit 1; ' +
+            '  fi; ' +
+            'fi; ' +
+            'if ! udisksctl power-off -b "$2" --no-user-interaction >/dev/null 2>&1; then ' +
+            '  notify-send -u critical -a "Removable Storage" -i dialog-error "Cannot Power Off Drive" "$2 could not be powered off (another partition may still be mounted)"; exit 1; ' +
+            'fi; ' +
             'notify-send -a "Removable Storage" -i media-eject "Safe to Remove" "$1 has been ejected"',
             "sh", path, dp
         ]);

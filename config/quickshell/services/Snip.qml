@@ -31,6 +31,15 @@ Singleton {
     property var initialHoveredWindow: null
 
     readonly property string scriptPath: Quickshell.shellPath("scripts/capture.sh")
+    readonly property string captureBaseDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/hcs-capture"
+
+    function _safeRemoveSession(dir: string) {
+        if (!dir) return;
+        const prefix = root.captureBaseDir + "/snip_";
+        if (dir.startsWith(prefix) && /^[0-9]+$/.test(dir.slice(prefix.length))) {
+            Quickshell.execDetached(["rm", "-rf", "--", dir]);
+        }
+    }
 
     property string _pendingMode: "region"
     property string _pendingAction: "copy"
@@ -77,7 +86,7 @@ Singleton {
         root._freezeBuf = "";
         root._freezeExited = false;
         root._freezeStreamDone = false;
-        root._pendingSession = "/tmp/hcs_snip_" + Date.now();
+        root._pendingSession = root.captureBaseDir + "/snip_" + Date.now();
         freezeProc.command = ["bash", root.scriptPath, "freeze", root._pendingSession];
         freezeProc.running = true;
     }
@@ -93,8 +102,7 @@ Singleton {
             data = null;
         }
         if (!data || !data.monitors || data.monitors.length === 0) {
-            if (root._pendingSession)
-                Quickshell.execDetached(["rm", "-rf", root._pendingSession]);
+            root._safeRemoveSession(root._pendingSession);
             root._pendingSession = "";
             return;
         }
@@ -244,12 +252,13 @@ Singleton {
     }
 
     function cancel() {
+        waitTimer.stop();
         const dir = root.sessionDir;
         root.active = false;
         root.clearSelection();
         root.initialHoveredWindow = null;
         root.sessionDir = "";
-        if (dir) Quickshell.execDetached(["rm", "-rf", dir]);
+        root._safeRemoveSession(dir);
     }
 
     Timer {

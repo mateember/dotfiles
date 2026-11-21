@@ -182,7 +182,7 @@ BarButton {
             Layout.preferredHeight: Math.min(contentHeight, 360)
             clip: true
             spacing: 2
-            model: pop.filtered
+            model: pop.open ? pop.filtered : []
             boundsBehavior: Flickable.StopAtBounds
 
             delegate: ListItem {
@@ -205,6 +205,7 @@ BarButton {
                     width: 120
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    cache: false
                     source: thumb.ready ? "file://" + thumb.file : ""
                 }
 
@@ -232,8 +233,12 @@ BarButton {
                     readonly property string file: Quickshell.cachePath("clipboard/" + item.modelData.id + ".png")
                 }
                 Process {
-                    running: item.modelData.isImage
-                    command: ["sh", "-c", 'mkdir -p "$(dirname "$2")"; [ -s "$2" ] || cliphist decode "$1" > "$2"', "sh", item.modelData.id, thumb.file]
+                    running: pop.open && item.modelData.isImage && /^\d+$/.test(item.modelData.id)
+                    command: [
+                        "sh", "-c",
+                        'dir=$(dirname "$2"); mkdir -p -m 0700 "$dir"; [ -s "$2" ] && exit 0; tmp="$2.tmp.$$"; if cliphist decode "$1" > "$tmp" && [ -s "$tmp" ]; then mv -f "$tmp" "$2"; else rm -f "$tmp"; exit 1; fi',
+                        "sh", item.modelData.id, thumb.file
+                    ]
                     onExited: code => thumb.ready = code === 0
                 }
             }

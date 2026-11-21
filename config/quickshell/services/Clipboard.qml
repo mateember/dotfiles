@@ -45,13 +45,17 @@ Singleton {
     }
 
     function remove(id: string) {
-        Quickshell.execDetached(["sh", "-c", 'printf "%s\\t\\n" "$1" | cliphist delete', "sh", id]);
-        root.entries = root.entries.filter(e => e.id !== id);
+        const cleanId = String(id || "");
+        if (!/^\d+$/.test(cleanId)) return;
+        const thumb = Quickshell.cachePath("clipboard/" + cleanId + ".png");
+        Quickshell.execDetached(["sh", "-c", 'printf "%s\\t\\n" "$1" | cliphist delete; rm -f -- "$2"', "sh", cleanId, thumb]);
+        root.entries = root.entries.filter(e => e.id !== cleanId);
     }
 
-    // Wipes cliphist history while preserving all pinned snippets.
+    // Wipes cliphist history and cached image thumbnails while preserving all pinned snippets.
     function wipe() {
-        Quickshell.execDetached(["cliphist", "wipe"]);
+        const cacheDir = Quickshell.cachePath("clipboard");
+        Quickshell.execDetached(["sh", "-c", 'cliphist wipe; rm -rf -- "$1"', "sh", cacheDir]);
         root.entries = [];
     }
 
@@ -126,11 +130,12 @@ Singleton {
         onExited: root._watchersReady = true
     }
     property bool _watchersReady: false
+    property bool _restartingTextWatcher: false
 
     // Managed text clipboard watcher (auto-stops when paused, restarts cleanly if secret hygiene changes)
     Process {
         id: textWatcher
-        running: root._watchersReady && !root.paused
+        running: root._watchersReady && !root.paused && !root._restartingTextWatcher
         command: ["wl-paste", "--type", "text", "--watch", "sh", "-c", root.textStoreCmd, "sh", root.skipPasswordManagers ? "1" : "0"]
     }
 
@@ -141,17 +146,17 @@ Singleton {
         command: ["wl-paste", "--type", "image", "--watch", "cliphist", "store"]
     }
 
-    // Restart textWatcher when skipPasswordManagers changes so the new flag takes effect immediately.
+    // Restart textWatcher declaratively when skipPasswordManagers changes (preserving the running binding).
     onSkipPasswordManagersChanged: {
-        if (textWatcher.running) {
-            textWatcher.running = false;
+        if (root._watchersReady && !root.paused) {
+            root._restartingTextWatcher = true;
             watcherRestartTimer.restart();
         }
     }
     Timer {
         id: watcherRestartTimer
         interval: 80
-        onTriggered: if (root._watchersReady && !root.paused) textWatcher.running = true
+        onTriggered: root._restartingTextWatcher = false
     }
 
     Process {

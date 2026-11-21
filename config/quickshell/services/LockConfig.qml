@@ -12,6 +12,7 @@ Singleton {
     readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/quickshell"
     readonly property string stateFile: stateDir + "/hcs-lock.json"
 
+    property bool loaded: false
     property bool howdyEnabled: true
     property string customGreeting: ""
     property string avatarPath: ""
@@ -107,7 +108,9 @@ Singleton {
                     if (d.showPowerActions !== undefined) root.showPowerActions = Boolean(d.showPowerActions);
                 }
             } catch (e) {}
+            root.loaded = true;
         }
+        onLoadFailed: root.loaded = true
     }
 
     FileView {

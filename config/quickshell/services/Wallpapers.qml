@@ -1298,9 +1298,13 @@ Singleton {
         }
     }
 
+    // Pause desktop wallpaper animations/videos while the separate lock screen (lock.qml) is active.
+    property bool sessionLocked: false
+
     // qs ipc call wallpaper <method>; screenUrls is read by lock.qml
     IpcHandler {
         target: "wallpaper"
+        function setLocked(v: bool): void { root.sessionLocked = Boolean(v); }
         function next(): void { root.next(); }
         function prev(): void { root.prev(""); }
         function togglePause(): void { root.toggleCurrentPause(); }

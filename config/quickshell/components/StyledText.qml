@@ -11,6 +11,7 @@ Text {
     font.pixelSize: Theme.fontSize
     verticalAlignment: Text.AlignVCenter
     renderType: Text.NativeRendering
+    textFormat: Text.PlainText
 
     // Set imperatively (a binding on font.styleName that reads font.weight is a binding loop).
     function syncStyle() {

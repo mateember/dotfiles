@@ -48,10 +48,19 @@ Scope {
     property string errorText: ""
     property bool abortingFacePam: false
     property bool abortingPasswordPam: false
+    property double _sleepEnteredMs: 0
 
-    readonly property bool effectiveHowdy: root.howdyAvailable && LockConfig.howdyEnabled
+    readonly property bool effectiveHowdy: LockConfig.loaded && root.howdyAvailable && LockConfig.howdyEnabled
     readonly property bool faceScanning: persist.locked && !persist.sleeping && root.effectiveHowdy
                                          && facePam.active && !facePam.responseRequired
+
+    onEffectiveHowdyChanged: {
+        if (!effectiveHowdy) {
+            root.stopFacePam();
+        } else if (persist.locked && !persist.sleeping && !facePam.active && !wakeFaceTimer.running) {
+            root.startFacePam();
+        }
+    }
 
     readonly property string rawUser: Quickshell.env("USER") || "User"
     readonly property string displayName: rawUser.charAt(0).toUpperCase() + rawUser.slice(1)
@@ -83,6 +92,8 @@ Scope {
     function notifyUserActivity(): void {
         if (!persist.locked) return;
         if (persist.sleeping) {
+            // Ignore stray clicks/keys right after entering sleep before the kernel freezes userspace.
+            if (Date.now() - root._sleepEnteredMs < 4000) return;
             root.wakeFromSleep();
             return;
         }
@@ -170,6 +181,7 @@ Scope {
         root.errorText = "";
         root.pendingPassword = "";
         root.submittingPassword = false;
+        root._sleepEnteredMs = Date.now();
         persist.sleeping = true;
         persist.locked = true;
         root.refreshPamProbe();
@@ -269,7 +281,15 @@ Scope {
 
     // Exit after unlock. Exit code 0, so systemd (Restart=on-failure) doesn't start it again.
     function quitIfUnlocked(): void {
-        if (!persist.locked) Qt.quit();
+        if (!persist.locked) quitGraceTimer.restart();
+    }
+
+    // Brief grace delay so Wayland flushes ext_session_lock_v1.unlock_and_destroy before exit.
+    Timer {
+        id: quitGraceTimer
+        interval: 150
+        repeat: false
+        onTriggered: if (!persist.locked) Qt.quit()
     }
 
     Timer {
@@ -389,6 +409,7 @@ Scope {
         id: idleResetProc
         command: [
             "bash", "-c",
+            "timeout 2 qs ipc call wallpaper setLocked false >/dev/null 2>&1; " +
             "prep=$(busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager PreparingForSleep 2>/dev/null); " +
             "[ \"$prep\" = \"b true\" ] && exit 0; " +
             "timeout 3 hyprctl dispatch 'hl.dsp.dpms({ action = \"enable\" })' >/dev/null 2>&1; " +
@@ -400,11 +421,13 @@ Scope {
         onExited: root.quitIfUnlocked()
     }
 
-    // Close bar popups, Quick Settings and the overview in the bar instance (default qs config).
+    // Close bar popups, Quick Settings and the overview in the bar instance (default qs config),
+    // and pause desktop wallpaper animations/videos while the lock surface covers all outputs.
     Process {
         id: overlayCloseProc
         command: [
             "sh", "-c",
+            "timeout 2 qs ipc call wallpaper setLocked true >/dev/null 2>&1; " +
             "for t in bar quicksettings overview; do timeout 2 qs ipc call \"$t\" close >/dev/null 2>&1; done"
         ]
     }
@@ -520,7 +543,7 @@ Scope {
         }
 
         function onCompleted(result): void {
-            if (result === PamResult.Success) {
+            if (result === PamResult.Success && persist.locked && !persist.sleeping && !root.abortingFacePam) {
                 root.unlock();
                 return;
             }

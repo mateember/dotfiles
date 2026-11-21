@@ -54,7 +54,8 @@ PanelWindow {
         id: scene
         anchors.fill: parent
         imageUrl: root.currentUrl
-        paused: (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
+        paused: Wallpapers.sessionLocked
+             || (Wallpapers.mode === "animated" && Wallpapers.animatedPaused)
              || (Wallpapers.pauseOnFullscreen && root.fullscreenActive)
         instantTransitions: root.fullscreenActive
         decodeWidth: root.width * root.dpr
@@ -122,10 +123,35 @@ PanelWindow {
                 else ThemeSync.finishAccentExtraction("");
             }
 
-            onImageLoaded: requestPaint()
+            onTargetUrlChanged: {
+                if (targetUrl) {
+                    accentWatchdog.restart();
+                    loadImage(targetUrl);
+                } else {
+                    ThemeSync.finishAccentExtraction("");
+                }
+            }
+
+            Timer {
+                id: accentWatchdog
+                interval: 5000
+                running: true
+                repeat: false
+                onTriggered: ThemeSync.finishAccentExtraction("")
+            }
+
+            onImageLoaded: {
+                if (isImageError(targetUrl)) {
+                    accentWatchdog.stop();
+                    ThemeSync.finishAccentExtraction("");
+                    return;
+                }
+                requestPaint();
+            }
 
             onPaint: {
                 if (!isImageLoaded(targetUrl)) return;
+                accentWatchdog.stop();
                 const ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
                 ctx.drawImage(targetUrl, 0, 0, width, height);

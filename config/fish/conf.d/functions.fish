@@ -4,8 +4,11 @@ function myip
 end
 
 function vencord
-    sh -c "$(curl -sS https://vencord.dev/install.sh)"
-
+    set -l tmp (mktemp)
+    if curl -fsSL --proto '=https' --tlsv1.2 -o "$tmp" https://vencord.dev/install.sh
+        sh "$tmp"
+    end
+    rm -f "$tmp"
 end
 
 function bat
