@@ -8,9 +8,8 @@ hl.on("hyprland.start", function()
 
     -- Idle daemon: hypridle runs as a systemd user service (services.hypridle in ~/Nix).
 
-    -- Clipboard & tray applets
-    hl.exec_cmd("wl-paste --type text --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    -- Clipboard watchers are managed directly by Quickshell (services/Clipboard.qml)
+    -- so Pause History and Bitwarden/password-manager secret hygiene work natively.
     hl.exec_cmd("kdeconnect-indicator")
 end)
 

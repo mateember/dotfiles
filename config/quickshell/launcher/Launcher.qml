@@ -110,11 +110,37 @@ Scope {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
             property string query: search.text
+
+            function looksLikeCalc(q: string): bool {
+                const s = (q || "").trim();
+                if (s === "") return false;
+                if (s.startsWith("=")) return true;
+                // Pure arithmetic: "2*21", "(10 + 5) / 3", "2^10"
+                if (/^[\d\s.,()+\-*/^%]+$/.test(s) && /\d\s*[+\-*/^%]\s*[\d(]/.test(s)) return true;
+                // Math functions: "sqrt(2)", "sin(45 deg)", "log(100)"
+                if (/^(?:sqrt|cbrt|sin|cos|tan|asin|acos|atan|log|log10|ln|abs|ceil|floor|round|exp)\s*\(.+\)$/i.test(s)) return true;
+                // Percentage of number: "15% of 240"
+                if (/^[\d.,]+\s*%\s+of\s+[\d.,]+$/i.test(s)) return true;
+                // Unit & currency conversions: "100 eur to huf", "50 km to mi", "32 f in c", "6 ft to cm", "2 gb in mb"
+                if (/^[\d.,+\-*/()^\s]+\s*[a-zA-Z°%$€£¥/²³]+\s+(?:to|in|as)\s+[a-zA-Z°%$€£¥/²³]+$/i.test(s) && /\d/.test(s)) return true;
+                return false;
+            }
+
+            function normalizeCalcExpr(q: string): string {
+                let s = (q || "").replace(/^=/, "").trim();
+                // "15% of 240" -> "15% * 240"
+                s = s.replace(/^([\d.,]+\s*%)\s+of\s+([\d.,]+)$/i, "$1 * $2");
+                // Temperature shorthand ("32 f to c" -> "32 °F to °C") so F isn't parsed as Farad
+                s = s.replace(/^([\d.,+\-*/()\s]+?)\s*°?\s*([cfCF])\s+(to|in|as)\s+°?\s*([cfCF])$/i,
+                    (_, num, u1, prep, u2) => `${num.trim()} °${u1.toUpperCase()} ${prep} °${u2.toUpperCase()}`);
+                return s;
+            }
+
             readonly property string mode: query.startsWith(":") ? "emoji"
                                          : (query.startsWith("!") || query.startsWith("/") || query.startsWith("@")) ? "shell"
-                                         : query.startsWith("=") ? "calc"
+                                         : query.startsWith("?") ? "web"
                                          : query.startsWith(">") ? "run"
-                                         : /^[\d\s.,()+\-*/^%]+$/.test(query) && /\d\s*[+\-*/^%]\s*[\d(]/.test(query) ? "calc"
+                                         : looksLikeCalc(query) ? "calc"
                                          : "apps"
             property string calcResult: ""
             property string previousQuery: ""
@@ -201,7 +227,14 @@ Scope {
                 }
                 if (mode === "calc") {
                     const expr = query.replace(/^=/, "").trim();
-                    return expr === "" ? [] : [{ kind: "calc", title: calcResult !== "" ? calcResult : "…", subtitle: expr + " · Enter to copy", icon: "calculate" }];
+                    if (expr === "") return [];
+                    const out = [{ kind: "calc", title: calcResult !== "" ? calcResult : "…", subtitle: expr + " · Enter to copy", icon: "calculate" }];
+                    out.push({ kind: "web", queryText: expr, title: `Search web for "${expr}"`, subtitle: "Open in default web browser", icon: "public" });
+                    return out;
+                }
+                if (mode === "web") {
+                    const wq = query.slice(1).trim();
+                    return wq === "" ? [] : [{ kind: "web", queryText: wq, title: `Search web for "${wq}"`, subtitle: "Open in default web browser", icon: "public" }];
                 }
                 if (mode === "emoji")
                     return Emoji.search(query.slice(1), 80).map(e => ({ kind: "emoji", char: e.char, title: e.name, subtitle: e.group }));
@@ -216,6 +249,10 @@ Scope {
                     const s = score(q, settingsEntry);
                     if (s >= 400) {
                         appItems.unshift({ kind: "shell", id: settingsEntry.id, title: "HCS Settings", subtitle: settingsEntry.comment, icon: settingsEntry.icon, keepOpen: false });
+                    }
+                    if (appItems.length === 0) {
+                        const rawQ = query.trim();
+                        appItems.push({ kind: "web", queryText: rawQ, title: `Search web for "${rawQ}"`, subtitle: "No matching apps · Enter to search in browser", icon: "public" });
                     }
                 }
                 return appItems;
@@ -246,6 +283,11 @@ Scope {
                 } else if (r.kind === "calc") {
                     if (calcResult === "") return;
                     Quickshell.execDetached(["wl-copy", calcResult]);
+                } else if (r.kind === "web") {
+                    const wq = (r.queryText || "").trim();
+                    if (wq === "") return;
+                    const url = /^https?:\/\//i.test(wq) ? wq : ("https://duckduckgo.com/?q=" + encodeURIComponent(wq));
+                    Quickshell.execDetached(["xdg-open", url]);
                 }
                 root.open = false;
             }
@@ -258,7 +300,13 @@ Scope {
             onQueryChanged: {
                 list.currentIndex = 0;
                 if (query === "") win.previousQuery = "";
-                if (mode === "calc") calcTimer.restart();
+                if (mode === "calc") {
+                    win.calcResult = "";
+                    calcTimer.restart();
+                } else {
+                    calcTimer.stop();
+                    win.calcResult = "";
+                }
             }
 
             Timer {
@@ -266,7 +314,7 @@ Scope {
                 interval: 120
                 onTriggered: {
                     calc.running = false;
-                    calc.command = ["qalc", "-t", win.query.replace(/^=/, "").trim()];
+                    calc.command = ["qalc", "-t", win.normalizeCalcExpr(win.query)];
                     calc.running = true;
                 }
             }
@@ -305,7 +353,7 @@ Scope {
                         id: search
                         Layout.fillWidth: true
                         implicitHeight: 44
-                        placeholder: "Search apps · ! shell apps · = calculate · > command · : emoji"
+                        placeholder: "Search apps · ! shell · = calc · > cmd · : emoji · ? web"
                         input.font.pixelSize: Theme.fontSizeLarge
                         Component.onCompleted: { text = root.initialQuery; focusInput(); }
 

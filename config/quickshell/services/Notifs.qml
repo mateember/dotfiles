@@ -27,6 +27,8 @@ Singleton {
 
     readonly property bool fullscreenActive: Hyprland.focusedMonitor?.activeWorkspace?.hasFullscreen ?? false
     readonly property bool smartDndActive: (autoDndFullscreen && fullscreenActive) || (autoDndScreenshare && Privacy.screenActive)
+    readonly property string smartDndReason: (autoDndScreenshare && Privacy.screenActive) ? "Screen sharing active"
+                                           : (autoDndFullscreen && fullscreenActive) ? "Fullscreen app active" : ""
     readonly property bool effectiveDnd: dnd || smartDndActive
 
     readonly property bool running: loader.item !== null
@@ -101,6 +103,20 @@ Singleton {
     function dismiss(n) {
         removeToast(n);
         n.dismiss();
+    }
+    function dismissGroup(appKey: string) {
+        const key = (appKey || "Notification").trim().toLowerCase();
+        const matches = root.history.filter(n => ((n.appName || "Notification").trim().toLowerCase()) === key);
+        for (const n of matches) {
+            removeToast(n);
+            n.dismiss();
+        }
+    }
+    function sendReply(n, replyText: string) {
+        const msg = (replyText || "").trim();
+        if (!n || !msg || !n.hasInlineReply) return;
+        n.sendInlineReply(msg);
+        dismiss(n);
     }
     function clearAll() {
         const list = root.history;
@@ -258,6 +274,7 @@ for text in (body, summary):
             bodyHyperlinksSupported: true
             actionsSupported: true
             actionIconsSupported: true
+            inlineReplySupported: true
             imageSupported: true
 
             onNotification: n => {

@@ -173,7 +173,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | Widget | Left Click | Right / Middle Click | Details |
 |---|---|---|---|
 | **Workspaces** | Focus workspace | Right/Middle: Toggle Overview. Scroll: cycle workspaces | Shows active workspaces per monitor with optically centered digits. |
-| **Clipboard** | Open clipboard history | — | Search `cliphist` text/image entries, copy with Enter, or wipe history. |
+| **Clipboard** | Open clipboard history | Middle: Pause/resume history | Search `cliphist` text/image entries, pin favorites (preserved across Wipe), pause history, and auto-skip password managers (Bitwarden/KeePassXC). |
 | **Night Light** | Open Night Light menu | Right/Middle: Toggle on/off | Warmth slider (`2500–6000 K`) and automatic schedule (`20:00–08:30`) via `hyprsunset`. |
 | **Caffeine** | Toggle keep-awake on/off | Right/Middle: Preset timer menu | Wayland `IdleInhibitor` with `Indefinitely`, `15m`, `30m`, `1h`, `2h`, `4h` timers and countdown. |
 | **System Stats (Minimon)** | Open sensor popup | Right/Middle: Open system monitor | Live sparklines/rings/values for CPU, CPU Temp, Memory, Network, Disk, and Intel Arc GPU. |
@@ -191,7 +191,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 | **Bluetooth** | Open Bluetooth menu | Middle: Toggle Bluetooth | Paired devices (with battery % and 2-click right-click forget) plus collapsible scan list. |
 | **Network & VPN** | Open network menu | — | Ethernet status, NetworkManager VPN/WireGuard manager (with inline password prompt), and Wi-Fi list. |
 | **Battery** | Open battery menu | — | Charge/health status, TLP power mode selector (`Power Saver` / `Balanced` / `Performance`) with `Auto` reset pill, `60/120 Hz` toggle, and session-only blur toggle. |
-| **Notifications** | Open notification center | Middle: Toggle Do Not Disturb | Notification history, Clear All, DND switch, and media card. |
+| **Notifications** | Open notification center | Middle: Toggle Do Not Disturb | App-grouped expandable notification stacks, inline reply (`inline-reply`), swipe-to-dismiss toasts with countdown bar, Smart Auto-DND, and media card. |
 | **Quick Settings** | Open Quick Settings | — | Equivalent to `SUPER + ,`. |
 | **Power Menu** | Open power menu | — | Equivalent to `SUPER + CTRL + L` (two-click confirm for Log out / Restart / Shut down). |
 
@@ -217,7 +217,8 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 - **Theme & Profiles** (`!theme` or `qs ipc call theme toggle`, also accessible from the header **Theme** button in **Bar Settings** and **Opacity & Transparency**): Live appearance customizer with 5 tabs (**Profiles**, **Colors**, **Surfaces**, **Shape & Bar**, **Type & Motion**) and a collapsible live preview strip. Preserves the original COSMIC Dark look as the immutable **Default** profile alongside **COSMIC Light**, **Nordic Frost**, **Catppuccin Mocha**, and **Minimal Sharp** presets, and lets you create, update, rename, duplicate, and delete custom profiles (`~/.local/state/quickshell/hcs-theme.json`, synced to the lock screen). Includes a latched HSL+A color inspector, `hyprpicker` eyedropper, auto-derived accent/background readability helpers, synchronized opacities, corner radius & bar geometry sliders, UI/monospace font browsers, and animation speed scaling.
 - **App Launcher** (`SUPER + Space`):
   - Default: fuzzy app search weighted by launch frequency (`launcher-usage.json`).
-  - `=expr` (or plain arithmetic): evaluates via `qalc`; Enter copies result.
+  - `=expr` (or plain arithmetic, `15% of 240`, `sqrt(2)`, unit/currency conversions like `100 eur to huf`, `50 km to mi`, `32 f to c`): evaluates via `qalc`; Enter copies result.
+  - `?query` (or automatic fallback when no app matches): searches the web in your default browser.
   - `>cmd`: executes a shell command (`Shift + Enter` runs it inside `kitty`).
   - `:name` (or `SUPER + .`): searches Unicode emojis; Enter copies and types via `wtype`, `Shift + Enter` copies only.
   - `!name` (also `/name`, `@name`): launches Quickshell panels and tools as centered floating windows (`!bar`, `!background`, `!opacity`, `!theme`, `!overview`, `!capture`, `!record`, `!lock`, `!wallpaper`, `!colorpicker`, `!power`, etc.).

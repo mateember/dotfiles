@@ -6,21 +6,25 @@ import Quickshell.Widgets
 import qs
 import qs.services
 
-// One notification: icon, app + time, summary, body, action buttons, close button.
-// Used both for toasts and in the notification center.
+// One notification: icon, app + time, summary, body, action buttons, inline reply,
+// optional auto-dismiss countdown bar (on toasts), and close button.
 Rectangle {
     id: root
 
     required property Notification notification
     property bool toast: false
+    property real progress: 1.0          // 1.0 -> 0.0 countdown bar (used when toast === true)
+    property bool showProgress: false
+    property bool replying: false
     readonly property bool hovered: hover.hovered
     readonly property bool critical: notification.urgency === NotificationUrgency.Critical
 
-    implicitHeight: layout.implicitHeight + 2 * Theme.spaceXs
+    implicitHeight: layout.implicitHeight + 2 * Theme.spaceXs + (showProgress ? 3 : 0)
     radius: Theme.radiusS
     color: root.toast ? Theme.notificationsBg : (hover.hovered ? Theme.componentHover : Theme.component)
     border.width: root.toast ? Theme.popupBorderWidth : 0
     border.color: root.critical ? Theme.destructive : Theme.popupBorder
+    clip: true
 
     HoverHandler { id: hover }
 
@@ -28,13 +32,20 @@ Rectangle {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-        onClicked: e => e.button === Qt.MiddleButton ? Notifs.dismiss(root.notification) : Notifs.activate(root.notification)
+        onClicked: e => {
+            if (e.button === Qt.MiddleButton) Notifs.dismiss(root.notification);
+            else if (!root.replying) Notifs.activate(root.notification);
+        }
     }
 
     RowLayout {
         id: layout
-        anchors.fill: parent
-        anchors.margins: Theme.spaceXs
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            margins: Theme.spaceXs
+        }
         spacing: Theme.spaceXs
 
         Item {
@@ -115,15 +126,50 @@ Rectangle {
                 onLinkActivated: link => Qt.openUrlExternally(link)
             }
 
+            // Action buttons + Inline Reply toggle
             Flow {
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.spaceXxxs
                 spacing: Theme.spaceXxxs
-                visible: actions.count > 0
+                visible: actions.count > 0 || (root.notification.hasInlineReply && !root.replying)
+
+                Rectangle {
+                    visible: root.notification.hasInlineReply && !root.replying
+                    implicitWidth: replyRow.implicitWidth + 2 * Theme.spaceXs
+                    implicitHeight: 28
+                    radius: height / 2
+                    color: replyBtnMouse.containsMouse ? Theme.accentHover : Theme.alpha(Theme.accent, 0.22)
+                    border.width: 1
+                    border.color: Theme.alpha(Theme.accent, 0.55)
+
+                    RowLayout {
+                        id: replyRow
+                        anchors.centerIn: parent
+                        spacing: 4
+                        Icon { icon: "reply"; size: 15; color: replyBtnMouse.containsMouse ? Theme.fgOnAccent : Theme.accent }
+                        StyledText {
+                            text: "Reply"
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: Font.Medium
+                            color: replyBtnMouse.containsMouse ? Theme.fgOnAccent : Theme.accent
+                        }
+                    }
+
+                    MouseArea {
+                        id: replyBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.replying = true;
+                            Qt.callLater(() => replyInput.focusInput());
+                        }
+                    }
+                }
 
                 Repeater {
                     id: actions
-                    model: root.notification.actions.filter(a => a.identifier !== "default")
+                    model: root.notification.actions.filter(a => a.identifier !== "default" && a.identifier !== "inline-reply")
                     delegate: Rectangle {
                         required property NotificationAction modelData
                         implicitWidth: label.implicitWidth + 2 * Theme.spaceXs
@@ -141,13 +187,66 @@ Rectangle {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                Notifs.invokeAction(root.notification, parent.modelData);
-                            }
+                            onClicked: Notifs.invokeAction(root.notification, parent.modelData)
+                        }
+                    }
+                }
+            }
+
+            // Inline Reply input field (`inline-reply` freedesktop spec)
+            RowLayout {
+                visible: root.notification.hasInlineReply && root.replying
+                Layout.fillWidth: true
+                Layout.topMargin: Theme.spaceXxxs
+                spacing: Theme.spaceXxxs
+
+                TextField {
+                    id: replyInput
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    placeholder: root.notification.inlineReplyPlaceholder || "Type a reply…"
+                    onAccepted: {
+                        const msg = text.trim();
+                        if (msg !== "") {
+                            text = "";
+                            root.replying = false;
+                            Notifs.sendReply(root.notification, msg);
+                        }
+                    }
+                    input.Keys.onEscapePressed: {
+                        text = "";
+                        root.replying = false;
+                    }
+                }
+
+                IconButton {
+                    icon: "send"
+                    highlighted: replyInput.text.trim() !== ""
+                    implicitWidth: 32
+                    implicitHeight: 32
+                    iconSize: 17
+                    onClicked: {
+                        const msg = replyInput.text.trim();
+                        if (msg !== "") {
+                            replyInput.text = "";
+                            root.replying = false;
+                            Notifs.sendReply(root.notification, msg);
                         }
                     }
                 }
             }
         }
+    }
+
+    // Subtle auto-dismiss countdown progress bar along the bottom edge of toasts
+    Rectangle {
+        visible: root.showProgress
+        anchors {
+            left: parent.left
+            bottom: parent.bottom
+        }
+        height: 2.5
+        width: parent.width * Math.max(0, Math.min(1, root.progress))
+        color: root.critical ? Theme.destructive : Theme.alpha(Theme.accent, 0.78)
     }
 }
