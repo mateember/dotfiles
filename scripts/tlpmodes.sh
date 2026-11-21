@@ -11,6 +11,7 @@ run_privileged() {
     local mode="$1"
     local helper
     if helper="$(command -v hcs-tlp-mode 2>/dev/null)"; then
+        helper="$(readlink -f "$helper" 2>/dev/null || printf '%s' "$helper")"
         sudo -n "$helper" "$mode"
         return $?
     fi

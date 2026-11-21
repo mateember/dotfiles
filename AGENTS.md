@@ -51,7 +51,7 @@ dotfiles/
 │   ├── kitty/                      # Kitty terminal configuration
 │   ├── nvim/                       # Neovim (Lazy.nvim) configuration
 │   ├── Kvantum/, qt5ct/, qt6ct/    # Qt & KDE COSMIC Dark theming + make-cosmic-shell-theme.py
-│   ├── fastfetch/, distrobox/, winapps/
+│   ├── fastfetch/, distrobox/
 └── scripts/                        # Utility scripts (tlpmodes.sh, bingpaper.sh, sunshine.sh)
 ```
 

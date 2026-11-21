@@ -27,7 +27,7 @@ Run [`link.sh`](file:///home/mate/dotfiles/link.sh) to symlink everything into p
   - [`config/nvim/`](file:///home/mate/dotfiles/config/nvim) — Neovim configuration (Lazy.nvim)
 - **Theming & Tools**:
   - [`config/qt5ct/`](file:///home/mate/dotfiles/config/qt5ct), [`config/qt6ct/`](file:///home/mate/dotfiles/config/qt6ct), [`config/Kvantum/`](file:///home/mate/dotfiles/config/Kvantum) — COSMIC Dark Qt/KDE styling and [`make-cosmic-shell-theme.py`](file:///home/mate/dotfiles/config/qt6ct/make-cosmic-shell-theme.py) generator
-  - [`config/fastfetch/`](file:///home/mate/dotfiles/config/fastfetch), [`config/distrobox/`](file:///home/mate/dotfiles/config/distrobox), [`config/winapps/`](file:///home/mate/dotfiles/config/winapps)
+  - [`config/fastfetch/`](file:///home/mate/dotfiles/config/fastfetch), [`config/distrobox/`](file:///home/mate/dotfiles/config/distrobox)
   - [`scripts/`](file:///home/mate/dotfiles/scripts) — Power profile switcher (`tlpmodes.sh`), Bing wallpaper fetcher (`bingpaper.sh`), and Sunshine virtual monitor (`sunshine.sh`)
 
 ## Documentation
