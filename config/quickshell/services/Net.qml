@@ -123,6 +123,120 @@ Singleton {
         Quickshell.execDetached(["nm-connection-editor"]);
     }
 
+    // ---- Extended Network Settings (saved Wi-Fi profiles, live IP/DNS/MAC details, hidden SSID) ----
+    property var savedWifi: []       // [{ name, uuid, autoconnect, active }]
+    property var activeDetails: ({}) // { device, ip4, ip6, gateway, dns, mac, speed }
+    property string hiddenError: ""
+    property bool hiddenBusy: false
+
+    function refreshDetails() {
+        if (!savedWifiProc.running) savedWifiProc.running = true;
+        if (!detailsProc.running) detailsProc.running = true;
+    }
+
+    function forgetSavedConnection(uuid: string) {
+        if (!uuid) return;
+        Quickshell.execDetached(["nmcli", "connection", "delete", "uuid", uuid]);
+        detailsRefreshTimer.restart();
+    }
+
+    function setConnectionAutoconnect(uuid: string, on: bool) {
+        if (!uuid) return;
+        Quickshell.execDetached(["nmcli", "connection", "modify", "uuid", uuid, "connection.autoconnect", on ? "yes" : "no"]);
+        detailsRefreshTimer.restart();
+    }
+
+    function connectHiddenWifi(ssid: string, password: string) {
+        const s = (ssid || "").trim();
+        if (!s || root.hiddenBusy) return;
+        root.hiddenBusy = true;
+        root.hiddenError = "";
+        if (password && password.length > 0) {
+            hiddenProc.command = ["nmcli", "--wait", "20", "device", "wifi", "connect", s, "password", password, "hidden", "yes"];
+        } else {
+            hiddenProc.command = ["nmcli", "--wait", "20", "device", "wifi", "connect", s, "hidden", "yes"];
+        }
+        hiddenProc.running = true;
+    }
+
+    Timer {
+        id: detailsRefreshTimer
+        interval: 450
+        onTriggered: root.refreshDetails()
+    }
+
+    Process {
+        id: savedWifiProc
+        command: ["timeout", "4", "nmcli", "-t", "-f", "NAME,UUID,TYPE,AUTOCONNECT,ACTIVE", "connection", "show"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = [];
+                for (const line of text.split("\n")) {
+                    if (!line.trim()) continue;
+                    const cols = line.split(/(?<!\\):/).map(p => p.replace(/\\:/g, ":").replace(/\\\\/g, "\\"));
+                    if (cols.length < 5) continue;
+                    if (cols[2] !== "802-11-wireless") continue;
+                    out.push({
+                        name: cols[0],
+                        uuid: cols[1],
+                        autoconnect: cols[3] === "yes",
+                        active: cols[4] === "yes"
+                    });
+                }
+                out.sort((a, b) => (b.active - a.active) || a.name.localeCompare(b.name));
+                root.savedWifi = out;
+            }
+        }
+    }
+
+    Process {
+        id: detailsProc
+        command: [
+            "sh", "-c",
+            "dev=$(nmcli -t -f DEVICE,TYPE,STATE dev status 2>/dev/null | awk -F: '$3==\"connected\" && ($2==\"wifi\" || $2==\"ethernet\"){print $1; exit}'); " +
+            "[ -z \"$dev\" ] && exit 0; " +
+            "printf 'DEVICE=%s\\n' \"$dev\"; " +
+            "nmcli -t -f GENERAL.HWADDR,IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,WIRED-PROPERTIES.SPEED dev show \"$dev\" 2>/dev/null"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const d = { device: "", ip4: "", ip6: "", gateway: "", dns: [], mac: "", speed: "" };
+                for (const line of text.split("\n")) {
+                    if (!line.trim()) continue;
+                    if (line.startsWith("DEVICE=")) { d.device = line.slice(7).trim(); continue; }
+                    const idx = line.indexOf(":");
+                    if (idx <= 0) continue;
+                    const k = line.slice(0, idx).trim();
+                    const v = line.slice(idx + 1).replace(/\\:/g, ":").trim();
+                    if (!v) continue;
+                    if (k === "GENERAL.HWADDR") d.mac = v;
+                    else if (k.startsWith("IP4.ADDRESS") && !d.ip4) d.ip4 = v;
+                    else if (k === "IP4.GATEWAY") d.gateway = v;
+                    else if (k.startsWith("IP4.DNS")) d.dns.push(v);
+                    else if (k.startsWith("IP6.ADDRESS") && !d.ip6 && !v.startsWith("fe80:")) d.ip6 = v;
+                    else if (k === "WIRED-PROPERTIES.SPEED") d.speed = v;
+                }
+                d.dnsText = d.dns.join(", ");
+                root.activeDetails = d;
+            }
+        }
+    }
+
+    Process {
+        id: hiddenProc
+        stderr: StdioCollector {
+            onStreamFinished: {
+                const e = text.trim();
+                if (e) root.hiddenError = e.replace(/^Error:\s*/i, "");
+            }
+        }
+        onExited: code => {
+            root.hiddenBusy = false;
+            if (code === 0) root.hiddenError = "";
+            root.refreshDetails();
+        }
+    }
+
     QtObject {
         id: vpnActionStdin
         property string text: ""

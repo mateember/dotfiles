@@ -2,24 +2,93 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import qs
 
 // Notification daemon (replaces dunst / cosmic-notifications).
 // Every notification is kept in `history` until dismissed; `toasts` are the ones currently
-// shown as pop-ups. Do-not-disturb hides toasts except critical ones.
+// shown as pop-ups. Supports Do Not Disturb, Smart Auto-DND (fullscreen & screenshare),
+// and per-app mute rules.
 Singleton {
     id: root
 
     readonly property bool dnd: persist.dnd
+    property bool autoDndFullscreen: false
+    property bool autoDndScreenshare: true
+    property var mutedApps: []          // lowercased app names suppressed from toasts
+    property var knownApps: []          // app names seen in this/recent sessions
+    property real defaultTimeoutSec: 4.5
     property bool _clearing: false
     readonly property var history: _clearing ? [] : (loader.item?.trackedNotifications.values ?? []).slice().reverse()   // newest first
     property var toasts: []
     property var arrival: ({})   // notification id → Date
 
+    readonly property bool fullscreenActive: Hyprland.focusedMonitor?.activeWorkspace?.hasFullscreen ?? false
+    readonly property bool smartDndActive: (autoDndFullscreen && fullscreenActive) || (autoDndScreenshare && Privacy.screenActive)
+    readonly property bool effectiveDnd: dnd || smartDndActive
+
     readonly property bool running: loader.item !== null
 
     function toggleDnd() { persist.dnd = !persist.dnd; }
+    function setAutoDndFullscreen(v: bool) { root.autoDndFullscreen = v; savePrefs(); }
+    function setAutoDndScreenshare(v: bool) { root.autoDndScreenshare = v; savePrefs(); }
+    function setDefaultTimeoutSec(v: real) { root.defaultTimeoutSec = Math.max(2, Math.min(12, Math.round(v * 2) / 2)); savePrefs(); }
+
+    function isAppMuted(appName: string): bool {
+        const key = (appName || "").trim().toLowerCase();
+        return key !== "" && root.mutedApps.indexOf(key) >= 0;
+    }
+
+    function toggleAppMute(appName: string) {
+        const key = (appName || "").trim().toLowerCase();
+        if (!key) return;
+        const cur = root.mutedApps.slice();
+        const idx = cur.indexOf(key);
+        if (idx >= 0) cur.splice(idx, 1);
+        else cur.push(key);
+        root.mutedApps = cur;
+        savePrefs();
+    }
+
+    function rememberApp(appName: string) {
+        const clean = (appName || "").trim();
+        if (!clean) return;
+        if (!root.knownApps.some(a => a.toLowerCase() === clean.toLowerCase())) {
+            root.knownApps = root.knownApps.concat([clean]).sort((a, b) => a.localeCompare(b));
+            savePrefs();
+        }
+    }
+
+    function savePrefs() {
+        prefsStore.setText(JSON.stringify({
+            autoDndFullscreen: root.autoDndFullscreen,
+            autoDndScreenshare: root.autoDndScreenshare,
+            mutedApps: root.mutedApps,
+            knownApps: root.knownApps,
+            defaultTimeoutSec: root.defaultTimeoutSec
+        }, null, 2));
+    }
+
+    FileView {
+        id: prefsStore
+        path: Quickshell.statePath("notifs-config.json")
+        atomicWrites: true
+        printErrors: false
+        onLoaded: {
+            try {
+                const d = JSON.parse(text());
+                if (d && typeof d === "object") {
+                    if (d.autoDndFullscreen !== undefined) root.autoDndFullscreen = Boolean(d.autoDndFullscreen);
+                    if (d.autoDndScreenshare !== undefined) root.autoDndScreenshare = Boolean(d.autoDndScreenshare);
+                    if (Array.isArray(d.mutedApps)) root.mutedApps = d.mutedApps.map(s => String(s).toLowerCase());
+                    if (Array.isArray(d.knownApps)) root.knownApps = d.knownApps.map(s => String(s));
+                    if (d.defaultTimeoutSec !== undefined) root.defaultTimeoutSec = Math.max(2, Math.min(12, Number(d.defaultTimeoutSec) || 4.5));
+                }
+            } catch (e) {}
+        }
+    }
 
     function removeToast(n) {
         root.toasts = root.toasts.filter(t => t !== n);
@@ -141,15 +210,15 @@ for text in (body, summary):
         dismiss(n);
     }
 
-    // Seconds the toast stays up before fading out (4.5s default; 10s for critical).
+    // Seconds the toast stays up before fading out (configurable default; 10s for critical).
     function timeoutFor(n): real {
-        if (!n) return 4.5;
+        if (!n) return root.defaultTimeoutSec;
         if (n.urgency === NotificationUrgency.Critical) return 10;
         let t = n.expireTimeout;
-        if (t <= 0) return 4.5;
+        if (t <= 0) return root.defaultTimeoutSec;
         // FreeDesktop expire_timeout is sometimes passed in milliseconds (e.g. 5000)
         if (t > 100) t = t / 1000.0;
-        return Math.max(3.0, Math.min(t, 6.0));
+        return Math.max(3.0, Math.min(t, Math.max(6.0, root.defaultTimeoutSec)));
     }
 
     function timeText(n): string {
@@ -196,8 +265,13 @@ for text in (body, summary):
                 const a = Object.assign({}, root.arrival);
                 a[n.id] = new Date();
                 root.arrival = a;
-                if (!root.dnd || n.urgency === NotificationUrgency.Critical)
+                root.rememberApp(n.appName);
+                const critical = n.urgency === NotificationUrgency.Critical;
+                const suppressed = !critical && (root.effectiveDnd || root.isAppMuted(n.appName));
+                if (!suppressed) {
                     root.toasts = [n].concat(root.toasts.filter(t => t.id !== n.id)).slice(0, 5);
+                    SoundCues.playNotification();
+                }
                 n.closed.connect(() => root.removeToast(n));
             }
         }

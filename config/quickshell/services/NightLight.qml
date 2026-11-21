@@ -16,10 +16,58 @@ Singleton {
     id: root
 
     // ---- Schedule for "auto" (local time, HH:MM; may wrap past midnight) ----
-    readonly property string warmFrom: "20:00"
-    readonly property string warmUntil: "08:30"
-    readonly property int scheduleTemperature: 5500
-    readonly property int scheduleGamma: 80          // percent
+    property string warmFrom: "20:00"
+    property string warmUntil: "08:30"
+    property int scheduleTemperature: 5500
+    property int scheduleGamma: 80          // percent
+
+    function setSchedule(fromStr: string, untilStr: string) {
+        const re = /^([01]?\d|2[0-3]):([0-5]\d)$/;
+        const f = String(fromStr || "").trim();
+        const u = String(untilStr || "").trim();
+        if (re.test(f)) root.warmFrom = f.length === 4 ? ("0" + f) : f;
+        if (re.test(u)) root.warmUntil = u.length === 4 ? ("0" + u) : u;
+        updateSchedule();
+        saveSchedule();
+    }
+
+    function setScheduleTemperature(k: int) {
+        root.scheduleTemperature = Math.max(minTemperature, Math.min(maxTemperature, Math.round(k / 100) * 100));
+        saveSchedule();
+    }
+
+    function setScheduleGamma(g: int) {
+        root.scheduleGamma = Math.max(50, Math.min(100, Math.round(g)));
+        saveSchedule();
+    }
+
+    function saveSchedule() {
+        nlStore.setText(JSON.stringify({
+            warmFrom: root.warmFrom,
+            warmUntil: root.warmUntil,
+            scheduleTemperature: root.scheduleTemperature,
+            scheduleGamma: root.scheduleGamma
+        }, null, 2));
+    }
+
+    FileView {
+        id: nlStore
+        path: Quickshell.statePath("nightlight-config.json")
+        atomicWrites: true
+        printErrors: false
+        onLoaded: {
+            try {
+                const d = JSON.parse(text());
+                if (d && typeof d === "object") {
+                    if (d.warmFrom) root.warmFrom = String(d.warmFrom);
+                    if (d.warmUntil) root.warmUntil = String(d.warmUntil);
+                    if (d.scheduleTemperature) root.scheduleTemperature = Number(d.scheduleTemperature);
+                    if (d.scheduleGamma) root.scheduleGamma = Number(d.scheduleGamma);
+                    root.updateSchedule();
+                }
+            } catch (e) {}
+        }
+    }
 
     readonly property string mode: persist.mode
     readonly property int temperature: persist.temperature       // K used for "on"

@@ -84,7 +84,7 @@ BarButton {
         PopupHeader {
             title: "Bluetooth"
             Toggle { checked: Bt.enabled; onToggled: Bt.toggle(); anchors.verticalCenter: parent.verticalCenter }
-            AppButton { command: ["cosmic-settings", "bluetooth"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("bluetooth", ""); } }
         }
 
         StyledText {

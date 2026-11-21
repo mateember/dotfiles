@@ -396,7 +396,7 @@ Scope {
                         }
                         IconButton {
                             icon: "settings"
-                            onClicked: { root.dismiss(); Quickshell.execDetached(["cosmic-settings"]); }
+                            onClicked: { root.dismiss(); SettingsState.open = true; }
                         }
                         IconButton {
                             icon: "lock"

@@ -98,4 +98,72 @@ PanelWindow {
     }
 
     Component.onCompleted: pickInitialOrNext()
+
+    // On-demand native QML Canvas dominant-accent sampler (zero external scripts).
+    // Runs only on the first screen while ThemeSync.extractingAccent is true.
+    Loader {
+        active: ThemeSync.extractingAccent
+             && Quickshell.screens.length > 0
+             && root.screenName === Quickshell.screens[0].name
+        sourceComponent: Canvas {
+            id: accentCanvas
+            width: 48
+            height: 48
+            visible: false
+            property string targetUrl: ThemeSync.extractImageUrl
+
+            function toHexByte(n: int): string {
+                const s = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+                return s.length < 2 ? "0" + s : s;
+            }
+
+            Component.onCompleted: {
+                if (targetUrl) loadImage(targetUrl);
+                else ThemeSync.finishAccentExtraction("");
+            }
+
+            onImageLoaded: requestPaint()
+
+            onPaint: {
+                if (!isImageLoaded(targetUrl)) return;
+                const ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(targetUrl, 0, 0, width, height);
+                const img = ctx.getImageData(0, 0, width, height);
+                const d = img.data;
+                // Bucket pixels into 24 hue bins weighted by saturation and pleasant mid-luminance.
+                const bins = [];
+                for (let b = 0; b < 24; b++) bins.push({ w: 0, r: 0, g: 0, bl: 0 });
+                for (let i = 0; i < d.length; i += 4) {
+                    const r = d[i] / 255, g = d[i + 1] / 255, bl = d[i + 2] / 255;
+                    const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
+                    const l = (max + min) / 2;
+                    const delta = max - min;
+                    if (delta < 0.10 || l < 0.14 || l > 0.88) continue;
+                    const s = delta / (1 - Math.abs(2 * l - 1));
+                    let h = 0;
+                    if (max === r) h = ((g - bl) / delta) % 6;
+                    else if (max === g) h = (bl - r) / delta + 2;
+                    else h = (r - g) / delta + 4;
+                    h = (h * 60 + 360) % 360;
+                    const idx = Math.min(23, Math.floor(h / 15));
+                    const weight = s * s * (1 - Math.abs(l - 0.55));
+                    bins[idx].w += weight;
+                    bins[idx].r += d[i] * weight;
+                    bins[idx].g += d[i + 1] * weight;
+                    bins[idx].bl += d[i + 2] * weight;
+                }
+                let best = null;
+                for (const bin of bins) {
+                    if (bin.w > 0 && (!best || bin.w > best.w)) best = bin;
+                }
+                if (best && best.w > 0) {
+                    const hex = "#" + toHexByte(best.r / best.w) + toHexByte(best.g / best.w) + toHexByte(best.bl / best.w);
+                    ThemeSync.finishAccentExtraction(hex);
+                } else {
+                    ThemeSync.finishAccentExtraction("#FFAD00");
+                }
+            }
+        }
+    }
 }

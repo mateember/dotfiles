@@ -32,7 +32,7 @@ BarButton {
                 onToggled: NightLight.toggle()
                 anchors.verticalCenter: parent.verticalCenter
             }
-            AppButton { command: ["cosmic-settings", "displays"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("displays", ""); } }
         }
 
         StyledText {

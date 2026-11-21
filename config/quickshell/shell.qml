@@ -13,11 +13,12 @@ import qs.osd
 import qs.polkit
 import qs.quicksettings
 import qs.services
+import qs.settings
 
 ShellRoot {
     // Singletons are created lazily; touch the ones that own IPC targets or system hooks
-    // so they exist from startup (picker, wallpaper, notifications server, weather).
-    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, ThemeConfig, WeatherConfig, Weather, Hypr, Recorder, Snip, Privacy, Storage, WidgetHistory]
+    // so they exist from startup (picker, wallpaper, notifications server, weather, settings).
+    readonly property var _eager: [ColorPicker, Wallpapers, Notifs, Emoji, PowerProfile, BarConfig, OpacityConfig, ThemeConfig, ThemeSync, WeatherConfig, Weather, Hypr, HyprSettings, Recorder, Snip, Privacy, Storage, WidgetHistory, SettingsState, SoundCues, LockConfig, SystemManager]
 
     // Wallpaper slideshow, one surface per screen (background layer).
     Variants {
@@ -37,9 +38,7 @@ ShellRoot {
     Overview {}
     CaptureOverlay {}
     SnipOverlay {}
-    BarSettingsWindow {}
-    OpacitySettingsWindow {}
-    ThemeSettingsWindow {}
+    SettingsWindow {}
     Toasts {}
     OsdWindow {}
     OsdTriggers {}

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Widgets
 import qs
 import qs.components
 import qs.services
@@ -230,12 +231,28 @@ Item {
 
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            width: 64
-            height: 64
-            radius: 32
+            width: 68
+            height: 68
+            radius: 34
             color: Theme.accent
 
+            ClippingRectangle {
+                anchors.fill: parent
+                radius: 34
+                color: "transparent"
+                visible: avatarImg.status === Image.Ready
+                Image {
+                    id: avatarImg
+                    anchors.fill: parent
+                    source: LockConfig.avatarPath ? ("file://" + LockConfig.avatarPath) : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    smooth: true
+                }
+            }
+
             StyledText {
+                visible: avatarImg.status !== Image.Ready
                 anchors.centerIn: parent
                 text: stage.controller.userInitial
                 font.pixelSize: 26
@@ -379,7 +396,7 @@ Item {
                     }
 
                     IconButton {
-                        visible: passwordInput.text.length > 0 || (stage.controller.howdyAvailable && !stage.controller.faceScanning)
+                        visible: passwordInput.text.length > 0 || (stage.controller.effectiveHowdy && !stage.controller.faceScanning)
                         enabled: !stage.controller.submittingPassword
                         implicitWidth: 34
                         implicitHeight: 34
@@ -409,6 +426,52 @@ Item {
             color: stage.controller.errorText !== "" ? Theme.destructive : Theme.textDim
             font.pixelSize: Theme.fontSizeSmall
             Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+        }
+
+        // Caps Lock & Keyboard Layout badges
+        RowLayout {
+            visible: LockConfig.showCapsAndLayout && (HyprSettings.capsLockOn || HyprSettings.activeKeymap !== "")
+            Layout.alignment: Qt.AlignHCenter
+            spacing: Theme.spaceXxs
+
+            Rectangle {
+                visible: HyprSettings.capsLockOn
+                implicitWidth: capsRow.implicitWidth + 16
+                implicitHeight: 26
+                radius: 13
+                color: Theme.alpha(Theme.warning, 0.22)
+                border.width: 1
+                border.color: Theme.warning
+                RowLayout {
+                    id: capsRow
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Icon { icon: "keyboard_capslock"; size: 15; color: Theme.warning }
+                    StyledText { text: "Caps Lock is ON"; font.pixelSize: Theme.fontSizeSmall; font.weight: Font.DemiBold; color: Theme.warning }
+                }
+            }
+
+            Rectangle {
+                visible: HyprSettings.activeKeymap !== ""
+                implicitWidth: kbRow.implicitWidth + 16
+                implicitHeight: 26
+                radius: 13
+                color: Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.12)
+                RowLayout {
+                    id: kbRow
+                    anchors.centerIn: parent
+                    spacing: 4
+                    Icon { icon: "language"; size: 14; color: Theme.textDim }
+                    StyledText { text: HyprSettings.activeKeymap; font.pixelSize: Theme.fontSizeSmall; color: Theme.textDim }
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: HyprSettings.switchNextKeyboardLayout()
+                }
+            }
         }
     }
 
@@ -480,6 +543,23 @@ Item {
             spacing: Theme.spaceXxs
 
             Rectangle {
+                visible: LockConfig.showWeather && Weather.ready
+                implicitWidth: lockWxRow.implicitWidth + 2 * Theme.spaceXs
+                implicitHeight: 32
+                radius: 16
+                color: Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.10)
+                RowLayout {
+                    id: lockWxRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon { icon: Weather.icon || "partly_cloudy_day"; size: 16; color: Theme.accent }
+                    StyledText { text: Weather.formatTemp(Weather.tempC, true) + (Weather.description ? (" · " + Weather.description) : ""); font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
+                }
+            }
+
+            Rectangle {
                 visible: Battery.available
                 implicitWidth: batRow.implicitWidth + 2 * Theme.spaceXs
                 implicitHeight: 32
@@ -547,6 +627,68 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: stage.controller.suspendSystem()
+                }
+            }
+
+            Rectangle {
+                id: rebootPill
+                visible: LockConfig.showPowerActions
+                property bool armed: false
+                implicitWidth: rebootRow.implicitWidth + 2 * Theme.spaceXs
+                implicitHeight: 32
+                radius: 16
+                color: armed ? Theme.alpha(Theme.warning, 0.30)
+                     : rebootMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
+                     : Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: armed ? Theme.warning : Qt.rgba(1, 1, 1, 0.10)
+                RowLayout {
+                    id: rebootRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon { icon: "restart_alt"; size: 16; color: rebootPill.armed ? Theme.warning : Theme.text }
+                    StyledText { text: rebootPill.armed ? "Confirm Reboot" : "Reboot"; font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
+                }
+                MouseArea {
+                    id: rebootMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (rebootPill.armed) Quickshell.execDetached(["systemctl", "reboot"]);
+                        else rebootPill.armed = true;
+                    }
+                }
+            }
+
+            Rectangle {
+                id: poweroffPill
+                visible: LockConfig.showPowerActions
+                property bool armed: false
+                implicitWidth: poRow.implicitWidth + 2 * Theme.spaceXs
+                implicitHeight: 32
+                radius: 16
+                color: armed ? Theme.alpha(Theme.destructive, 0.30)
+                     : poMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.14)
+                     : Qt.rgba(0.11, 0.11, 0.11, 0.62)
+                border.width: 1
+                border.color: armed ? Theme.destructive : Qt.rgba(1, 1, 1, 0.10)
+                RowLayout {
+                    id: poRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon { icon: "power_settings_new"; size: 16; color: poweroffPill.armed ? Theme.destructive : Theme.text }
+                    StyledText { text: poweroffPill.armed ? "Confirm Shut Down" : "Shut Down"; font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
+                }
+                MouseArea {
+                    id: poMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (poweroffPill.armed) Quickshell.execDetached(["systemctl", "poweroff"]);
+                        else poweroffPill.armed = true;
+                    }
                 }
             }
         }

@@ -16,7 +16,7 @@ BarButton {
     onClicked: pop.toggle()
 
     StyledText {
-        text: Time.format(Config.clockFormat)
+        text: Time.format(SystemManager.clockFormat || Config.clockFormat)
         font.pixelSize: Theme.barFontSize
     }
 
@@ -128,7 +128,7 @@ BarButton {
                 font.weight: Font.DemiBold
             }
             AppButton { icon: "calendar_month"; command: ["gnome-calendar"] }
-            AppButton { command: ["cosmic-settings", "date-time"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("weather", "datetime"); } }
             IconButton { icon: "chevron_left"; onClicked: pop.shift(-1) }
             IconButton { icon: "chevron_right"; onClicked: pop.shift(1) }
         }

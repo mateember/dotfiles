@@ -21,3 +21,12 @@ hl.device({
 })
 
 require("conf.scrolling") -- scrolling layout + touchpad gestures (comment out for dwindle)
+
+-- Load optional user overrides persisted by HCS Settings (Quickshell), if present.
+local hcs_state = (os.getenv("XDG_STATE_HOME") or ((os.getenv("HOME") or "") .. "/.local/state"))
+    .. "/quickshell/hypr-overrides.lua"
+local f = io.open(hcs_state, "r")
+if f then
+    f:close()
+    pcall(dofile, hcs_state)
+end

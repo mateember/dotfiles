@@ -70,7 +70,7 @@ BarButton {
 
         PopupHeader {
             title: "Network"
-            AppButton { command: ["cosmic-settings", "network"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("network", ""); } }
         }
 
         ListItem {
@@ -341,8 +341,8 @@ BarButton {
         ListItem {
             icon: "settings_ethernet"
             text: "Network settings"
-            subtext: "Wired, VPN and advanced connection settings"
-            onClicked: { Popups.close(); Quickshell.execDetached(["cosmic-settings", "network"]); }
+            subtext: "Wired, VPN, Tailscale and saved networks"
+            onClicked: { Popups.close(); SettingsState.openPage("network", ""); }
         }
     }
 }

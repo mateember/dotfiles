@@ -16,6 +16,7 @@ Scope {
         target: Audio
         function onVolumeChanged() {
             if (!root.popupOpen("volume")) Osd.show(Audio.icon, "Volume", Audio.muted ? 0 : Audio.volume, 1);
+            if (Osd.ready) SoundCues.playVolumeTick();
         }
         function onMutedChanged() {
             Osd.show(Audio.icon, Audio.muted ? "Muted" : "Volume", Audio.muted ? 0 : Audio.volume, 1);
@@ -73,6 +74,17 @@ Scope {
         target: Hypr
         function onLayoutChanged() { Osd.show("view_quilt", "Layout: " + Hypr.layout, -1, 1); }
     }
+    Connections {
+        target: HyprSettings
+        function onLayoutSwitched(layoutName) {
+            if (HyprSettings.capsOsdEnabled)
+                Osd.show("language", "Keyboard: " + layoutName, -1, 1);
+        }
+        function onLockKeyChanged(keyName, active) {
+            if (HyprSettings.capsOsdEnabled)
+                Osd.show(active ? "keyboard_capslock" : "keyboard", keyName + (active ? " on" : " off"), -1, 1);
+        }
+    }
 
     // ---- power ----
     property bool warnedLow: false
@@ -107,6 +119,7 @@ Scope {
         function onOnBatteryChanged() {
             if (!Battery.available) return;
             Osd.show(Battery.onBattery ? Battery.icon : "power", Battery.onBattery ? "On battery" : "Plugged in", Battery.percent, 1);
+            if (Osd.ready) SoundCues.playPower(!Battery.onBattery);
             root.checkBattery();
         }
         function onChargingChanged() { root.checkBattery(); }

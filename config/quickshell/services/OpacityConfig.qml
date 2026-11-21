@@ -149,9 +149,12 @@ Singleton {
 
     IpcHandler {
         target: "opacity"
-        function toggle(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = !root.settingsOpen; }
-        function open(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = true; }
-        function close(): void { WidgetHistory.opacityFromBarSettings = false; root.settingsOpen = false; }
+        function toggle(): void {
+            if (SettingsState.open && SettingsState.activePage === "appearance" && SettingsState.activeSubTab === "surfaces") SettingsState.close();
+            else SettingsState.openPage("appearance", "surfaces");
+        }
+        function open(): void { SettingsState.openPage("appearance", "surfaces"); }
+        function close(): void { SettingsState.close(); }
         function reset(): void { root.reset(); }
     }
 }

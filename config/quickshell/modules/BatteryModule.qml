@@ -34,7 +34,7 @@ BarButton {
 
         PopupHeader {
             title: "Battery"
-            AppButton { command: ["cosmic-settings", "power"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("power", ""); } }
         }
 
         RowLayout {

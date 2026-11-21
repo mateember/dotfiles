@@ -13,6 +13,8 @@ Singleton {
     readonly property bool available: adapter !== null
     readonly property bool enabled: adapter?.enabled ?? false
     readonly property bool discovering: adapter?.discovering ?? false
+    readonly property bool discoverable: adapter?.discoverable ?? false
+    readonly property string adapterName: adapter?.name || "Bluetooth Adapter"
     readonly property var devices: (adapter?.devices.values ?? []).slice().sort((a, b) =>
         (b.connected - a.connected) || (b.paired - a.paired) || (a.name || "").localeCompare(b.name || ""))
     readonly property var connected: devices.filter(d => d.connected)
@@ -42,6 +44,13 @@ Singleton {
     function setDiscovering(on: bool) {
         if (root.adapter && root.adapter.enabled && root.adapter.discovering !== on)
             root.adapter.discovering = on;
+    }
+    function setDiscoverable(on: bool) {
+        if (root.adapter && root.adapter.enabled)
+            root.adapter.discoverable = on;
+    }
+    function setTrusted(device, on: bool) {
+        if (device) device.trusted = on;
     }
 
     // Connected → disconnect. Paired → connect. New → trust + pair (click again to connect).

@@ -60,7 +60,7 @@ BarButton {
         PopupHeader {
             title: "Sound"
             AppButton { icon: "tune"; command: ["pavucontrol"] }
-            AppButton { command: ["cosmic-settings", "sound"] }
+            IconButton { icon: "settings"; onClicked: { Popups.close(); SettingsState.openPage("sound", ""); } }
         }
 
         SectionLabel { text: "Output · " + Audio.nodeName(Audio.sink) }

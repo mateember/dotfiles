@@ -151,9 +151,12 @@ Singleton {
 
     IpcHandler {
         target: "barsettings"
-        function toggle(): void { root.settingsOpen = !root.settingsOpen; }
-        function open(): void { root.settingsOpen = true; }
-        function close(): void { root.settingsOpen = false; }
+        function toggle(): void {
+            if (SettingsState.open && SettingsState.activePage === "panel") SettingsState.close();
+            else SettingsState.openPage("panel", "");
+        }
+        function open(): void { SettingsState.openPage("panel", ""); }
+        function close(): void { SettingsState.close(); }
         function reset(): void { root.reset(); }
     }
 }

@@ -288,6 +288,48 @@ def point_qt6ct():
 
 
 if __name__ == "__main__":
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="Generate Qt6ct, KDE & Kvantum theme matching HCS Quickshell.")
+    parser.add_argument("--from-theme-json", dest="theme_json", default="", help="Optional path to hcs-theme.json")
+    args = parser.parse_args()
+
+    if args.theme_json and os.path.isfile(args.theme_json):
+        try:
+            with open(args.theme_json, "r", encoding="utf-8") as tf:
+                data = json.load(tf)
+            cur = data.get("current") if isinstance(data, dict) else None
+            if isinstance(cur, dict):
+                def _hex6(val, fallback):
+                    if not isinstance(val, str):
+                        return fallback
+                    s = val.strip().lower()
+                    if len(s) == 9 and s.startswith("#"):
+                        s = "#" + s[3:]
+                    return s if (len(s) == 7 and s.startswith("#")) else fallback
+
+                bg = _hex6(cur.get("bg"), bg)
+                primary = _hex6(cur.get("primary"), primary)
+                secondary = _hex6(cur.get("secondary"), secondary)
+                fg = _hex6(cur.get("text"), fg)
+                fg_strong = _hex6(cur.get("textStrong"), fg_strong)
+                accent = _hex6(cur.get("accent"), accent)
+                accent_hover = _hex6(cur.get("accentHover"), accent_hover)
+                accent_pressed = _hex6(cur.get("accentPressed"), accent_pressed)
+                on_accent = _hex6(cur.get("fgOnAccent"), on_accent)
+                destructive = _hex6(cur.get("destructive"), destructive)
+                success = _hex6(cur.get("success"), success)
+                warning = _hex6(cur.get("warning"), warning)
+                alt = mix(bg, primary, 0.55)
+                hover = mix(primary, fg, 0.14)
+                pressed = mix(primary, fg, 0.24)
+                dark = mix(bg, "#000000", 0.25)
+                fg_dim = mix(bg, fg, 0.65)
+                fg_disabled = mix(bg, fg, 0.42)
+        except Exception as exc:
+            print("warning: could not load theme json:", exc)
+
     for p in (write_qt6ct(), write_kde_scheme(), write_kdeglobals(), write_kvantum(),
               point_qt6ct()):
         print("wrote", p)

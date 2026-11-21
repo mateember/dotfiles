@@ -91,7 +91,8 @@ in {
 }
 ```
 - **System Controls, Qt Theming, Icons & Fonts**:
-  - `hyprsunset`, `playerctl`, `pavucontrol`, `cosmic-settings` (settings shortcuts in Display, Network, Bluetooth, Battery, Night Light, Clock, and Quick Settings), `kdePackages.kdeconnect-kde` (`kdeconnect-indicator`), `qt6ct` / `qt5ct` / Kvantum (`QT_QPA_PLATFORMTHEME=qt6ct`).
+  - `hyprsunset`, `playerctl`, `pavucontrol`, `kdePackages.kdeconnect-kde` (`kdeconnect-indicator`, `kdeconnect-cli`), `pipewire` (`pw-play` + `sound-theme-freedesktop` for optional UI sound cues), `tailscale` (optional exit-node switcher in Settings → Network; set `tailscale set --operator=$USER` or use Polkit prompt), `xdg-utils` (`xdg-mime`), `glib` (`gsettings` for GTK dark/light sync), `qt6ct` / `qt5ct` / Kvantum (`QT_QPA_PLATFORMTHEME=qt6ct`).
+  - Optional `NOPASSWD` sudo rule for `tee /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode` enables passwordless Lenovo IdeaPad battery conservation toggling from Settings → Power (falls back to Polkit `pkexec` prompt otherwise).
   - Themes & fonts: `pop-icon-theme` (`QS_ICON_THEME=Pop`), `BreezeX-Black` cursor theme, `material-symbols`, `fira-sans`, and `noto-fonts-color-emoji` / `openmoji-color`.
 
 ## 6. Portals, KWallet & Secret Portal

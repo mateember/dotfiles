@@ -958,11 +958,11 @@ Singleton {
     IpcHandler {
         target: "theme"
         function toggle(): void {
-            if (root.settingsOpen) WidgetHistory.closeThemeSettings();
-            else WidgetHistory.openThemeStandalone();
+            if (SettingsState.open && SettingsState.activePage === "appearance") SettingsState.close();
+            else SettingsState.openPage("appearance", "profiles");
         }
-        function open(): void { WidgetHistory.openThemeStandalone(); }
-        function close(): void { WidgetHistory.closeThemeSettings(); }
+        function open(): void { SettingsState.openPage("appearance", "profiles"); }
+        function close(): void { SettingsState.close(); }
         function reset(): void { root.resetToDefault(); }
         function profile(idOrName: string): string {
             const p = root.findProfileByIdOrName(idOrName);

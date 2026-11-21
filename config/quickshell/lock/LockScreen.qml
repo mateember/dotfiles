@@ -48,13 +48,16 @@ Scope {
     property bool abortingFacePam: false
     property bool abortingPasswordPam: false
 
-    readonly property bool faceScanning: persist.locked && !persist.sleeping && root.howdyAvailable
+    readonly property bool effectiveHowdy: root.howdyAvailable && LockConfig.howdyEnabled
+    readonly property bool faceScanning: persist.locked && !persist.sleeping && root.effectiveHowdy
                                          && facePam.active && !facePam.responseRequired
 
     readonly property string rawUser: Quickshell.env("USER") || "User"
     readonly property string displayName: rawUser.charAt(0).toUpperCase() + rawUser.slice(1)
     readonly property string userInitial: displayName.charAt(0).toUpperCase()
     readonly property string greetingText: {
+        if (LockConfig.customGreeting && LockConfig.customGreeting.trim() !== "")
+            return LockConfig.customGreeting.trim();
         const h = Time.date.getHours();
         const greet = (h < 5 || h >= 18) ? "Good evening"
                     : (h < 12) ? "Good morning"
@@ -118,7 +121,7 @@ Scope {
     }
 
     function startFacePam(): void {
-        if (!persist.locked || persist.sleeping || !root.howdyAvailable || !root.facePamConfig) return;
+        if (!persist.locked || persist.sleeping || !root.effectiveHowdy || !root.facePamConfig) return;
         if (facePam.active) return;
         if (facePam.config !== root.facePamConfig) facePam.config = root.facePamConfig;
         root.abortingFacePam = false;
@@ -190,7 +193,7 @@ Scope {
     }
 
     function retryFaceScan(): void {
-        if (!persist.locked || root.submittingPassword || !root.howdyAvailable) return;
+        if (!persist.locked || root.submittingPassword || !root.effectiveHowdy) return;
         persist.sleeping = false;
         root.errorText = "";
         wakeFaceTimer.stop();

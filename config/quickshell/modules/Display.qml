@@ -39,7 +39,10 @@ BarButton {
                     Popups.restore("background@" + scr, Popups.asWindow, Popups.fromQuickSettings);
                 }
             }
-            AppButton { command: ["cosmic-settings", "displays"] }
+            IconButton {
+                icon: "settings"
+                onClicked: { Popups.close(); SettingsState.openPage("displays", ""); }
+            }
         }
 
         RowLayout {

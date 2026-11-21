@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 // PipeWire audio: default sink/source, device lists, per-app streams.
@@ -14,8 +15,30 @@ Singleton {
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property real micVolume: source?.audio?.volume ?? 0
     readonly property bool micMuted: source?.audio?.muted ?? false
-    // Same limit as the XF86Audio binds (wpctl -l 1.5).
-    readonly property real maxVolume: 1.5
+    // Configurable over-amplification (150% vs 100%).
+    property bool overAmplification: true
+    readonly property real maxVolume: overAmplification ? 1.5 : 1.0
+
+    function setOverAmplification(on: bool) {
+        root.overAmplification = on;
+        if (!on && root.sink?.audio && root.sink.audio.volume > 1.0)
+            root.sink.audio.volume = 1.0;
+        audioStore.setText(JSON.stringify({ overAmplification: root.overAmplification }));
+    }
+
+    FileView {
+        id: audioStore
+        path: Quickshell.statePath("audio-config.json")
+        atomicWrites: true
+        printErrors: false
+        onLoaded: {
+            try {
+                const d = JSON.parse(text());
+                if (d && d.overAmplification !== undefined)
+                    root.overAmplification = Boolean(d.overAmplification);
+            } catch (e) {}
+        }
+    }
 
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)

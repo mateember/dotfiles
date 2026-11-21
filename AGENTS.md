@@ -68,6 +68,7 @@ dotfiles/
    - Use anchored patterns (e.g. `pkill -f '^...'`) if killing processes so a shell command does not match its own command line.
 7. **Keep docs in sync**: Update [`docs/USER_GUIDE.md`](file:///home/mate/dotfiles/docs/USER_GUIDE.md) or [`docs/NIXOS_NOTES.md`](file:///home/mate/dotfiles/docs/NIXOS_NOTES.md) when making user-visible or system-dependency changes.
 8. **Git workflow**: Always commit completed changes to git (and create a new branch when needed, e.g., for larger features or isolated experiments), while still keeping unrelated personal/uncommitted changes out of commits unless explicitly requested.
+9. **Avoid unnecessary external scripts**: Only write external scripts (bash, python, etc.) if doing so produces a much cleaner solution than implementing the logic directly in Hyprland Lua or Quickshell QML. Prefer native QML (`FileView`, `Process`, `Canvas`, Quickshell services) and Hyprland Lua over adding helper scripts.
 
 ## Architecture & Coding Conventions
 

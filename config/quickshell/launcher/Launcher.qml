@@ -50,9 +50,16 @@ Scope {
             const id = root.pendingShellId;
             const scr = root.pendingScreen;
             root.pendingShellId = "";
-            if (id === "qs:bar-settings") BarConfig.settingsOpen = true;
-            else if (id === "qs:opacity-settings") { WidgetHistory.opacityFromBarSettings = false; OpacityConfig.settingsOpen = true; }
-            else if (id === "qs:theme-settings") WidgetHistory.openThemeStandalone();
+            if (id === "qs:settings") SettingsState.open = true;
+            else if (id.startsWith("qs:settings:")) {
+                const rest = id.slice(12);
+                const colon = rest.indexOf(":");
+                if (colon >= 0) SettingsState.openPage(rest.slice(0, colon), rest.slice(colon + 1));
+                else SettingsState.openPage(rest, "");
+            }
+            else if (id === "qs:bar-settings") SettingsState.openPage("panel", "");
+            else if (id === "qs:opacity-settings") SettingsState.openPage("appearance", "surfaces");
+            else if (id === "qs:theme-settings") SettingsState.openPage("appearance", "profiles");
             else if (id === "qs:overview") Hypr.openOverview();
             else if (id === "qs:capture") Recorder.openOverlay("shot");
             else if (id === "qs:record") Recorder.openOverlay("record");
@@ -113,6 +120,12 @@ Scope {
             property string previousQuery: ""
 
             readonly property var shellApps: [
+                { id: "qs:settings",            name: "Settings",              comment: "Unified HCS Settings (Wi-Fi, Bluetooth, Displays, Sound, Theme, Power, Input & About)", icon: "settings", keywords: ["settings", "control center", "preferences", "system", "config", "wifi", "bluetooth", "displays", "sound", "theme", "power", "keybinds"] },
+                { id: "qs:settings:input",      name: "Keybindings & Input",   comment: "Searchable shortcut cheat sheet, touchpad, mouse & keyboard layouts", icon: "keyboard", keywords: ["keybinds", "shortcuts", "cheatsheet", "keyboard", "touchpad", "mouse"] },
+                { id: "qs:settings:phone",      name: "Phone & Continuity",    comment: "KDE Connect phone battery, ring, clipboard & file sharing", icon: "smartphone", keywords: ["phone", "kdeconnect", "android", "ring", "continuity"] },
+                { id: "qs:settings:apps",       name: "Apps & Services",       comment: "Default apps (xdg-mime), autostart entries & systemd user services", icon: "apps", keywords: ["default apps", "autostart", "systemd", "services"] },
+                { id: "qs:settings:lock",       name: "Lock Screen & Security", comment: "Howdy IR face unlock, lock widgets, avatar & idle timers", icon: "lock", keywords: ["howdy", "lock", "security", "idle", "hypridle"] },
+                { id: "qs:settings:about",      name: "About This Computer",   comment: "NixOS, hardware specs, removable drives & shell maintenance", icon: "info", keywords: ["about", "specs", "hardware", "nixos", "version"] },
                 { id: "qs:overview",            name: "Overview",              comment: "KDE Plasma-style workspaces & live window previews (SUPER+Tab)", icon: "grid_view",        keywords: ["workspaces", "desktops", "expose", "windows", "plasma"] },
                 { id: "qs:capture",             name: "Screenshot & Capture",  comment: "Interactive region/window/screen capture, timer & annotation (SUPER+Print)", icon: "photo_camera", keywords: ["screenshot", "snip", "satty", "swappy", "annotate", "capture"] },
                 { id: "qs:record",              name: "Screen Recorder",       comment: "Record screen, region or window with system/mic audio",       icon: "videocam",            keywords: ["record", "video", "screenrec", "wf-recorder", "capture"] },
@@ -196,7 +209,16 @@ Scope {
                     const cmd = query.slice(1).trim();
                     return cmd === "" ? [] : [{ kind: "run", title: cmd, subtitle: "Run command · Shift+Enter runs in a terminal", icon: "terminal" }];
                 }
-                return apps.map(e => ({ kind: "app", entry: e, title: e.name, subtitle: e.comment || e.genericName || "" }));
+                const appItems = apps.map(e => ({ kind: "app", entry: e, title: e.name, subtitle: e.comment || e.genericName || "" }));
+                const q = query.trim().toLowerCase();
+                if (q !== "") {
+                    const settingsEntry = shellApps[0];
+                    const s = score(q, settingsEntry);
+                    if (s >= 400) {
+                        appItems.unshift({ kind: "shell", id: settingsEntry.id, title: "HCS Settings", subtitle: settingsEntry.comment, icon: settingsEntry.icon, keepOpen: false });
+                    }
+                }
+                return appItems;
             }
 
             function activate(i: int, inTerminal: bool) {
