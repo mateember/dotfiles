@@ -272,7 +272,7 @@ Singleton {
 
     function stepPage(delta: int) {
         const idx = pages.findIndex(p => p.id === root.activePage);
-        const next = (idx + delta + pages.length) % pages.length;
+        const next = ((idx + delta) % pages.length + pages.length) % pages.length;
         selectPage(pages[next].id, "");
     }
 

@@ -73,7 +73,14 @@ Singleton {
         onTriggered: root.refresh()
     }
 
-    // Event-driven block device monitor via udevadm (zero polling overhead)
+    // Event-driven block device monitor via udevadm (zero polling overhead, auto-restarts if exited)
+    Timer {
+        id: udevRestartTimer
+        interval: 3000
+        repeat: false
+        onTriggered: udevMon.running = true
+    }
+
     Process {
         id: udevMon
         running: true
@@ -83,6 +90,7 @@ Singleton {
                 if (line.includes("UDEV")) delayedRefresh.restart();
             }
         }
+        onExited: udevRestartTimer.restart()
     }
 
     Component.onCompleted: root.refresh()
@@ -104,7 +112,7 @@ Singleton {
                             } else {
                                 Quickshell.execDetached([
                                     "notify-send", "-a", "Removable Storage", "-i", "drive-removable-media",
-                                    "USB Drive Connected", `${d.label} (${d.size})`
+                                    "--", "USB Drive Connected", `${d.label} (${d.size})`
                                 ]);
                             }
                         }

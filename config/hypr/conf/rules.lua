@@ -92,7 +92,7 @@ local function handle_dynamic_window(w)
     if t == "Bitwarden" or t:match("^Extension:") or it:match("^_crx_") then
         if not w.floating then
             hl.dispatch(hl.dsp.window.float({ action = "enable", window = addr }))
-            hl.dispatch(hl.dsp.window.center())
+            hl.dispatch(hl.dsp.window.center({ window = addr }))
         end
     elseif t:match("^[Pp]icture[- ]in[- ][Pp]icture$") and not pip_configured[addr] then
         pip_configured[addr] = true
@@ -142,7 +142,7 @@ rule({ match = { title = "^(Figures)$" }, float = true, center = true, size = "m
 -- Gaming & Idle
 rule({ match = { class = ".*" }, idle_inhibit = "fullscreen" })
 rule({ match = { title = "^(Fallout4)$" }, fullscreen = true })
-rule({ match = { class = "^(steam_app_)$" }, fullscreen = true })
+rule({ match = { class = "^(steam_app_[0-9]+)$" }, fullscreen = true })
 rule({ match = { class = "^(com.moonlight_stream.Moonlight)$" }, fullscreen = true })
 rule({ match = { title = "^(Ultimate Chicken Horse)$" }, fullscreen = true })
 

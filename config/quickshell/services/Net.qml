@@ -306,7 +306,14 @@ Singleton {
         onTriggered: root.refreshVpns()
     }
 
-    // Event-driven NetworkManager listener (zero idle CPU wakeups).
+    // Event-driven NetworkManager listener (zero idle CPU wakeups, auto-restarts on exit).
+    Timer {
+        id: nmMonRestart
+        interval: 3000
+        repeat: false
+        onTriggered: nmMon.running = true
+    }
+
     Process {
         id: nmMon
         running: true
@@ -314,6 +321,7 @@ Singleton {
         stdout: SplitParser {
             onRead: _ => vpnRefreshDebounce.restart()
         }
+        onExited: nmMonRestart.restart()
     }
 
     Process {

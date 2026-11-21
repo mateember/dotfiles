@@ -17,7 +17,7 @@ Item {
     readonly property int activeId: monitor?.activeWorkspace?.id ?? -1
 
     readonly property var ids: Hyprland.workspaces.values
-        .filter(w => w.id > 0 && w.monitor === root.monitor)
+        .filter(w => w.id > 0 && root.monitor && w.monitor === root.monitor)
         .map(w => w.id)
         .sort((a, b) => a - b)
 

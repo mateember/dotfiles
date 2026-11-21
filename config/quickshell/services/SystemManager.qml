@@ -449,8 +449,10 @@ finally:
     }
 
     function controlUserService(unit: string, action: string) {
-        if (!unit) return;
-        Quickshell.execDetached(["timeout", "6", "systemctl", "--user", action, unit]);
+        const cleanUnit = String(unit || "").trim();
+        const allowed = ["start", "stop", "restart", "reload", "enable", "disable"];
+        if (!cleanUnit || cleanUnit.startsWith("-") || allowed.indexOf(action) < 0) return;
+        Quickshell.execDetached(["timeout", "6", "systemctl", "--user", action, "--", cleanUnit]);
         svcRefreshLater.restart();
     }
 

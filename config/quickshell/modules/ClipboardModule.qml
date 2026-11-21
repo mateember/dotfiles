@@ -108,7 +108,7 @@ BarButton {
             placeholder: "Search pinned & clipboard history"
             onTextChanged: list.currentIndex = 0
             onAccepted: {
-                if (pop.filtered.length > 0) pop.copyAt(list.currentIndex);
+                if (pop.filtered.length > 0) pop.copyAt(Math.max(0, list.currentIndex));
                 else if (pop.filteredPins.length > 0) {
                     Clipboard.copyPin(pop.filteredPins[0].text);
                     pop.close();

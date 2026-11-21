@@ -18,11 +18,15 @@ Singleton {
     // A click on the bar button first closes the panel (click outside), then toggles:
     // ignore that toggle so the button closes the panel instead of reopening it.
     function toggle() {
-        if (!root.open && Date.now() - root.closedAt < 300) return;
+        if (root.open) {
+            root.close();
+            return;
+        }
+        if (Date.now() - root.closedAt < 300) return;
         WidgetHistory.clear();
         root.targetScreen = "";
         root.asWindow = false;
-        root.open = !root.open;
+        root.open = true;
     }
 
     function openFresh() {

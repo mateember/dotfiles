@@ -170,6 +170,8 @@ Rectangle {
                         color: Theme.accent
                         StyledText {
                             anchors.centerIn: parent
+                            width: Math.max(0, parent.width - 12)
+                            horizontalAlignment: Text.AlignHCenter
                             text: ThemeConfig.activeProfile?.name ?? "Default"
                             font.pixelSize: 10
                             font.weight: Font.DemiBold

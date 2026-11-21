@@ -14,6 +14,12 @@ Singleton {
     property string subtext: ""
     property bool shown: false
 
+    onAnchorItemChanged: if (!anchorItem && shown) clear()
+    Connections {
+        target: root.anchorItem
+        function onVisibleChanged() { if (root.anchorItem && !root.anchorItem.visible && root.shown) root.clear(); }
+    }
+
     property Item _pendingItem: null
     property string _pendingText: ""
     property string _pendingSubtext: ""

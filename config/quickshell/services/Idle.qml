@@ -27,7 +27,12 @@ Singleton {
     readonly property string shortRemainingText: {
         if (!root.caffeine || root.endTimeMs <= 0) return "";
         const s = Math.max(0, root.remainingSeconds);
-        if (s >= 3600) return Math.ceil(s / 60) + "m";
+        if (s >= 3600) {
+            const totalMins = Math.ceil(s / 60);
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            return m > 0 ? `${h}h${m}m` : `${h}h`;
+        }
         if (s >= 60) return Math.ceil(s / 60) + "m";
         return s + "s";
     }

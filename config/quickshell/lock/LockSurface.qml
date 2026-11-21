@@ -745,6 +745,13 @@ Item {
                     Icon { icon: "restart_alt"; size: 16; color: rebootPill.armed ? Theme.warning : Theme.text }
                     StyledText { text: rebootPill.armed ? "Confirm Reboot" : "Reboot"; font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
                 }
+                Timer {
+                    id: rebootDisarmTimer
+                    interval: 5000
+                    repeat: false
+                    running: rebootPill.armed
+                    onTriggered: rebootPill.armed = false
+                }
                 MouseArea {
                     id: rebootMouse
                     anchors.fill: parent
@@ -752,7 +759,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         if (rebootPill.armed) Quickshell.execDetached(["systemctl", "reboot"]);
-                        else rebootPill.armed = true;
+                        else { poweroffPill.armed = false; rebootPill.armed = true; }
                     }
                 }
             }
@@ -776,6 +783,13 @@ Item {
                     Icon { icon: "power_settings_new"; size: 16; color: poweroffPill.armed ? Theme.destructive : Theme.text }
                     StyledText { text: poweroffPill.armed ? "Confirm Shut Down" : "Shut Down"; font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
                 }
+                Timer {
+                    id: poweroffDisarmTimer
+                    interval: 5000
+                    repeat: false
+                    running: poweroffPill.armed
+                    onTriggered: poweroffPill.armed = false
+                }
                 MouseArea {
                     id: poMouse
                     anchors.fill: parent
@@ -783,7 +797,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         if (poweroffPill.armed) Quickshell.execDetached(["systemctl", "poweroff"]);
-                        else poweroffPill.armed = true;
+                        else { rebootPill.armed = false; poweroffPill.armed = true; }
                     }
                 }
             }

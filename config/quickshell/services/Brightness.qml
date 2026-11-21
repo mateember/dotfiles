@@ -129,10 +129,19 @@ Singleton {
         }
     }
 
+    Timer {
+        id: udevBacklightRestart
+        interval: 3000
+        repeat: false
+        onTriggered: if (root.device !== "") udevBacklightMon.running = true
+    }
+
     Process {
+        id: udevBacklightMon
         running: root.device !== ""
         command: ["udevadm", "monitor", "--udev", "--subsystem-match=backlight"]
-        stdout: SplitParser { onRead: cur.reload() }
+        stdout: SplitParser { onRead: line => { if (line.includes("UDEV")) cur.reload(); } }
+        onExited: if (root.device !== "") udevBacklightRestart.restart()
     }
 
     // One line per display: "<bus>\t<model>\t<current>\t<max>"

@@ -142,7 +142,7 @@ def cmd_storage():
 
                 fstype = dev.get("fstype") or ""
                 dev_type = dev.get("type") or ""
-                if is_rem and (dev_type == "part" or (dev_type == "disk" and not children and fstype)):
+                if is_rem and (dev_type in ("part", "crypt") or (dev_type == "disk" and not children and fstype)):
                     if fstype not in ("swap", ""):
                         label = dev.get("label") or dev.get("partlabel") or model or name
                         drives.append({

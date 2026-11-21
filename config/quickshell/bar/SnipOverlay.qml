@@ -322,6 +322,9 @@ Scope {
 
                     onPressed: mouse => {
                         if (mouse.button === Qt.RightButton) {
+                            dragKind = "none";
+                            dragHandle = "none";
+                            dragging = false;
                             if (Snip.hasSelection) Snip.clearSelection();
                             else Snip.cancel();
                             return;

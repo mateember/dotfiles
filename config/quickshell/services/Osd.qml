@@ -24,8 +24,8 @@ Singleton {
         if (!root.ready) return;
         root.icon = icon;
         root.label = label;
-        root.value = value === undefined ? -1 : value;
-        root.max = max === undefined || max <= 0 ? 1 : max;
+        root.value = !isFinite(value) ? -1 : value;
+        root.max = (!isFinite(max) || max <= 0) ? 1 : max;
         root.swatch = "transparent";
         root.visible = true;
         hide.restart();
@@ -33,7 +33,7 @@ Singleton {
 
     function showColor(hex: string) {
         root.show("colorize", hex + " copied", -1, 1);
-        root.swatch = hex;
+        if (root.ready) root.swatch = hex;
     }
 
     Timer {

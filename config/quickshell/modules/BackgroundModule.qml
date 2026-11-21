@@ -99,7 +99,7 @@ BarButton {
         }
 
         ColumnLayout {
-            width: parent.width
+            Layout.fillWidth: true
             spacing: Theme.spaceXxs
 
             PopupHeader {

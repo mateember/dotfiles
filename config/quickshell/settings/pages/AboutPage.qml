@@ -176,7 +176,7 @@ ColumnLayout {
             SettingsActionButton {
                 icon: "terminal"
                 text: "View Shell Logs"
-                onClicked: Quickshell.execDetached(["kitty", "-e", "sh", "-c", "qs log; read -p 'Press Enter to close…'"])
+                onClicked: Quickshell.execDetached(["kitty", "-e", "sh", "-c", "qs log; printf 'Press Enter to close… '; read _"])
             }
         }
 

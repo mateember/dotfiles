@@ -66,18 +66,20 @@ Scope {
             else if (id === "qs:quicksettings") QuickSettingsState.openWindow();
             else if (id === "qs:colorpicker") ColorPicker.pick();
             else if (id === "qs:wallpaper") Wallpapers.next();
-            else if (id === "qs:lock") Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/lock.sh"]);
+            else if (id === "qs:lock") Quickshell.execDetached(["loginctl", "lock-session"]);
             else if (id.startsWith("qs:popup:")) Popups.openWindow(id.slice(9) + "@" + scr);
         }
     }
+
+    onOpenChanged: if (!open) root.initialQuery = ""
 
     IpcHandler {
         target: "launcher"
         function toggle(): void { root.initialQuery = ""; root.toggle(); }
         function emoji(): void { root.initialQuery = root.open ? "" : ":"; root.toggle(); }
         function shell(): void { root.initialQuery = root.open ? "" : "!"; root.toggle(); }
-        function open(): void { root.open = true; }
-        function close(): void { root.open = false; }
+        function open(): void { root.initialQuery = ""; root.open = true; }
+        function close(): void { root.initialQuery = ""; root.open = false; }
     }
 
     FileView {
@@ -100,7 +102,7 @@ Scope {
         PanelWindow {
             id: win
 
-            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+            screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0] ?? null
             anchors { top: true; bottom: true; left: true; right: true }
             exclusionMode: ExclusionMode.Ignore
             color: "transparent"
@@ -263,8 +265,14 @@ Scope {
                 if (!r) return;
                 if (r.kind === "app") {
                     root.bump(r.entry.id);
-                    if (r.entry.runInTerminal) Quickshell.execDetached(["kitty", "-e"].concat(r.entry.command));
-                    else r.entry.execute();
+                    if (r.entry.runInTerminal && r.entry.command && r.entry.command.length > 0) {
+                        const termArgs = ["kitty"];
+                        if (r.entry.workingDirectory) termArgs.push("--directory", r.entry.workingDirectory);
+                        termArgs.push("-e");
+                        Quickshell.execDetached(termArgs.concat(r.entry.command));
+                    } else {
+                        r.entry.execute();
+                    }
                 } else if (r.kind === "shell") {
                     root.bump(r.id);
                     if (r.keepOpen) {
@@ -277,7 +285,9 @@ Scope {
                     return;
                 } else if (r.kind === "run") {
                     const cmd = query.slice(1).trim();
-                    Quickshell.execDetached(inTerminal ? ["kitty", "-e", "sh", "-c", cmd + '; exec "${SHELL:-sh}"'] : ["sh", "-c", cmd]);
+                    Quickshell.execDetached(inTerminal
+                        ? ["kitty", "-e", "sh", "-c", 'sh -c "$1"; exec "${SHELL:-sh}"', "sh", cmd]
+                        : ["sh", "-c", cmd]);
                 } else if (r.kind === "emoji") {
                     Emoji.insert(r.char, !inTerminal);
                 } else if (r.kind === "calc") {
@@ -305,6 +315,7 @@ Scope {
                     calcTimer.restart();
                 } else {
                     calcTimer.stop();
+                    calc.running = false;
                     win.calcResult = "";
                 }
             }
@@ -320,7 +331,7 @@ Scope {
             }
             Process {
                 id: calc
-                stdout: StdioCollector { onStreamFinished: win.calcResult = text.trim() }
+                stdout: StdioCollector { onStreamFinished: if (win.mode === "calc") win.calcResult = text.trim() }
             }
 
             // Click outside the box closes.

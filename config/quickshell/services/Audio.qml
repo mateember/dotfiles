@@ -48,7 +48,7 @@ Singleton {
                                  : volume < 0.34 ? "volume_mute"
                                  : volume < 0.67 ? "volume_down" : "volume_up"
 
-    function clamp(v: real): real { return Math.max(0, Math.min(root.maxVolume, v)); }
+    function clamp(v: real): real { return isFinite(v) ? Math.max(0, Math.min(root.maxVolume, v)) : 0; }
 
     function setNodeVolume(node, v: real) {
         if (!node?.audio) return;
@@ -64,7 +64,7 @@ Singleton {
 
     function nodeName(node): string {
         if (!node) return "None";
-        if (node.isStream) return node.properties["application.name"] || node.description || node.name;
+        if (node.isStream) return (node.properties && node.properties["application.name"]) || node.description || node.name;
         return node.description || node.nickname || node.name;
     }
 

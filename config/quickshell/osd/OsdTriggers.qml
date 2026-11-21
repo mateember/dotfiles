@@ -15,7 +15,7 @@ Scope {
     Connections {
         target: Audio
         function onVolumeChanged() {
-            if (!root.popupOpen("volume")) Osd.show(Audio.icon, "Volume", Audio.muted ? 0 : Audio.volume, 1);
+            if (!root.popupOpen("volume") && !QuickSettingsState.open) Osd.show(Audio.icon, "Volume", Audio.muted ? 0 : Audio.volume, 1);
             if (Osd.ready) SoundCues.playVolumeTick();
         }
         function onMutedChanged() {
@@ -33,12 +33,12 @@ Scope {
     Connections {
         target: Brightness
         function onChanged() {
-            if (!root.popupOpen("display")) Osd.show("brightness_6", "Brightness", Brightness.value, 1);
+            if (!root.popupOpen("display") && !QuickSettingsState.open) Osd.show("brightness_6", "Brightness", Brightness.value, 1);
         }
         function onKbdChanged() {
-            if (!root.popupOpen("display"))
+            if (!root.popupOpen("display") && !QuickSettingsState.open)
                 Osd.show("keyboard", Brightness.kbdLevel > 0 ? "Keyboard backlight" : "Keyboard backlight off",
-                         Brightness.kbdLevel > 0 ? Brightness.kbdLevel / Brightness.kbdMax : -1, 1);
+                         (Brightness.kbdLevel > 0 && Brightness.kbdMax > 0) ? Brightness.kbdLevel / Brightness.kbdMax : -1, 1);
         }
     }
 

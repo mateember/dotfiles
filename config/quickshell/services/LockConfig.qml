@@ -113,30 +113,52 @@ Singleton {
         onLoadFailed: root.loaded = true
     }
 
+    Process {
+        running: true
+        command: ["mkdir", "-p", root.stateDir]
+    }
+
     FileView {
         id: hypridleFile
         path: (Quickshell.env("HOME") || "") + "/.config/hypr/hypridle.conf"
         printErrors: false
         onLoaded: {
-            const raw = text();
-            const blocks = raw.split(/listener\s*\{/);
+            const lines = text().split("\n");
             const out = [];
-            for (let i = 1; i < blocks.length; i++) {
-                const body = blocks[i].split("}")[0] || "";
-                const tm = body.match(/timeout\s*=\s*(\d+)/);
-                const onTm = body.match(/on-timeout\s*=\s*([^\n#]+)/);
-                if (!tm) continue;
-                const secs = parseInt(tm[1]);
-                const cmd = onTm ? onTm[1].trim() : "";
-                let label = "Idle Action";
-                if (cmd.includes("lock")) label = "Lock Session";
-                else if (cmd.includes("dpms")) label = "Turn Off Display (DPMS)";
-                else if (cmd.includes("suspend")) label = "Suspend System";
-                else if (cmd.includes("brightness")) label = "Dim Screen";
-                const mins = Math.floor(secs / 60);
-                const rem = secs % 60;
-                const fmt = mins > 0 ? (rem > 0 ? `${mins}m ${rem}s` : `${mins} min`) : `${secs} s`;
-                out.push({ seconds: secs, formatted: fmt, label: label, command: cmd });
+            let inListener = false;
+            let secs = -1;
+            let cmd = "";
+            for (let i = 0; i < lines.length; i++) {
+                // Strip comments outside quotes (hypridle.conf lines are simple key = val)
+                const rawLine = lines[i].replace(/^\s*#.*$/, "").trim();
+                if (!rawLine) continue;
+                if (!inListener) {
+                    if (/^listener\s*\{/.test(rawLine)) {
+                        inListener = true;
+                        secs = -1;
+                        cmd = "";
+                    }
+                    continue;
+                }
+                if (rawLine === "}") {
+                    if (secs >= 0) {
+                        let label = "Idle Action";
+                        if (cmd.includes("lock")) label = "Lock Session";
+                        else if (cmd.includes("dpms")) label = "Turn Off Display (DPMS)";
+                        else if (cmd.includes("suspend")) label = "Suspend System";
+                        else if (cmd.includes("brightness")) label = "Dim Screen";
+                        const mins = Math.floor(secs / 60);
+                        const rem = secs % 60;
+                        const fmt = mins > 0 ? (rem > 0 ? `${mins}m ${rem}s` : `${mins} min`) : `${secs} s`;
+                        out.push({ seconds: secs, formatted: fmt, label: label, command: cmd });
+                    }
+                    inListener = false;
+                    continue;
+                }
+                const tm = rawLine.match(/^timeout\s*=\s*(\d+)/);
+                if (tm) secs = parseInt(tm[1]);
+                const onTm = rawLine.match(/^on-timeout\s*=\s*(.+)$/);
+                if (onTm) cmd = onTm[1].trim();
             }
             root.idleListeners = out;
         }

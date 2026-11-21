@@ -36,8 +36,8 @@ Singleton {
 
     function sendClipboard(deviceId: string) {
         if (!deviceId) return;
-        root.lastMessage = "Sent clipboard to phone";
-        Quickshell.execDetached(["sh", "-c", "txt=$(wl-paste 2>/dev/null); [ -n \"$txt\" ] && kdeconnect-cli -d \"$1\" --share-text \"$txt\"", "sh", deviceId]);
+        root.lastMessage = "Sending clipboard to phone…";
+        Quickshell.execDetached(["sh", "-c", "txt=$(timeout 2 wl-paste --type text/plain 2>/dev/null); [ -n \"$txt\" ] && kdeconnect-cli -d \"$1\" --share-text=\"$txt\"", "sh", deviceId]);
     }
 
     function sendFile(deviceId: string) {

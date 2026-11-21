@@ -28,7 +28,7 @@ Singleton {
     function previous() { if (root.active?.canGoPrevious) root.active.previous(); }
 
     function formatTime(s: real): string {
-        if (!s || s < 0) s = 0;
+        if (!isFinite(s) || s < 0) s = 0;
         const m = Math.floor(s / 60), sec = Math.floor(s % 60);
         return m + ":" + (sec < 10 ? "0" : "") + sec;
     }

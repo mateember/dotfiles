@@ -15,6 +15,7 @@ ColumnLayout {
         SystemManager.refreshConservation();
         Brightness.refreshExternals();
         Hypr.refreshLayout();
+        HyprSettings.refreshLiveOptions();
     }
 
     SettingsPageHeader {

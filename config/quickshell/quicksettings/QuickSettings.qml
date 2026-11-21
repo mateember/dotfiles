@@ -52,7 +52,7 @@ Scope {
             id: win
 
             readonly property string preferredScreen: QuickSettingsState.targetScreen || (Hyprland.focusedMonitor?.name ?? "")
-            screen: Quickshell.screens.find(s => s.name === preferredScreen) ?? Quickshell.screens[0]
+            screen: Quickshell.screens.find(s => s.name === preferredScreen) ?? Quickshell.screens[0] ?? null
             visible: !QuickSettingsState.asWindow && (root.open || root.cardOpacity > 0)
             color: "transparent"
             anchors.top: true
@@ -166,9 +166,9 @@ Scope {
                                     : !Net.wifiEnabled ? "Off"
                                     : Net.activeWifi ? Net.activeWifi.name : "Not connected")
                                     + (Net.vpnConnected ? " · VPN" : "")
-                            checked: Net.wifiEnabled
+                            checked: Net.wiredConnected || Net.wifiEnabled
                             detail: true
-                            onClicked: Net.setWifiEnabled(!Net.wifiEnabled)
+                            onClicked: Net.wiredConnected ? root.openPopup("network", win.screenName) : Net.setWifiEnabled(!Net.wifiEnabled)
                             onDetailClicked: root.openPopup("network", win.screenName)
                         }
                         QuickTile {

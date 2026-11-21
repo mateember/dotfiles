@@ -134,7 +134,7 @@ BarButton {
             visible: pop.player?.canRaise ?? false
             icon: "open_in_new"
             text: "Open " + (pop.player?.identity ?? "player")
-            onClicked: { pop.player.raise(); pop.close(); }
+            onClicked: { pop.player?.raise(); pop.close(); }
         }
 
         Separator { visible: Media.players.length > 1 }

@@ -32,6 +32,7 @@ Rectangle {
             radius: Theme.radiusS
             color: Theme.componentHover
             Image {
+                id: artImg
                 anchors.fill: parent
                 source: root.player?.trackArtUrl ?? ""
                 fillMode: Image.PreserveAspectCrop
@@ -41,7 +42,7 @@ Rectangle {
             }
             Icon {
                 anchors.centerIn: parent
-                visible: !(root.player?.trackArtUrl)
+                visible: artImg.status !== Image.Ready
                 icon: "music_note"
                 size: 26
                 color: Theme.textDim
@@ -75,6 +76,7 @@ Rectangle {
             icon: Media.playing ? "pause" : "play_arrow"
             filled: true
             highlighted: true
+            enabled: root.player?.canTogglePlaying ?? false
             implicitWidth: 38
             implicitHeight: 38
             iconSize: 22

@@ -18,7 +18,8 @@ QtObject {
     function feed(e) {
         // angleDelta is in 1/8 degree; touchpads report small values per event.
         const d = e.angleDelta.y !== 0 ? e.angleDelta.y : e.pixelDelta.y * 2;
-        if ((d > 0) !== (root._acc > 0)) root._acc = 0;   // direction change resets
+        if (d === 0) return;
+        if (root._acc !== 0 && (d > 0) !== (root._acc > 0)) root._acc = 0;   // direction change resets
         root._acc += d;
         if (Math.abs(root._acc) < root.threshold) return;
         const now = Date.now();

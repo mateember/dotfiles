@@ -69,7 +69,7 @@ ColumnLayout {
                     color: "transparent"
                     Image {
                         anchors.fill: parent
-                        source: LockConfig.avatarPath ? ("file://" + LockConfig.avatarPath) : ""
+                        source: LockConfig.avatarPath ? Wallpapers.pathToUrl(LockConfig.avatarPath) : ""
                         fillMode: Image.PreserveAspectCrop
                     }
                 }
@@ -105,6 +105,13 @@ ColumnLayout {
                     text: LockConfig.customGreeting
                     placeholder: "e.g. Welcome back, Mate"
                     onAccepted: LockConfig.setCustomGreeting(text)
+                    Connections {
+                        target: LockConfig
+                        function onCustomGreetingChanged() {
+                            if (greetField.text !== LockConfig.customGreeting)
+                                greetField.text = LockConfig.customGreeting;
+                        }
+                    }
                 }
                 SettingsActionButton {
                     variant: "accent"

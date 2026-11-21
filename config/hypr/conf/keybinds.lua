@@ -92,9 +92,16 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("SUPER + CTRL + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
--- Lid switch: suspend if single monitor, otherwise disable laptop panel
+-- Lid switch: suspend if no external physical monitor is connected, otherwise disable laptop panel
 hl.bind("switch:on:Lid Switch", function()
-    if #hl.get_monitors() == 1 then
+    local physical = 0
+    for _, m in ipairs(hl.get_monitors()) do
+        local name = tostring(m.name or "")
+        if not m.disabled and name ~= "REMOTE" and not name:match("^HEADLESS%-") then
+            physical = physical + 1
+        end
+    end
+    if physical <= 1 then
         hl.exec_cmd("systemctl suspend")
     else
         hl.monitor({ output = "eDP-1", disabled = true })
@@ -102,5 +109,5 @@ hl.bind("switch:on:Lid Switch", function()
 end, { locked = true })
 
 hl.bind("switch:off:Lid Switch", function()
-    hl.monitor({ output = "eDP-1", mode = "2880x1800@120", position = "0x0", scale = 2, vrr = 2 })
+    hl.monitor({ output = "eDP-1", mode = "2880x1800@120", position = "0x0", scale = 2, vrr = 1 })
 end, { locked = true })

@@ -15,6 +15,6 @@ end)
 
 -- Screen / Color Management (runs at start and on every reload).
 -- Done with events rather than a top-level call so `Hyprland --verify-config` doesn't run it.
-local function sunset() hl.exec_cmd("hyprsunset") end
+local function sunset() hl.exec_cmd("sh -c 'pgrep -x hyprsunset >/dev/null || exec hyprsunset'") end
 hl.on("hyprland.start", sunset)
 hl.on("config.reloaded", sunset)

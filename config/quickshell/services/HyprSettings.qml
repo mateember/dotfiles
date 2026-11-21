@@ -607,7 +607,11 @@ Singleton {
             try {
                 const d = JSON.parse(text());
                 if (d && typeof d === "object") {
-                    if (d.overrides && typeof d.overrides === "object") root.overrides = d.overrides;
+                    if (d.overrides && typeof d.overrides === "object") {
+                        root.overrides = d.overrides;
+                        if (d.overrides.touchpad_sensitivity !== undefined && Number.isFinite(Number(d.overrides.touchpad_sensitivity)))
+                            root.touchpadSensitivity = Number(d.overrides.touchpad_sensitivity);
+                    }
                     if (d.capsOsdEnabled !== undefined) root.capsOsdEnabled = Boolean(d.capsOsdEnabled);
                 }
             } catch (e) {}

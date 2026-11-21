@@ -23,11 +23,13 @@ Singleton {
 
     function playFile(filename: string, force: bool) {
         if (!force && !root.enabled) return;
+        const clean = String(filename || "");
+        if (!/^[A-Za-z0-9._-]+$/.test(clean)) return;
         const now = Date.now();
         if (!force && (now - root._lastPlayMs) < 120) return;
         root._lastPlayMs = now;
         const vol = Math.max(0.05, Math.min(1.0, root.volume)).toFixed(2);
-        Quickshell.execDetached(["pw-play", "--volume", vol, root.soundDir + "/" + filename]);
+        Quickshell.execDetached(["pw-play", "--volume", vol, "--", root.soundDir + "/" + clean]);
     }
 
     function playVolumeTick() {
@@ -50,11 +52,18 @@ Singleton {
     }
 
     function setEnabled(v: bool) { root.enabled = v; save(); }
-    function setVolume(v: real) { root.volume = Math.max(0.1, Math.min(1.0, Math.round(v * 20) / 20)); save(); }
+    function setVolume(v: real) { root.volume = Math.max(0.1, Math.min(1.0, Math.round(v * 20) / 20)); saveDebounce.restart(); }
     function setCueVolume(v: bool) { root.cueVolume = v; save(); }
     function setCueNotifications(v: bool) { root.cueNotifications = v; save(); }
     function setCuePower(v: bool) { root.cuePower = v; save(); }
     function setCueCapture(v: bool) { root.cueCapture = v; save(); }
+
+    Timer {
+        id: saveDebounce
+        interval: 150
+        repeat: false
+        onTriggered: root.save()
+    }
 
     function save() {
         store.setText(JSON.stringify({

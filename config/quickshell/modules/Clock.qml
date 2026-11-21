@@ -76,6 +76,7 @@ BarButton {
         // "Now: Lab 1 · until 12:00" / "Next: Lab 1 · 08:15 tomorrow" / "in 25 min"
         function nextText(e: var): string {
             const now = Time.date;
+            if (e.allday && e.start <= now) return "All day";
             if (e.start <= now && e.kind !== "task") return "Now · until " + hm(e.end);
             const mins = Math.round((e.start - now) / 60000);
             if (mins < 60) return "in " + Math.max(mins, 1) + " min";

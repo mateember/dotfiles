@@ -53,11 +53,16 @@ Singleton {
         if (device) device.trusted = on;
     }
 
-    // Connected → disconnect. Paired → connect. New → trust + pair (click again to connect).
+    // Connected → disconnect. Paired → trust + connect. New → pair first (trust only once paired).
     function activate(device) {
+        if (!device) return;
         if (device.connected) device.disconnect();
-        else if (device.paired || device.bonded) device.connect();
-        else { device.trusted = true; device.pair(); }
+        else if (device.paired || device.bonded) {
+            if (!device.trusted) device.trusted = true;
+            device.connect();
+        } else {
+            device.pair();
+        }
     }
 
     function forget(device) {
@@ -85,7 +90,7 @@ Singleton {
     }
 
     function deviceIcon(device): string {
-        const i = device.icon || "";
+        const i = (device && device.icon) ? device.icon : "";
         if (i.includes("headset") || i.includes("headphone")) return "headphones";
         if (i.includes("audio") || i.includes("speaker")) return "speaker";
         if (i.includes("keyboard")) return "keyboard";
