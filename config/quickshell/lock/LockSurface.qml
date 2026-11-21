@@ -211,6 +211,70 @@ Item {
                 font.weight: Font.Normal
                 color: Theme.text
             }
+
+            // Privacy-safe glanceability chips: ONLY upcoming event time (never title) & unread count
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: Theme.spaceXxs
+                spacing: Theme.spaceXxs
+                visible: nextEventChip.visible || notifCountChip.visible
+
+                Rectangle {
+                    id: nextEventChip
+                    readonly property var ev: CalendarEvents.nextUp
+                    readonly property string whenText: {
+                        if (!ev) return "";
+                        const now = Time.date;
+                        const hm = d => Time.locale.toString(d, "HH:mm");
+                        const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+                        if (ev.start <= now && ev.kind !== "task") return "Event until " + hm(ev.end);
+                        const mins = Math.round((ev.start - now) / 60000);
+                        if (mins < 60) return "Next event in " + Math.max(mins, 1) + " min";
+                        if (sameDay(ev.start, now)) return "Next event at " + hm(ev.start);
+                        const tom = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                        if (sameDay(ev.start, tom)) return "Next event tomorrow " + hm(ev.start);
+                        return "Next event " + Time.locale.toString(ev.start, "ddd, MMM d") + " " + hm(ev.start);
+                    }
+                    visible: LockConfig.showNextEvent && ev !== null && whenText !== ""
+                    implicitWidth: evChipRow.implicitWidth + 18
+                    implicitHeight: 28
+                    radius: 14
+                    color: Qt.rgba(0.11, 0.11, 0.11, 0.56)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.12)
+
+                    RowLayout {
+                        id: evChipRow
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Icon { icon: "event_upcoming"; size: 15; color: Theme.accent }
+                        StyledText { text: nextEventChip.whenText; font.pixelSize: Theme.fontSizeSmall; color: Theme.text }
+                    }
+                }
+
+                Rectangle {
+                    id: notifCountChip
+                    visible: LockConfig.showNotifCount && stage.controller.unreadNotifCount > 0
+                    implicitWidth: ncRow.implicitWidth + 18
+                    implicitHeight: 28
+                    radius: 14
+                    color: Qt.rgba(0.11, 0.11, 0.11, 0.56)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.12)
+
+                    RowLayout {
+                        id: ncRow
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Icon { icon: "notifications_unread"; size: 15; color: Theme.accent }
+                        StyledText {
+                            text: stage.controller.unreadNotifCount + (stage.controller.unreadNotifCount === 1 ? " notification" : " notifications")
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.text
+                        }
+                    }
+                }
+            }
         }
 
         layer.enabled: true

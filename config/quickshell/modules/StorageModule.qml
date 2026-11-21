@@ -11,6 +11,8 @@ BarButton {
 
     visible: Storage.count > 0 || pop.open
     active: pop.open
+    tooltip: `Removable Drives (${Storage.count})`
+    tooltipSubtext: "Click to open or safely eject"
     onClicked: pop.toggle()
 
     Icon {

@@ -12,6 +12,8 @@ BarButton {
 
     active: pop.open
     opacity: Media.active ? 1 : 0.5
+    tooltip: Media.active && Media.active.trackTitle ? ((Media.active.trackArtist ? (Media.active.trackArtist + " – ") : "") + Media.active.trackTitle) : "Media Player"
+    tooltipSubtext: Media.active ? "Right-click to play/pause" : "Nothing playing"
     onClicked: button => button === Qt.LeftButton ? pop.toggle() : Media.togglePlaying()
 
     Icon { icon: Media.playing ? "pause" : "play_arrow"; filled: true }

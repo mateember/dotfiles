@@ -120,14 +120,24 @@ PanelWindow {
                     }
                 }
 
-                NumberAnimation {
+                ParallelAnimation {
                     id: fadeInAnim
-                    target: card
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                    duration: 180
-                    easing.type: Easing.OutCubic
+                    NumberAnimation {
+                        target: card
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                        target: swipeTranslate
+                        property: "x"
+                        from: 24
+                        to: 0
+                        duration: 210
+                        easing.type: Easing.OutCubic
+                    }
                 }
 
                 ParallelAnimation {

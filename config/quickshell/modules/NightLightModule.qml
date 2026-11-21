@@ -11,6 +11,8 @@ BarButton {
 
     visible: NightLight.available
     active: pop.open
+    tooltip: NightLight.active ? (`Night Light · ${NightLight.targetTemperature} K`) : "Night Light · Off"
+    tooltipSubtext: (NightLight.mode === "auto" ? `Auto ${NightLight.scheduleText} · ` : "") + "Right-click to toggle"
     onClicked: button => button === Qt.LeftButton ? pop.toggle() : NightLight.toggle()
 
     Icon {

@@ -11,6 +11,8 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Brightness.available ? (`Display · ${Math.round(Brightness.value * 100)}% · ${Brightness.refreshRate} Hz`) : "Display & Capture"
+    tooltipSubtext: "Scroll to adjust brightness"
     onClicked: pop.toggle()
     onScrolled: delta => { if (Brightness.available) Brightness.set(Brightness.value + (delta > 0 ? 0.05 : -0.05)); }
 

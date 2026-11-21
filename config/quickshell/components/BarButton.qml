@@ -1,8 +1,9 @@
 import QtQuick
 import qs
+import qs.services
 
 // COSMIC-style icon/text button for the bar: transparent until hovered,
-// pill-shaped, with icon_button hover/pressed colors.
+// pill-shaped, with icon_button hover/pressed colors and optional hover tooltip.
 // Put content inside; it is centered. Emits clicked(button) and scrolled(deltaY).
 Item {
     id: root
@@ -10,11 +11,18 @@ Item {
     default property alias content: inner.data
     property bool active: false          // e.g. popup open
     property int horizontalPadding: Theme.spaceXxs
+    property string tooltip: ""
+    property string tooltipSubtext: ""
     property alias hovered: mouse.containsMouse
     property alias pressed: mouse.pressed
 
     signal clicked(int button)
     signal scrolled(real deltaY)
+
+    onTooltipChanged: if (mouse.containsMouse) TooltipState.updateText(root, root.tooltip, root.tooltipSubtext)
+    onTooltipSubtextChanged: if (mouse.containsMouse) TooltipState.updateText(root, root.tooltip, root.tooltipSubtext)
+    onActiveChanged: if (active) TooltipState.hide(root)
+    Component.onDestruction: TooltipState.hide(root)
 
     implicitHeight: Theme.barHeight - 4
     implicitWidth: Math.max(implicitHeight, inner.childrenRect.width + 2 * horizontalPadding)
@@ -47,6 +55,9 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
+        onEntered: if (root.tooltip !== "" && !root.active) TooltipState.requestShow(root, root.tooltip, root.tooltipSubtext)
+        onExited: TooltipState.hide(root)
+        onPressed: TooltipState.hide(root)
         onClicked: e => root.clicked(e.button)
         onWheel: e => stepper.feed(e)
     }

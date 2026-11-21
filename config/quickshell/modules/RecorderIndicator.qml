@@ -10,6 +10,8 @@ BarButton {
     id: root
 
     visible: Recorder.recording
+    tooltip: "Recording Screen (" + Recorder.formattedTime + ")"
+    tooltipSubtext: "Click to stop & save"
     onClicked: button => {
         if (button === Qt.LeftButton) Recorder.stopRecording();
         else Recorder.openOverlay("record");

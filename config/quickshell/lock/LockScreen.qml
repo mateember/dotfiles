@@ -36,6 +36,7 @@ Scope {
     property string wallpaperCurrent: ""
     property var wallpaperInfo: ({})
     property bool wallpaperReady: false
+    property int unreadNotifCount: 0
 
     function wallpaperFor(screenName: string): string {
         if (screenName && root.wallpaperMap[screenName]) return root.wallpaperMap[screenName];
@@ -426,6 +427,18 @@ Scope {
         onExited: root.wallpaperReady = true
     }
 
+    // Query privacy-safe unread notification count from the main shell instance.
+    Process {
+        id: notifCountProc
+        command: ["timeout", "2", "qs", "ipc", "call", "notifications", "count"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const n = parseInt(text.trim());
+                if (!isNaN(n) && n >= 0) root.unreadNotifCount = n;
+            }
+        }
+    }
+
     // Pure password PAM conversation (instant prompt, zero Howdy wait).
     PamContext {
         id: passwordPam
@@ -544,6 +557,7 @@ Scope {
         ThemeConfig.passiveMode = true;
         root.refreshPamProbe();
         wallpaperProc.running = true;
+        notifCountProc.running = true;
         if (persist.locked) {
             // Hot reload while locked: keep the lock, restart the PAM conversations.
             Qt.callLater(() => {

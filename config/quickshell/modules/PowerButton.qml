@@ -12,6 +12,8 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: "Power Menu"
+    tooltipSubtext: "Lock, Suspend, Reboot, Shut Down · SUPER+CTRL+L"
     onClicked: pop.toggle()
 
     Icon { icon: "power_settings_new" }

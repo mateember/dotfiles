@@ -8,6 +8,8 @@ BarButton {
     id: root
 
     active: QuickSettingsState.open
+    tooltip: "Quick Settings"
+    tooltipSubtext: "SUPER + ,"
     onClicked: QuickSettingsState.toggle()
 
     Icon { icon: "tune" }

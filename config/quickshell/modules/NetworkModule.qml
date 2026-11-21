@@ -13,6 +13,11 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Net.wiredConnected ? "Ethernet · Connected"
+           : !Net.wifiEnabled ? "Wi-Fi · Off"
+           : Net.activeWifi ? (`Wi-Fi · ${Net.activeWifi.name} (${Math.round(Net.activeWifi.signalStrength * 100)}%)`)
+           : "Network · Disconnected"
+    tooltipSubtext: Net.vpnConnected ? (`VPN active: ${Net.activeVpn?.name ?? ""}`) : "Click for Wi-Fi, VPN & Tailscale"
     onClicked: pop.toggle()
 
     Row {

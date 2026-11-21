@@ -12,6 +12,8 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Clipboard.paused ? "Clipboard · History Paused" : (`Clipboard (${Clipboard.entries.length} items` + (Clipboard.pins.length > 0 ? `, ${Clipboard.pins.length} pinned)` : ")"))
+    tooltipSubtext: "Middle-click to pause/resume · SUPER+SHIFT+C"
     onClicked: button => button === Qt.MiddleButton ? Clipboard.togglePaused() : pop.toggle()
 
     Icon {

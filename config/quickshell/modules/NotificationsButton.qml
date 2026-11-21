@@ -13,6 +13,10 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Notifs.dnd ? "Notifications · Do Not Disturb"
+           : Notifs.smartDndActive ? (`Notifications · Auto-DND (${Notifs.smartDndReason})`)
+           : (Notifs.history.length > 0 ? `Notifications (${Notifs.history.length})` : "Notifications")
+    tooltipSubtext: "Middle-click to toggle DND · SUPER+N"
     onClicked: button => button === Qt.MiddleButton ? Notifs.toggleDnd() : pop.toggle()
 
     Icon {

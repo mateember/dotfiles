@@ -10,6 +10,8 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Audio.muted ? "Volume · Muted" : (`Volume ${Math.round(Audio.volume * 100)}% · ${Audio.nodeName(Audio.sink)}`)
+    tooltipSubtext: "Scroll to adjust · Middle-click to mute"
     onClicked: button => button === Qt.MiddleButton ? Audio.toggleMute() : pop.toggle()
     onScrolled: delta => Audio.step(delta > 0 ? 0.05 : -0.05)
 

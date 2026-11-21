@@ -235,6 +235,8 @@ Singleton {
         root.initialHoveredWindow = null;
         root.sessionDir = "";
 
+        SoundCues.playCapture();
+
         Quickshell.execDetached([
             "bash", root.scriptPath, "commit",
             src, String(px), String(py), String(pw), String(ph), isFull, act, dir

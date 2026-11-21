@@ -1,5 +1,6 @@
 import QtQuick
 import qs
+import qs.services
 
 // Round icon-only button for use inside popups.
 Rectangle {
@@ -13,6 +14,9 @@ Rectangle {
     property string tooltip: ""
 
     signal clicked()
+
+    onTooltipChanged: if (mouse.containsMouse) TooltipState.updateText(root, root.tooltip, "")
+    Component.onDestruction: TooltipState.hide(root)
 
     implicitWidth: 32
     implicitHeight: 32
@@ -38,6 +42,9 @@ Rectangle {
         enabled: root.enabled
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
+        onEntered: if (root.tooltip !== "") TooltipState.requestShow(root, root.tooltip, "")
+        onExited: TooltipState.hide(root)
+        onPressed: TooltipState.hide(root)
         onClicked: root.clicked()
     }
 }

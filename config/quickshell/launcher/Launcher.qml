@@ -340,6 +340,18 @@ Scope {
                 border.color: Theme.popupBorder
                 border.width: Theme.popupBorderWidth
 
+                property bool entered: false
+                opacity: entered ? 1.0 : 0.0
+                scale: entered ? 1.0 : 0.96
+                transformOrigin: Item.Top
+                transform: Translate {
+                    y: box.entered ? 0 : -10
+                    Behavior on y { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
+                }
+                Behavior on opacity { NumberAnimation { duration: Theme.animFast; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
+                Component.onCompleted: Qt.callLater(() => { box.entered = true; })
+
                 // Swallow clicks so they don't reach the close-area behind.
                 MouseArea { anchors.fill: parent }
 

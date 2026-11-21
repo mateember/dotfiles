@@ -10,6 +10,8 @@ BarButton {
 
     visible: Battery.available
     active: pop.open
+    tooltip: `Battery ${Math.round(Battery.percent * 100)}% · ${Battery.status}`
+    tooltipSubtext: `Power mode: ${PowerProfile.label}`
     onClicked: pop.toggle()
 
     Icon {

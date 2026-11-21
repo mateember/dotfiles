@@ -12,6 +12,8 @@ BarButton {
     id: root
 
     active: pop.open
+    tooltip: Weather.ready ? (`${Weather.displayLocation} · ${Weather.formatTemp(Weather.tempC, true)} (${Weather.description})`) : "Weather"
+    tooltipSubtext: Weather.ready ? (`Feels like ${Weather.formatTemp(Weather.feelsLikeC, true)} · Right-click settings · Middle-click refresh`) : "Click for forecast"
     onClicked: button => {
         if (button === Qt.MiddleButton) {
             Weather.refresh();

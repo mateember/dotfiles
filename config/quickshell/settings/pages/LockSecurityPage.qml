@@ -135,6 +135,26 @@ ColumnLayout {
         }
 
         SettingsRow {
+            icon: "event_upcoming"
+            title: "Show Upcoming Event Time (Privacy-Safe)"
+            subtitle: "Shows only when your next calendar event starts — never its title or location"
+            Toggle {
+                checked: LockConfig.showNextEvent
+                onToggled: LockConfig.setShowNextEvent(!LockConfig.showNextEvent)
+            }
+        }
+
+        SettingsRow {
+            icon: "notifications"
+            title: "Show Unread Notification Count (Privacy-Safe)"
+            subtitle: "Shows only the unread notification count badge — never message contents"
+            Toggle {
+                checked: LockConfig.showNotifCount
+                onToggled: LockConfig.setShowNotifCount(!LockConfig.showNotifCount)
+            }
+        }
+
+        SettingsRow {
             icon: "power_settings_new"
             title: "Show Reboot & Shut Down Actions"
             subtitle: "Two-click confirmed power buttons alongside Suspend on the lock screen"

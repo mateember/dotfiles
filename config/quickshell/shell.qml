@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import qs.bar
+import qs.components
 import qs.launcher
 import qs.wallpaper
 import qs.notifications
@@ -45,6 +46,7 @@ ShellRoot {
     PolkitPrompt {}
     // The lock screen is a separate Quickshell instance: lock.qml, started by hypr/scripts/lock.sh.
     QuickSettings {}
+    HoverTooltip {}
 
     // Open bar popups from keybinds/scripts, on the focused monitor:
     //   qs ipc call bar toggle volume
@@ -72,6 +74,7 @@ ShellRoot {
     IpcHandler {
         target: "notifications"
         function toggle(): void { Popups.toggle("notifications@" + (Hyprland.focusedMonitor?.name ?? "")); }
+        function count(): int { return Notifs.history.length; }
     }
     // qs ipc call kbd cycle|toggle|set <level>
     IpcHandler {

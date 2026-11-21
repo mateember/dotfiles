@@ -11,6 +11,8 @@ BarButton {
     id: root
 
     active: Idle.caffeine || pop.open
+    tooltip: Idle.caffeine ? (`Caffeine · ${Idle.statusText}`) : "Caffeine · Off"
+    tooltipSubtext: "Left-click toggle · Right-click for timer"
     onClicked: button => button === Qt.LeftButton ? Idle.toggle() : pop.toggle()
 
     RowLayout {

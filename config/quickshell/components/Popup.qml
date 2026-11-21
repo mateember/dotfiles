@@ -194,7 +194,14 @@ PanelWindow {
         Keys.onEscapePressed: root.back()
 
         opacity: root.open ? 1 : 0
+        scale: (root.effectiveAsWindow || root.open) ? 1.0 : 0.97
+        transformOrigin: Item.Top
+        transform: Translate {
+            y: (root.effectiveAsWindow || root.open) ? 0 : -8
+            Behavior on y { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
+        }
         Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
 
         ColumnLayout {
             id: body

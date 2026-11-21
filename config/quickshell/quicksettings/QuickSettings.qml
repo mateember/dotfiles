@@ -137,6 +137,13 @@ Scope {
                 Keys.onEscapePressed: root.dismiss()
 
                 opacity: QuickSettingsState.asWindow ? 1 : root.cardOpacity
+                scale: (QuickSettingsState.asWindow || root.open) ? 1.0 : 0.97
+                transformOrigin: Item.TopRight
+                transform: Translate {
+                    y: (QuickSettingsState.asWindow || root.open) ? 0 : -8
+                    Behavior on y { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
+                }
+                Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Easing.OutCubic } }
 
                 ColumnLayout {
                     id: col
@@ -381,10 +388,12 @@ Scope {
 
                         IconButton {
                             icon: "photo_camera"
+                            tooltip: "Screenshot & Capture"
                             onClicked: Recorder.openOverlayFromQuickSettings("shot", win.screenName, QuickSettingsState.asWindow)
                         }
                         IconButton {
                             icon: Recorder.recording ? "stop_circle" : "videocam"
+                            tooltip: Recorder.recording ? "Stop Recording" : "Screen Recorder"
                             onClicked: {
                                 if (Recorder.recording) {
                                     root.dismiss();
@@ -396,14 +405,17 @@ Scope {
                         }
                         IconButton {
                             icon: "settings"
+                            tooltip: "HCS Settings"
                             onClicked: { root.dismiss(); SettingsState.open = true; }
                         }
                         IconButton {
                             icon: "lock"
+                            tooltip: "Lock Screen"
                             onClicked: { root.dismiss(); Quickshell.execDetached(["loginctl", "lock-session"]); }
                         }
                         IconButton {
                             icon: "power_settings_new"
+                            tooltip: "Power Menu"
                             onClicked: root.openPopup("power", win.screenName)
                         }
                     }

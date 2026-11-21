@@ -204,6 +204,14 @@ ColumnLayout {
             Toggle { checked: SoundCues.cuePower; onToggled: SoundCues.setCuePower(!SoundCues.cuePower) }
         }
 
+        SettingsRow {
+            visible: SoundCues.enabled
+            icon: "photo_camera"
+            title: "Screenshot Shutter"
+            subtitle: "Soft camera shutter cue when capturing screenshots"
+            Toggle { checked: SoundCues.cueCapture; onToggled: SoundCues.setCueCapture(!SoundCues.cueCapture) }
+        }
+
         RowLayout {
             visible: SoundCues.enabled
             Layout.fillWidth: true

@@ -13,6 +13,8 @@ BarButton {
 
     horizontalPadding: Theme.spaceXs
     active: pop.open
+    tooltip: Time.format("dddd, MMMM d, yyyy")
+    tooltipSubtext: CalendarEvents.nextUp ? ("Next: " + CalendarEvents.nextUp.title) : "Click for calendar & agenda"
     onClicked: pop.toggle()
 
     StyledText {

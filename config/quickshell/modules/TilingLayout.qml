@@ -11,6 +11,8 @@ BarButton {
     readonly property var icons: ({ dwindle: "view_quilt", master: "view_sidebar", scrolling: "view_column", monocle: "crop_square" })
 
     active: pop.open
+    tooltip: "Layout · " + Hypr.layout.charAt(0).toUpperCase() + Hypr.layout.slice(1)
+    tooltipSubtext: "Left-click toggle · Right-click for all layouts"
     onClicked: button => button === Qt.RightButton ? pop.toggle() : Hypr.toggleLayout()
 
     Icon { icon: root.icons[Hypr.layout] ?? "dashboard" }

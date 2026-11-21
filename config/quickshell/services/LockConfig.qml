@@ -17,6 +17,8 @@ Singleton {
     property string avatarPath: ""
     property bool showCapsAndLayout: true
     property bool showWeather: true
+    property bool showNextEvent: true
+    property bool showNotifCount: true
     property bool showPowerActions: true
 
     // Live Howdy hardware/PAM probe (so Settings can show status without locking)
@@ -34,6 +36,8 @@ Singleton {
     function setAvatarPath(s: string) { root.avatarPath = s; save(); }
     function setShowCapsAndLayout(v: bool) { root.showCapsAndLayout = v; save(); }
     function setShowWeather(v: bool) { root.showWeather = v; save(); }
+    function setShowNextEvent(v: bool) { root.showNextEvent = v; save(); }
+    function setShowNotifCount(v: bool) { root.showNotifCount = v; save(); }
     function setShowPowerActions(v: bool) { root.showPowerActions = v; save(); }
 
     function reset() {
@@ -42,6 +46,8 @@ Singleton {
         root.avatarPath = "";
         root.showCapsAndLayout = true;
         root.showWeather = true;
+        root.showNextEvent = true;
+        root.showNotifCount = true;
         root.showPowerActions = true;
         save();
     }
@@ -68,6 +74,8 @@ Singleton {
             avatarPath: root.avatarPath,
             showCapsAndLayout: root.showCapsAndLayout,
             showWeather: root.showWeather,
+            showNextEvent: root.showNextEvent,
+            showNotifCount: root.showNotifCount,
             showPowerActions: root.showPowerActions
         }, null, 2));
     }
@@ -94,6 +102,8 @@ Singleton {
                     if (d.avatarPath !== undefined) root.avatarPath = String(d.avatarPath);
                     if (d.showCapsAndLayout !== undefined) root.showCapsAndLayout = Boolean(d.showCapsAndLayout);
                     if (d.showWeather !== undefined) root.showWeather = Boolean(d.showWeather);
+                    if (d.showNextEvent !== undefined) root.showNextEvent = Boolean(d.showNextEvent);
+                    if (d.showNotifCount !== undefined) root.showNotifCount = Boolean(d.showNotifCount);
                     if (d.showPowerActions !== undefined) root.showPowerActions = Boolean(d.showPowerActions);
                 }
             } catch (e) {}

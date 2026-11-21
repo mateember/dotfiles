@@ -11,6 +11,8 @@ BarButton {
 
     visible: Privacy.active || pop.open
     active: pop.open
+    tooltip: "Privacy Alert"
+    tooltipSubtext: Privacy.summaryText
     onClicked: pop.toggle()
 
     Rectangle {

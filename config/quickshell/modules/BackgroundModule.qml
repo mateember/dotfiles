@@ -14,6 +14,8 @@ BarButton {
     id: btn
 
     active: pop.open
+    tooltip: "Background · " + Wallpapers.mode.charAt(0).toUpperCase() + Wallpapers.mode.slice(1)
+    tooltipSubtext: "Right-click next · Middle-click pause"
 
     readonly property bool pausedHighlight:
         (Wallpapers.mode === "folder" && Wallpapers.slideshowPaused)

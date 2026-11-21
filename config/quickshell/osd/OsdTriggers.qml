@@ -105,10 +105,12 @@ Scope {
         if (p < 10 && !root.warnedCritical) {
             root.warnedCritical = true;
             root.warnedLow = true;
+            SoundCues.playFile("dialog-warning.oga", false);
             Quickshell.execDetached(["notify-send", "-u", "critical", "-i", "battery-empty",
                                      "-a", "Battery", "Battery critical", p + "% remaining. Plug in the charger immediately."]);
         } else if (p < 20 && !root.warnedLow) {
             root.warnedLow = true;
+            SoundCues.playFile("dialog-warning.oga", false);
             Quickshell.execDetached(["notify-send", "-u", "normal", "-i", "battery-caution",
                                      "-a", "Battery", "Battery low", p + "% remaining. Plug in the charger."]);
         }

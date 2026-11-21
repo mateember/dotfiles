@@ -11,6 +11,11 @@ BarButton {
 
     visible: Bt.available
     active: pop.open
+    tooltip: !Bt.enabled ? "Bluetooth · Off"
+           : Bt.connected.length === 1 ? (`Bluetooth · ${Bt.connected[0].name}` + (Bt.primaryBattery >= 0 ? ` (${Bt.primaryBattery}%)` : ""))
+           : Bt.connected.length > 1 ? (`Bluetooth · ${Bt.connected.length} devices connected`)
+           : "Bluetooth · On"
+    tooltipSubtext: "Middle-click to toggle"
     onClicked: button => button === Qt.MiddleButton ? Bt.toggle() : pop.toggle()
 
     Icon { icon: Bt.icon; color: Bt.connected.length > 0 ? Theme.accent : Theme.text }
