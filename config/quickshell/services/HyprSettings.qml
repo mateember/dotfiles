@@ -69,7 +69,25 @@ Singleton {
     // ---- Helpers ----
 
     function luaStr(s): string {
-        return JSON.stringify(String(s ?? ""));
+        const str = String(s ?? "");
+        let out = '"';
+        for (let i = 0; i < str.length; i++) {
+            const c = str.charCodeAt(i);
+            if (c === 0x5c) out += "\\\\";
+            else if (c === 0x22) out += '\\"';
+            else if (c === 0x0a) out += "\\n";
+            else if (c === 0x0d) out += "\\r";
+            else if (c === 0x09) out += "\\t";
+            else if (c < 0x20 || c === 0x7f) out += "\\" + String(c).padStart(3, "0");
+            else out += str.charAt(i);
+        }
+        return out + '"';
+    }
+
+    function luaNum(v, fallback: real, decimals: int): string {
+        const n = Number(v);
+        const safe = Number.isFinite(n) ? n : fallback;
+        return decimals >= 0 ? safe.toFixed(decimals) : String(safe);
     }
 
     function hexToHyprRgba(hex: string, alphaHex: string): string {
@@ -367,14 +385,18 @@ Singleton {
         if (m.disabled) {
             return `hl.monitor({ output = ${luaStr(out)}, disabled = true })`;
         }
+        const mx = Number.isFinite(Number(m.x)) ? Math.round(Number(m.x)) : 0;
+        const my = Number.isFinite(Number(m.y)) ? Math.round(Number(m.y)) : 0;
+        const sc = Number(m.scale);
+        const scaleStr = (Number.isFinite(sc) && sc > 0) ? sc.toFixed(2).replace(/\.00$/, "") : "1";
         const parts = [
             `output = ${luaStr(out)}`,
             `mode = ${luaStr(m.mode || "preferred")}`,
-            `position = ${luaStr(Math.round(m.x) + "x" + Math.round(m.y))}`,
-            `scale = ${Number(m.scale) > 0 ? Number(m.scale).toFixed(2).replace(/\.00$/, "") : "1"}`
+            `position = ${luaStr(mx + "x" + my)}`,
+            `scale = ${scaleStr}`
         ];
-        if (m.vrr !== undefined && m.vrr !== null) parts.push(`vrr = ${Number(m.vrr)}`);
-        if (m.transform !== undefined && Number(m.transform) > 0) parts.push(`transform = ${Number(m.transform)}`);
+        if (m.vrr !== undefined && m.vrr !== null && Number.isFinite(Number(m.vrr))) parts.push(`vrr = ${Math.round(Number(m.vrr))}`);
+        if (m.transform !== undefined && Number.isFinite(Number(m.transform)) && Number(m.transform) > 0) parts.push(`transform = ${Math.round(Number(m.transform))}`);
         if (m.mirror && m.mirror !== "") parts.push(`mirror = ${luaStr(m.mirror)}`);
         return `hl.monitor({ ${parts.join(", ")} })`;
     }
@@ -458,9 +480,9 @@ Singleton {
         const cfg = [];
         // general
         const gen = [];
-        if (o.gaps_in !== undefined) gen.push(`        gaps_in = ${Number(o.gaps_in)},`);
-        if (o.gaps_out !== undefined) gen.push(`        gaps_out = ${Number(o.gaps_out)},`);
-        if (o.border_size !== undefined) gen.push(`        border_size = ${Number(o.border_size)},`);
+        if (o.gaps_in !== undefined) gen.push(`        gaps_in = ${luaNum(o.gaps_in, 3, 0)},`);
+        if (o.gaps_out !== undefined) gen.push(`        gaps_out = ${luaNum(o.gaps_out, 6, 0)},`);
+        if (o.border_size !== undefined) gen.push(`        border_size = ${luaNum(o.border_size, 2, 0)},`);
         if (o.layout !== undefined) gen.push(`        layout = ${luaStr(o.layout)},`);
         if (o.active_border !== undefined || o.inactive_border !== undefined) {
             gen.push("        col = {");
@@ -474,12 +496,12 @@ Singleton {
 
         // decoration
         const dec = [];
-        if (o.rounding !== undefined) dec.push(`        rounding = ${Number(o.rounding)},`);
-        if (o.inactive_opacity !== undefined) dec.push(`        inactive_opacity = ${Number(o.inactive_opacity).toFixed(2)},`);
+        if (o.rounding !== undefined) dec.push(`        rounding = ${luaNum(o.rounding, 8, 0)},`);
+        if (o.inactive_opacity !== undefined) dec.push(`        inactive_opacity = ${luaNum(o.inactive_opacity, 1.0, 2)},`);
         const blur = [];
         if (o.blur_enabled !== undefined) blur.push(`            enabled = ${o.blur_enabled ? "true" : "false"},`);
-        if (o.blur_size !== undefined) blur.push(`            size = ${Number(o.blur_size)},`);
-        if (o.blur_passes !== undefined) blur.push(`            passes = ${Number(o.blur_passes)},`);
+        if (o.blur_size !== undefined) blur.push(`            size = ${luaNum(o.blur_size, 6, 0)},`);
+        if (o.blur_passes !== undefined) blur.push(`            passes = ${luaNum(o.blur_passes, 3, 0)},`);
         if (blur.length > 0) dec.push("        blur = {\n" + blur.join("\n") + "\n        },");
         if (dec.length > 0) cfg.push("    decoration = {\n" + dec.join("\n") + "\n    },");
 
@@ -492,7 +514,7 @@ Singleton {
         const inp = [];
         if (o.kb_layout !== undefined) inp.push(`        kb_layout = ${luaStr(o.kb_layout)},`);
         if (o.kb_options !== undefined) inp.push(`        kb_options = ${luaStr(o.kb_options)},`);
-        if (o.mouse_sensitivity !== undefined) inp.push(`        sensitivity = ${Number(o.mouse_sensitivity).toFixed(2)},`);
+        if (o.mouse_sensitivity !== undefined) inp.push(`        sensitivity = ${luaNum(o.mouse_sensitivity, 0.0, 2)},`);
         if (o.mouse_accel !== undefined) inp.push(`        accel_profile = ${luaStr(o.mouse_accel)},`);
         if (o.mouse_natural_scroll !== undefined) inp.push(`        natural_scroll = ${o.mouse_natural_scroll ? "true" : "false"},`);
         const tp = [];
@@ -511,7 +533,7 @@ Singleton {
             if (o.touchpad_natural_scroll !== undefined)
                 devLines.push(`    natural_scroll = ${o.touchpad_natural_scroll ? "true" : "false"},`);
             if (o.touchpad_sensitivity !== undefined)
-                devLines.push(`    sensitivity = ${Number(o.touchpad_sensitivity).toFixed(2)},`);
+                devLines.push(`    sensitivity = ${luaNum(o.touchpad_sensitivity, 0.03, 2)},`);
             lines.push("hl.device({\n" + devLines.join("\n") + "\n})");
         }
 

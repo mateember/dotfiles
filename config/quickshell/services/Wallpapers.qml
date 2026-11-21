@@ -189,6 +189,11 @@ Singleton {
         return s;
     }
 
+    function isSafeLocalPath(p: string): bool {
+        const s = normalizePath(p);
+        return s.startsWith("/") && !/[\x00-\x1f\x7f]/.test(s);
+    }
+
     function displayPath(p: string): string {
         const s = normalizePath(p);
         if (!s) return "";
@@ -856,10 +861,22 @@ Singleton {
         const suffix = !job.asGif ? ".png"
             : useWebpLoop ? ((job.isApng ? "-apng-" : "-clip-") + targetFps + "fps.webp")
                           : ((job.isApng ? "-apng-" : "-clip-") + targetFps + "fps.gif");
+        if (!root.isSafeLocalPath(job.srcPath)) {
+            root.convertError = "Invalid local media path";
+            Qt.callLater(() => root.runNextMediaConvert());
+            return;
+        }
         const outPath = root.cacheDir + "/" + hashString(job.srcPath) + suffix;
         convertProc.pendingSlot = job.slot;
         convertProc.pendingSrc = job.srcPath;
         convertProc.pendingOut = outPath;
+        const ffmpegIn = "file:" + job.srcPath;
+        const atomicWrap = (ffCmd) =>
+            'mkdir -p "$3"; ' +
+            'if [ ! -s "$2" ] || [ "$4" -nt "$2" ]; then ' +
+            '  tmp="$2.tmp.$$"; ' +
+            '  if ' + ffCmd + ' && [ -s "$tmp" ]; then mv -f "$tmp" "$2"; else rm -f "$tmp"; exit 1; fi; ' +
+            'fi';
         if (job.asGif) {
             if (useWebpLoop) {
                 // Fallback when QtMultimedia is absent but qtimageformats WebP is present: supports up to Hyprland's full Hz (e.g. 120fps)
@@ -867,41 +884,29 @@ Singleton {
                 const q = job.isApng ? "85" : "80";
                 convertProc.command = [
                     "sh", "-c",
-                    'mkdir -p "$3"; ' +
-                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                    '  ffmpeg -y -v error ' + trim + '-i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos" -c:v libwebp_anim -loop 0 -preset default -q:v ' + q + ' "$2"; ' +
-                    'fi',
-                    "sh", job.srcPath, outPath, root.cacheDir
+                    atomicWrap('ffmpeg -y -v error ' + trim + '-i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos" -c:v libwebp_anim -loop 0 -preset default -q:v ' + q + ' -f webp "$tmp"'),
+                    "sh", ffmpegIn, outPath, root.cacheDir, job.srcPath
                 ];
             } else if (job.isApng) {
                 // Pure GIF fallback when neither QtMultimedia nor qtimageformats is available (50fps max for Qt GIF delay compatibility)
                 convertProc.command = [
                     "sh", "-c",
-                    'mkdir -p "$3"; ' +
-                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                    '  ffmpeg -y -v error -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
-                    'fi',
-                    "sh", job.srcPath, outPath, root.cacheDir
+                    atomicWrap('ffmpeg -y -v error -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1920,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer" -f gif "$tmp"'),
+                    "sh", ffmpegIn, outPath, root.cacheDir, job.srcPath
                 ];
             } else {
                 // Pure GIF fallback video clip loop (up to 20s, 50fps max for Qt GIF delay compatibility, 1280px)
                 convertProc.command = [
                     "sh", "-c",
-                    'mkdir -p "$3"; ' +
-                    'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                    '  ffmpeg -y -v error -t 20 -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1280,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=224[p];[s1][p]paletteuse=dither=bayer" "$2"; ' +
-                    'fi',
-                    "sh", job.srcPath, outPath, root.cacheDir
+                    atomicWrap('ffmpeg -y -v error -t 20 -i "$1" -vf "fps=\'min(' + targetFps + ',source_fps)\',scale=\'min(1280,iw)\':-2:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=224[p];[s1][p]paletteuse=dither=bayer" -f gif "$tmp"'),
+                    "sh", ffmpegIn, outPath, root.cacheDir, job.srcPath
                 ];
             }
         } else {
             convertProc.command = [
                 "sh", "-c",
-                'mkdir -p "$3"; ' +
-                'if [ ! -s "$2" ] || [ "$1" -nt "$2" ]; then ' +
-                '  ffmpeg -y -v error -i "$1" -frames:v 1 "$2"; ' +
-                'fi',
-                "sh", job.srcPath, outPath, root.cacheDir
+                atomicWrap('ffmpeg -y -v error -i "$1" -frames:v 1 -f image2 -c:v png "$tmp"'),
+                "sh", ffmpegIn, outPath, root.cacheDir, job.srcPath
             ];
         }
         convertProc.running = true;
@@ -949,13 +954,17 @@ Singleton {
     function runNextPngProbe(): void {
         if (pngProbeProc.running || root.pngProbeQueue.length === 0) return;
         const job = root.pngProbeQueue.shift();
+        if (!root.isSafeLocalPath(job.path)) {
+            Qt.callLater(() => root.runNextPngProbe());
+            return;
+        }
         pngProbeProc.pendingSlot = job.slot;
         pngProbeProc.pendingPath = job.path;
         pngProbeProc.detectedCodec = "";
         pngProbeProc.command = [
             "ffprobe", "-v", "error", "-select_streams", "v:0",
             "-show_entries", "stream=codec_name", "-of", "default=nw=1:nk=1",
-            job.path
+            "file:" + job.path
         ];
         pngProbeProc.running = true;
     }
@@ -1009,12 +1018,17 @@ Singleton {
 
     function refreshFolderFiles(): void {
         if (root.includeSubfolders) {
+            if (!root.isSafeLocalPath(root.folderPath)) {
+                root.scanningFolder = false;
+                root.folderFiles = [];
+                return;
+            }
             root.scanningFolder = true;
             recursiveScanProc.running = false;
             const webpExpr = root.hasWebpPlugin ? ' -o -iname "*.webp"' : '';
             recursiveScanProc.command = [
                 "sh", "-c",
-                'find "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.svg" -o -iname "*.gif"' + webpExpr + ' \\) 2>/dev/null | sort -V | head -n 2000',
+                'find -- "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.svg" -o -iname "*.gif"' + webpExpr + ' \\) 2>/dev/null | sort -V | head -n 2000',
                 "sh", root.folderPath
             ];
             recursiveScanProc.running = true;

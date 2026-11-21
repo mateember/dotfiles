@@ -490,11 +490,11 @@ Singleton {
 
         if (WeatherConfig.autoLocate) {
             geoFetch.runCommand(["sh", "-c", `
-                out=$(curl -sf -m 5 "https://ipwho.is/")
-                if echo "$out" | grep -q '"success":true'; then
+                out=$(curl -sf -g --proto '=https' -m 5 -- "https://ipwho.is/")
+                if printf '%s' "$out" | grep -q '"success":true'; then
                     printf '%s' "$out"
                 else
-                    curl -sf -m 5 "http://ip-api.com/json/?fields=status,lat,lon,city,regionName,country,countryCode"
+                    curl -sf -g --proto '=https' -m 5 -- "https://get.geojs.io/v1/ip/geo.json"
                 fi
             `]);
         } else {
@@ -512,7 +512,15 @@ Singleton {
         return lat >= 45.2 && lat <= 49.1 && lon >= 15.5 && lon <= 23.5;
     }
 
+    function validCoords(lat: real, lon: real): bool {
+        return isFinite(lat) && isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    }
+
     function startForecastFetch(lat: real, lon: real, locName: string, locRegion: string, auto: bool) {
+        if (!validCoords(lat, lon)) {
+            root.finishFetch(false, "Invalid coordinates");
+            return;
+        }
         root._pendingLat = lat;
         root._pendingLon = lon;
         root._pendingLocName = locName;
@@ -529,7 +537,7 @@ Singleton {
             + "&hourly=temperature_2m,weather_code,is_day,precipitation_probability,precipitation"
             + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,wind_speed_10m_max,sunrise,sunset"
             + "&timezone=auto&forecast_days=10";
-        forecastFetch.runCommand(["curl", "-sf", "-m", "15", url]);
+        forecastFetch.runCommand(["curl", "-sf", "-g", "--proto", "=https", "-m", "15", "--", url]);
 
         if (WeatherConfig.dataSource === "hybrid" && inHungaryRegion(lat, lon)) {
             root._pendingObsDone = false;
@@ -590,7 +598,7 @@ Singleton {
         root.searching = true;
         root.searchError = "";
         const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`;
-        searchProc.runCommand(["curl", "-sf", "-m", "10", url]);
+        searchProc.runCommand(["curl", "-sf", "-g", "--proto", "=https", "-m", "10", "--", url]);
     }
 
     function clearSearch() {
@@ -666,7 +674,7 @@ Singleton {
                     const g = JSON.parse(output);
                     const lat = Number(g.latitude ?? g.lat);
                     const lon = Number(g.longitude ?? g.lon);
-                    if (!isNaN(lat) && !isNaN(lon) && g.success !== false && g.status !== "fail") {
+                    if (root.validCoords(lat, lon) && g.success !== false && g.status !== "fail") {
                         const city = String(g.city || "");
                         const region = [g.region || g.regionName, g.country_code || g.countryCode].filter(Boolean).join(", ");
                         if (city !== "") root.detectedLocation = city;

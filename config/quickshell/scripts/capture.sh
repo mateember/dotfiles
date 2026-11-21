@@ -27,8 +27,10 @@ get_focused_monitor() {
 }
 
 get_window_geometry() {
-    local boxes
-    boxes=$(hyprctl clients -j 2>/dev/null | jq -r --argjson ws "$(hyprctl monitors -j | jq '[.[].activeWorkspace.id]')" '
+    local ws_json boxes
+    ws_json=$(hyprctl monitors -j 2>/dev/null | jq -c '[.[].activeWorkspace.id]' 2>/dev/null || echo '[]')
+    [ -n "$ws_json" ] || ws_json='[]'
+    boxes=$(hyprctl clients -j 2>/dev/null | jq -r --argjson ws "$ws_json" '
         .[] | select(.mapped == true and .hidden == false and (.workspace.id as $w | $ws | index($w))) |
         "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"
     ')
@@ -347,13 +349,22 @@ case "$cmd" in
         echo "$rec_pid" > "$PIDFILE"
         trap 'kill -INT "$rec_pid" 2>/dev/null || true; rm -f "$PIDFILE"' INT TERM
 
+        sleep 0.15
+        if ! kill -0 "$rec_pid" 2>/dev/null; then
+            rm -f "$PIDFILE" "$out_file"
+            notify-send -a "Screen Recorder" -u critical "Recording failed" "Screen recorder exited unexpectedly" 2>/dev/null || true
+            exit 1
+        fi
+
         echo "STARTED:$out_file"
         wait "$rec_pid" 2>/dev/null || true
         rm -f "$PIDFILE"
 
-        if [ -f "$out_file" ]; then
+        if [ -s "$out_file" ]; then
             printf "file://%s\r\n" "$out_file" | wl-copy --type text/uri-list 2>/dev/null || true
             notify-send -a "Screen Recorder" -i camera-video "Recording saved" "$out_file (copied file to clipboard)" 2>/dev/null || true
+        else
+            rm -f "$out_file"
         fi
         ;;
 esac

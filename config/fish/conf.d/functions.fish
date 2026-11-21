@@ -1,5 +1,12 @@
 function myip
-    curl -$argv ifconfig.me
+    if test (count $argv) -eq 0
+        curl -fsS --proto '=https' --max-time 10 https://ifconfig.me
+    else if test "$argv[1]" = 4 -o "$argv[1]" = 6
+        curl -fsS --proto '=https' --max-time 10 -"$argv[1]" https://ifconfig.me
+    else
+        echo "Usage: myip [4|6]" >&2
+        return 1
+    end
     echo ""
 end
 
@@ -24,20 +31,23 @@ function vpn
     set -l argc (count $argv)
     if test $argc -eq 0
         sudo tailscale set --exit-node=
-    else if test $argv[1] = none
+    else if test -- "$argv[1]" = none
         sudo tailscale set --exit-node=
+    else if string match -qr '^-' -- "$argv[1]"
+        echo "Invalid exit node: $argv[1]" >&2
+        return 1
     else
-        sudo tailscale up
-        sudo tailscale set --exit-node=$argv[1]
+        sudo tailscale up; and sudo tailscale set --exit-node="$argv[1]"
     end
 end
 
+# Note: termbin.com only accepts unencrypted raw TCP on port 9999; avoid uploading secrets.
 function tb --description 'Upload text, file, or piped input to termbin.com'
     if test (count $argv) -gt 0
-        if test -f "$argv[1]"
-            cat "$argv[1]" | nc termbin.com 9999
+        if test (count $argv) -eq 1 -a -f "$argv[1]"
+            cat -- "$argv[1]" | nc termbin.com 9999
         else
-            echo "$argv[1]" | nc termbin.com 9999
+            printf '%s\n' (string join " " -- $argv) | nc termbin.com 9999
         end
     else
         cat | nc termbin.com 9999
@@ -103,17 +113,25 @@ function pm
 end
 
 function cm
-    echo "$argv[1]" | sudo tee /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode
+    if test (count $argv) -eq 1; and test -- "$argv[1]" = 0 -o "$argv[1]" = 1
+        printf '%s\n' "$argv[1]" | sudo tee /sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/conservation_mode
+    else
+        echo "Usage: cm <0|1>" >&2
+        return 1
+    end
 end
 
 function screenoff
-    set current_state (cat /sys/class/graphics/fb0/blank)
-    if test $current_state -eq 0
+    set -l current_state (tr -d '[:space:]' < /sys/class/graphics/fb0/blank 2>/dev/null)
+    if test -- "$current_state" = 0
         echo 1 | sudo tee /sys/class/graphics/fb0/blank
         echo "Turning screen off"
-    else
+    else if test -- "$current_state" = 1
         echo 0 | sudo tee /sys/class/graphics/fb0/blank
         echo "Turning screen on"
+    else
+        echo "Could not read /sys/class/graphics/fb0/blank" >&2
+        return 1
     end
 end
 

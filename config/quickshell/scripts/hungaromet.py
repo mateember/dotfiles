@@ -13,6 +13,8 @@ import urllib.request
 import zipfile
 
 ODP_10M_URL = "https://odp.met.hu/weather/weather_reports/synoptic/hungary/10_minutes/csv/HABP_10M_SYNOP_LATEST.csv.zip"
+MAX_ZIP_BYTES = 10 * 1024 * 1024
+MAX_CSV_BYTES = 25 * 1024 * 1024
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -35,7 +37,9 @@ def parse_num(raw: str | None):
         v = float(s)
     except ValueError:
         return None
-    return None if v <= -900 else v
+    if not math.isfinite(v) or v <= -900:
+        return None
+    return v
 
 
 def parse_time(ts: str) -> datetime | None:
@@ -72,6 +76,8 @@ def main() -> None:
         max_km = float(sys.argv[3]) if len(sys.argv) >= 4 else 50.0
     except ValueError:
         fail("invalid_args")
+    if not (math.isfinite(target_lat) and math.isfinite(target_lon) and math.isfinite(max_km) and max_km > 0):
+        fail("invalid_args")
 
     # Quick bounding-box check around Hungary before hitting odp.met.hu.
     if not (45.2 <= target_lat <= 49.1 and 15.5 <= target_lon <= 23.5):
@@ -80,7 +86,9 @@ def main() -> None:
     try:
         req = urllib.request.Request(ODP_10M_URL, headers={"User-Agent": "quickshell-weather/1.0"})
         with urllib.request.urlopen(req, timeout=8) as resp:
-            raw_zip = resp.read()
+            raw_zip = resp.read(MAX_ZIP_BYTES + 1)
+        if len(raw_zip) > MAX_ZIP_BYTES:
+            fail("zip_too_large")
     except Exception as exc:
         fail(f"fetch_error:{exc}")
 
@@ -89,7 +97,14 @@ def main() -> None:
             names = [n for n in zf.namelist() if n.endswith(".csv")]
             if not names:
                 fail("empty_zip")
-            text = zf.read(names[0]).decode("utf-8", errors="replace")
+            info = zf.getinfo(names[0])
+            if info.file_size > MAX_CSV_BYTES:
+                fail("csv_too_large")
+            with zf.open(info) as member:
+                raw_csv = member.read(MAX_CSV_BYTES + 1)
+            if len(raw_csv) > MAX_CSV_BYTES:
+                fail("csv_too_large")
+            text = raw_csv.decode("utf-8", errors="replace")
     except Exception as exc:
         fail(f"zip_error:{exc}")
 
@@ -109,6 +124,7 @@ def main() -> None:
 
     latest_by_station: dict[str, dict] = {}
     newest_time: datetime | None = None
+    max_allowed_time = datetime.now(timezone.utc).timestamp() + 1800.0
 
     for line in lines[1:]:
         if not line.strip():
@@ -118,7 +134,7 @@ def main() -> None:
         st_id = (col(row, "StationNumber") or "").strip()
         lat = parse_num(col(row, "Latitude"))
         lon = parse_num(col(row, "Longitude"))
-        if dt is None or not st_id or lat is None or lon is None:
+        if dt is None or dt.timestamp() > max_allowed_time or not st_id or lat is None or lon is None:
             continue
 
         if newest_time is None or dt > newest_time:
@@ -197,7 +213,7 @@ def main() -> None:
         "visibilityM": round(v_st["v"]) if v_st is not None else None,
         "precip10mMm": round(primary["r"], 1) if primary["r"] is not None else None,
     }
-    print(json.dumps(out, ensure_ascii=False))
+    print(json.dumps(out, ensure_ascii=False, allow_nan=False))
 
 
 if __name__ == "__main__":

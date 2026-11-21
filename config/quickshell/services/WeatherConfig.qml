@@ -216,7 +216,12 @@ Singleton {
         return root.savedLocations.some(loc => coordsMatch(loc.lat, loc.lon, lat, lon));
     }
 
+    function validCoords(lat: real, lon: real): bool {
+        return isFinite(lat) && isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    }
+
     function setLocation(name: string, region: string, lat: real, lon: real) {
+        if (!validCoords(lat, lon)) return;
         const cleanName = (name || "").trim() || `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
         const changed = root.autoLocate
             || !coordsMatch(root.latitude, root.longitude, lat, lon)
@@ -238,7 +243,7 @@ Singleton {
     }
 
     function saveLocation(name: string, region: string, lat: real, lon: real) {
-        if (isLocationSaved(lat, lon)) return;
+        if (!validCoords(lat, lon) || isLocationSaved(lat, lon)) return;
         const entry = {
             name: (name || "").trim() || `${lat.toFixed(2)}, ${lon.toFixed(2)}`,
             region: (region || "").trim(),
@@ -331,11 +336,12 @@ Singleton {
             if (typeof d.autoLocate === "boolean") root.autoLocate = d.autoLocate;
             if (typeof d.locationName === "string" && d.locationName.trim() !== "") root.locationName = d.locationName;
             if (typeof d.locationRegion === "string") root.locationRegion = d.locationRegion;
-            if (typeof d.latitude === "number" && !isNaN(d.latitude)) root.latitude = d.latitude;
-            if (typeof d.longitude === "number" && !isNaN(d.longitude)) root.longitude = d.longitude;
+            if (typeof d.latitude === "number" && isFinite(d.latitude) && d.latitude >= -90 && d.latitude <= 90) root.latitude = d.latitude;
+            if (typeof d.longitude === "number" && isFinite(d.longitude) && d.longitude >= -180 && d.longitude <= 180) root.longitude = d.longitude;
             if (Array.isArray(d.savedLocations)) {
                 root.savedLocations = d.savedLocations.filter(l =>
-                    l && typeof l.name === "string" && typeof l.lat === "number" && typeof l.lon === "number");
+                    l && typeof l.name === "string" && typeof l.lat === "number" && typeof l.lon === "number"
+                    && root.validCoords(l.lat, l.lon));
             }
             if (d.tempUnit === "C" || d.tempUnit === "F") root.tempUnit = d.tempUnit;
             if (["kmh", "ms", "mph", "kn"].indexOf(d.windUnit) >= 0) root.windUnit = d.windUnit;

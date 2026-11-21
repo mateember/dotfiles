@@ -56,9 +56,22 @@ Singleton {
         else root.openOverview();
     }
 
-    // Lua string literal for any value (numbers stay numbers).
+    // Lua string/number literal (escapes control bytes as Lua decimal escapes, never JS \uXXXX).
     function luaValue(v): string {
-        return typeof v === "number" ? String(v) : JSON.stringify(String(v));
+        if (typeof v === "number") return Number.isFinite(v) ? String(v) : "0";
+        const s = String(v ?? "");
+        let out = '"';
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charCodeAt(i);
+            if (c === 0x5c) out += "\\\\";
+            else if (c === 0x22) out += '\\"';
+            else if (c === 0x0a) out += "\\n";
+            else if (c === 0x0d) out += "\\r";
+            else if (c === 0x09) out += "\\t";
+            else if (c < 0x20 || c === 0x7f) out += "\\" + String(c).padStart(3, "0");
+            else out += s.charAt(i);
+        }
+        return out + '"';
     }
 
     function normalizeAddress(addr: string): string {

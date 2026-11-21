@@ -43,7 +43,7 @@ Item {
     property string screenName: ""
 
     readonly property bool isMediaMode: mode === "folder" || mode === "image" || (mode === "animated" && animatedKind === "file")
-    readonly property bool isShaderMode: mode === "animated" && animatedKind === "scene"
+    readonly property bool isShaderMode: mode === "animated" && animatedKind === "scene" && Wallpapers.scenes.some(s => s.id === sceneId)
     readonly property bool isSolidMode: mode === "solid"
     readonly property bool useVideoLayer: isMediaMode && !staticPreviewOnly && isVideoUrl(imageUrl) && imageUrl !== ""
     readonly property bool useOverlayShader: showOverlay && overlayEffect !== "none" && Wallpapers.overlayEffects.some(e => e.id === overlayEffect)

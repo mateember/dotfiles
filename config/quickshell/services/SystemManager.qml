@@ -178,7 +178,13 @@ Singleton {
         const target = String(nodeNameOrEmpty || "");
         tsSetProc.command = [
             "sh", "-c",
-            "tailscale set --exit-node=\"$1\" 2>/dev/null || sudo -n tailscale set --exit-node=\"$1\" 2>/dev/null || pkexec tailscale set --exit-node=\"$1\"",
+            "err=$(tailscale set --exit-node=\"$1\" 2>&1) && exit 0; " +
+            "rc=$?; " +
+            "if printf '%s' \"$err\" | grep -qiE 'access denied|permission denied|must be run as root|operator|not permitted'; then " +
+            "  sudo -n tailscale set --exit-node=\"$1\" 2>/dev/null || pkexec tailscale set --exit-node=\"$1\"; " +
+            "  exit $?; " +
+            "fi; " +
+            "printf '%s\\n' \"$err\" >&2; exit $rc",
             "sh", target
         ];
         tsSetProc.running = true;
@@ -314,19 +320,72 @@ Singleton {
     }
 
     function setAutostartEnabled(fileName: string, appName: string, execCmd: string, enabled: bool) {
-        if (!fileName) return;
+        const cleanFile = String(fileName || "").trim();
+        if (!/^[A-Za-z0-9._-]+\.desktop$/.test(cleanFile)) return;
         const dir = (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/autostart";
-        const target = dir + "/" + fileName;
         const hiddenVal = enabled ? "false" : "true";
         Quickshell.execDetached([
-            "sh", "-c",
-            "mkdir -p \"$1\"; " +
-            "if [ -f \"$2\" ]; then " +
-            "  if grep -q '^Hidden=' \"$2\"; then sed -i \"s/^Hidden=.*/Hidden=$3/\" \"$2\"; else printf '\\nHidden=%s\\n' \"$3\" >> \"$2\"; fi; " +
-            "else " +
-            "  printf '[Desktop Entry]\\nType=Application\\nName=%s\\nExec=%s\\nHidden=%s\\n' \"$4\" \"$5\" \"$3\" > \"$2\"; " +
-            "fi",
-            "sh", dir, target, hiddenVal, appName || fileName, execCmd || "true"
+            "python3", "-c",
+            `
+import os, sys, tempfile
+user_dir, fname, hidden_val, app_name, exec_cmd = sys.argv[1:6]
+os.makedirs(user_dir, exist_ok=True)
+target = os.path.join(user_dir, fname)
+sys_src = os.path.join("/etc/xdg/autostart", fname)
+
+if os.path.isfile(target):
+    with open(target, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines(True)
+elif os.path.isfile(sys_src):
+    with open(sys_src, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines(True)
+else:
+    clean_name = app_name.replace("\\r", "").replace("\\n", " ")
+    clean_exec = exec_cmd.replace("\\r", "").replace("\\n", " ")
+    lines = ["[Desktop Entry]\\n", "Type=Application\\n", f"Name={clean_name}\\n", f"Exec={clean_exec}\\n"]
+
+out = []
+in_de = False
+replaced = False
+inserted = False
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith("[") and stripped.endswith("]"):
+        if in_de and not replaced and not inserted:
+            if out and not out[-1].endswith("\\n"):
+                out[-1] += "\\n"
+            out.append(f"Hidden={hidden_val}\\n")
+            inserted = True
+        in_de = (stripped == "[Desktop Entry]")
+        out.append(line)
+        continue
+    if in_de and line.startswith("Hidden="):
+        if not replaced:
+            out.append(f"Hidden={hidden_val}\\n")
+            replaced = True
+        continue
+    out.append(line)
+
+if in_de and not replaced and not inserted:
+    if out and not out[-1].endswith("\\n"):
+        out[-1] += "\\n"
+    out.append(f"Hidden={hidden_val}\\n")
+elif not replaced and not inserted:
+    if out and not out[-1].endswith("\\n"):
+        out[-1] += "\\n"
+    out.extend(["[Desktop Entry]\\n", f"Hidden={hidden_val}\\n"])
+
+fd, tmp = tempfile.mkstemp(prefix=".autostart-", dir=user_dir)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.writelines(out)
+    os.replace(tmp, target)
+finally:
+    if os.path.exists(tmp):
+        try: os.unlink(tmp)
+        except OSError: pass
+`,
+            dir, cleanFile, hiddenVal, appName || cleanFile, execCmd || "true"
         ]);
         autostartRefreshLater.restart();
     }

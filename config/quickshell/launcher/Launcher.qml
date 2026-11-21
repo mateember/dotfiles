@@ -282,7 +282,7 @@ Scope {
                     Emoji.insert(r.char, !inTerminal);
                 } else if (r.kind === "calc") {
                     if (calcResult === "") return;
-                    Quickshell.execDetached(["wl-copy", calcResult]);
+                    Quickshell.execDetached(["wl-copy", "--", calcResult]);
                 } else if (r.kind === "web") {
                     const wq = (r.queryText || "").trim();
                     if (wq === "") return;
@@ -314,7 +314,7 @@ Scope {
                 interval: 120
                 onTriggered: {
                     calc.running = false;
-                    calc.command = ["qalc", "-t", win.normalizeCalcExpr(win.query)];
+                    calc.command = ["qalc", "-t", "--", win.normalizeCalcExpr(win.query)];
                     calc.running = true;
                 }
             }

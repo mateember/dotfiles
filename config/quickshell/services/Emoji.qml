@@ -30,7 +30,7 @@ Singleton {
 
     // Copy, and type it into the window that had focus before the launcher opened.
     function insert(ch: string, typeIt: bool) {
-        Quickshell.execDetached(["wl-copy", ch]);
+        Quickshell.execDetached(["wl-copy", "--", ch]);
         if (typeIt) Quickshell.execDetached(["sh", "-c", 'sleep 0.25; wtype -- "$1"', "sh", ch]);
     }
 

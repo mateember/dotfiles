@@ -21,13 +21,14 @@ Singleton {
     property bool skipPasswordManagers: true
     readonly property bool loading: list.running
 
-    // Inline secret-hygiene guard for wl-paste --watch (no external scripts):
-    // Checks Wayland password-manager MIME hint AND focused Hyprland window class/title.
-    readonly property string textStoreCmd:
+    // Inline secret-hygiene guard for wl-paste --watch (text & image):
+    // Checks Wayland password-manager MIME hint (with timeout) AND focused Hyprland window class/initialClass
+    // (not window title, avoiding false positives on browser tabs/docs mentioning password managers).
+    readonly property string storeGuardCmd:
         "if [ \"$1\" = \"1\" ]; then " +
-        "  wl-paste --list-types 2>/dev/null | grep -qiE 'passwordManagerHint|password-manager' && exit 0; " +
-        "  win=$(timeout 1 hyprctl activewindow -j 2>/dev/null | tr '[:upper:]' '[:lower:]'); " +
-        "  echo \"$win\" | grep -qE 'bitwarden|keepassxc|1password|proton.?pass|vaultwarden|enpass' && exit 0; " +
+        "  timeout 1 wl-paste --list-types < /dev/null 2>/dev/null | grep -qiE 'passwordManagerHint|password-manager' && exit 0; " +
+        "  cls=$(timeout 1 hyprctl activewindow -j < /dev/null 2>/dev/null | jq -r '(.class // \"\") + \" \" + (.initialClass // \"\")' 2>/dev/null | tr '[:upper:]' '[:lower:]'); " +
+        "  printf '%s' \"$cls\" | grep -qE 'bitwarden|keepassxc|1password|proton.?pass|vaultwarden|enpass' && exit 0; " +
         "fi; " +
         "cliphist store"
 
@@ -41,7 +42,13 @@ Singleton {
 
     function copyPin(text: string) {
         if (!text) return;
-        Quickshell.execDetached(["wl-copy", "--", text]);
+        // Pass pinned snippet via stdin (never CLI argv, avoiding /proc/<pid>/cmdline exposure & E2BIG).
+        pinCopyProc.pendingText = text;
+        if (pinCopyProc.running) {
+            pinCopyProc.running = false;
+        }
+        pinCopyProc.stdinEnabled = true;
+        pinCopyProc.running = true;
     }
 
     function remove(id: string) {
@@ -130,33 +137,46 @@ Singleton {
         onExited: root._watchersReady = true
     }
     property bool _watchersReady: false
-    property bool _restartingTextWatcher: false
+    property bool _restartingWatchers: false
 
     // Managed text clipboard watcher (auto-stops when paused, restarts cleanly if secret hygiene changes)
     Process {
         id: textWatcher
-        running: root._watchersReady && !root.paused && !root._restartingTextWatcher
-        command: ["wl-paste", "--type", "text", "--watch", "sh", "-c", root.textStoreCmd, "sh", root.skipPasswordManagers ? "1" : "0"]
+        running: root._watchersReady && !root.paused && !root._restartingWatchers
+        command: ["wl-paste", "--type", "text", "--watch", "sh", "-c", root.storeGuardCmd, "sh", root.skipPasswordManagers ? "1" : "0"]
     }
 
-    // Managed image clipboard watcher
+    // Managed image clipboard watcher (also respects secret hygiene for 2FA QR codes / password manager images)
     Process {
         id: imageWatcher
-        running: root._watchersReady && !root.paused
-        command: ["wl-paste", "--type", "image", "--watch", "cliphist", "store"]
+        running: root._watchersReady && !root.paused && !root._restartingWatchers
+        command: ["wl-paste", "--type", "image", "--watch", "sh", "-c", root.storeGuardCmd, "sh", root.skipPasswordManagers ? "1" : "0"]
     }
 
-    // Restart textWatcher declaratively when skipPasswordManagers changes (preserving the running binding).
+    // Restart watchers declaratively when skipPasswordManagers changes (preserving the running binding).
     onSkipPasswordManagersChanged: {
         if (root._watchersReady && !root.paused) {
-            root._restartingTextWatcher = true;
+            root._restartingWatchers = true;
             watcherRestartTimer.restart();
         }
     }
     Timer {
         id: watcherRestartTimer
         interval: 80
-        onTriggered: root._restartingTextWatcher = false
+        onTriggered: root._restartingWatchers = false
+    }
+
+    Process {
+        id: pinCopyProc
+        property string pendingText: ""
+        command: ["wl-copy"]
+        onStarted: {
+            const t = pendingText;
+            pendingText = "";
+            if (t !== "") write(t);
+            stdinEnabled = false;
+        }
+        onExited: pendingText = ""
     }
 
     Process {
