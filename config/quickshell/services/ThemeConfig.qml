@@ -13,7 +13,6 @@ import qs
 Singleton {
     id: root
 
-    property bool settingsOpen: false
     property bool pickingColor: false
     property bool passiveMode: false
     property bool ready: false
@@ -536,7 +535,7 @@ Singleton {
         OpacityConfig.syncFromTheme(s.widgetsOpacity, s.barOpacity, s.notificationsOpacity, s.osdOpacity);
     }
 
-    // Called by OpacityConfig when OpacitySettingsWindow or `qs ipc call opacity` changes opacity.
+    // Called by OpacityConfig when `qs ipc call opacity` changes opacity.
     function syncOpacityFromExternal(w: real, b: real, n: real, o: real) {
         const next = Object.assign({}, root.current, {
             widgetsOpacity: clampNum(w, 0, 1, 2, root.current.widgetsOpacity),

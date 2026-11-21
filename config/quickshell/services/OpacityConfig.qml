@@ -14,7 +14,6 @@ import qs
 Singleton {
     id: root
 
-    property bool settingsOpen: false
     property bool ready: false
     property bool loadedFromFile: false
 

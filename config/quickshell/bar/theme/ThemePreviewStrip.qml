@@ -4,7 +4,7 @@ import qs
 import qs.components
 import qs.services
 
-// Compact live preview card inside ThemeSettingsWindow showing how the active
+// Compact live preview card inside Appearance settings showing how the active
 // bar, popup surface, typography, radii, toggles, and semantic colors harmonize.
 Rectangle {
     id: root

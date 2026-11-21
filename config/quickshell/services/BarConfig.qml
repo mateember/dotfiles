@@ -10,9 +10,6 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // Whether the Bar Settings window (bar/BarSettingsWindow.qml) is open.
-    property bool settingsOpen: false
-
     readonly property string stateFile: Quickshell.statePath("bar-config.json")
 
     readonly property var defaultItems: [

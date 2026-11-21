@@ -232,7 +232,7 @@ The top panel ([`Bar.qml`](file:///home/mate/dotfiles/config/quickshell/bar/Bar.
 
 - **Fish Shell** ([`config/fish/`](file:///home/mate/dotfiles/config/fish)):
   - [`config.fish`](file:///home/mate/dotfiles/config/fish/config.fish): initializes `starship` and `zoxide`, suppresses greeting.
-  - [`conf.d/aliases.fish`](file:///home/mate/dotfiles/config/fish/conf.d/aliases.fish): NixOS helpers (`nixrbd`, `nixupd`, `nixgb`, `nixsyntax`), `rm` → `trash`, `vim` → `nvim`, and `neofetch` → `fastfetch -c ~/.config/fastfetch/custom.jsonc`.
+  - [`conf.d/aliases.fish`](file:///home/mate/dotfiles/config/fish/conf.d/aliases.fish): NixOS helpers (`nixrbd`, `nixupd`, `nixgb`), `rm` → `trash`, `vim` → `nvim`, and `neofetch` → `fastfetch -c ~/.config/fastfetch/custom.jsonc`.
   - [`conf.d/functions.fish`](file:///home/mate/dotfiles/config/fish/conf.d/functions.fish): `vpn` (Tailscale exit-node toggle), `pm` (ACPI `platform_profile`), `cm` (Lenovo IdeaPad conservation mode), `tb` (`termbin.com` pastebin), `nixify` (exports `NIX_LD` / `NIX_LD_LIBRARY_PATH`), `screenoff`, `myip`, `bat`, `vencord`.
 - **Kitty** ([`config/kitty/kitty.conf`](file:///home/mate/dotfiles/config/kitty/kitty.conf)): JetBrains Mono Nerd Font Mono, `0.7` background opacity, beam cursor, no decorations, `fish` shell.
 - **Neovim** ([`config/nvim/`](file:///home/mate/dotfiles/config/nvim)): Lazy.nvim plugin setup.

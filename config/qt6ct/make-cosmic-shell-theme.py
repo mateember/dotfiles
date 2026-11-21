@@ -184,7 +184,25 @@ def write_kdeglobals():
 
 
 # ---- Kvantum: KvArcDark (ships with Kvantum) recoloured to the palette above ----
-KV_BASE = "/run/current-system/sw/share/Kvantum/KvArcDark/KvArcDark"
+def find_kv_base():
+    import glob
+    candidates = [
+        "/run/current-system/sw/share/Kvantum/KvArcDark/KvArcDark",
+        f"/etc/profiles/per-user/{os.environ.get('USER', '')}/share/Kvantum/KvArcDark/KvArcDark",
+        "/usr/share/Kvantum/KvArcDark/KvArcDark",
+    ]
+    for c in candidates:
+        if os.path.isfile(c + ".svg") and os.path.isfile(c + ".kvconfig"):
+            return c
+    store_hits = sorted(glob.glob("/nix/store/*-qtstyleplugin-kvantum-*/share/Kvantum/KvArcDark/KvArcDark.svg"), key=os.path.getmtime, reverse=True)
+    for hit in store_hits:
+        base = hit[:-4]
+        if os.path.isfile(base + ".kvconfig"):
+            return base
+    return candidates[0]
+
+
+KV_BASE = find_kv_base()
 ARC_ACCENT = "#5294e2"
 
 # Arc's blue-grey surfaces, by luma, mapped onto the shell's neutral greys.

@@ -54,50 +54,6 @@ function tb --description 'Upload text, file, or piped input to termbin.com'
     end
 end
 
-function tkg_update
-    if test -d $HOME/.cache/linux-tkg
-        sudo rm -r $HOME/.cache/linux-tkg
-    end
-
-    sleep 1
-    set tkg_kernel_url "https://github.com/Frogging-Family/linux-tkg.git"
-
-    git clone $tkg_kernel_url $HOME/.cache/(basename $tkg_kernel_url .git)
-    sleep 2
-    cd $HOME/.cache/linux-tkg
-    makepkg -si
-    cd ..
-    sudo rm -r linux-tkg
-    cd
-    set current_date (date +%s)
-    set last_prompt_file $HOME/.config/.last_prompt_date
-    sleep 1
-    echo $current_date >$last_prompt_file
-end
-
-function prompt_shell
-    set -l last_prompt_file "$HOME/.config/.last_prompt_date"
-    set -l current_date (date +%s)
-    set -l last_prompt_date 0
-
-    if test -f $last_prompt_file
-        set last_prompt_date (cat $last_prompt_file)
-    end
-
-    set -l diff (math $current_date - $last_prompt_date)
-    set -l two_weeks (math 7 * 24 * 3600)
-
-    if test $diff -ge $two_weeks
-        echo $current_date >$last_prompt_file
-        read -P "You wanna update the TKG kernel? It's been more than a week (y/n): " response
-        if test (string upper $response) = Y
-            tkg_update
-        else
-            echo "No update performed."
-        end
-    end
-end
-
 function pm
     if test "$argv[1]" = b -o "$argv[1]" = balanced
         echo balanced | sudo tee /sys/firmware/acpi/platform_profile

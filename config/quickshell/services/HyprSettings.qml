@@ -448,14 +448,6 @@ Singleton {
         applyMonitorPlan(backup, false);
     }
 
-    function clearMonitorOverrides() {
-        confirmMonitors();
-        const next = Object.assign({}, root.overrides);
-        delete next.monitors;
-        root.overrides = next;
-        _reloadAfterSave(false, true);
-    }
-
     // ---- Sunshine Headless Virtual Display ----
 
     function toggleSunshineVirtualDisplay() {
