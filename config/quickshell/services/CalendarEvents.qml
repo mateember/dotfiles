@@ -12,6 +12,7 @@ import qs
 Singleton {
     id: root
 
+    property bool passiveMode: false      // true inside lock.qml: read shared cache only, never spawn fetches
     property bool ready: false
     property bool stale: false            // last run failed; showing cached data
     property var events: []               // [{ calendar, color, kind, title, location, start: Date, end: Date, allday }]
@@ -23,7 +24,8 @@ Singleton {
     property int viewYear: new Date().getFullYear()
     property int viewMonth: new Date().getMonth()
 
-    readonly property string cacheFile: Quickshell.cachePath("calendar-events.json")
+    readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/quickshell"
+    readonly property string cacheFile: cacheDir + "/hcs-calendar-events.json"
 
     // Current or next timed event (or task due) from now, within the loaded range.
     readonly property var nextUp: {
@@ -90,6 +92,7 @@ Singleton {
     }
 
     function refresh() {
+        if (root.passiveMode) return;
         const r = wantedRange();
         if (fetch.running) { pending = true; return; }
         fetch.from = r[0];
@@ -104,7 +107,9 @@ Singleton {
     FileView {
         id: cache
         path: root.cacheFile
+        watchChanges: root.passiveMode
         printErrors: false
+        onFileChanged: if (root.passiveMode) reload()
         onLoaded: root.parse(text())
     }
 
@@ -127,10 +132,15 @@ Singleton {
 
     Timer {
         interval: Config.calendarRefreshMinutes * 60 * 1000
-        running: true
+        running: !root.passiveMode
         repeat: true
-        triggeredOnStart: true
         onTriggered: root.refresh()
+    }
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            if (!root.passiveMode) root.refresh();
+        });
     }
 
     // Re-parse when the calendar filters change (hot reload of Config.qml).

@@ -60,6 +60,13 @@ ColumnLayout {
             subtitle: LockConfig.avatarPath !== "" ? LockConfig.avatarPath : "Using accent initial circle"
 
             Rectangle {
+                id: avatarPreview
+                property bool useFallback: false
+                Connections {
+                    target: LockConfig
+                    function onAvatarPathChanged() { avatarPreview.useFallback = false; }
+                    function onAvatarThumbUrlChanged() { avatarPreview.useFallback = false; }
+                }
                 visible: LockConfig.avatarPath !== ""
                 width: 34; height: 34; radius: 17
                 color: Theme.accent
@@ -69,8 +76,19 @@ ColumnLayout {
                     color: "transparent"
                     Image {
                         anchors.fill: parent
-                        source: LockConfig.avatarPath ? Wallpapers.pathToUrl(LockConfig.avatarPath) : ""
+                        source: LockConfig.avatarPath
+                            ? (avatarPreview.useFallback ? LockConfig.avatarFallbackUrl : LockConfig.avatarThumbUrl)
+                            : ""
                         fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        smooth: true
+                        cache: false
+                        sourceSize: Qt.size(68, 68)
+                        onStatusChanged: {
+                            if (status === Image.Error && !avatarPreview.useFallback && LockConfig.avatarFallbackUrl !== "") {
+                                avatarPreview.useFallback = true;
+                            }
+                        }
                     }
                 }
             }

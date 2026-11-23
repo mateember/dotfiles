@@ -578,6 +578,9 @@ Scope {
     Component.onCompleted: {
         Wallpapers.passiveMode = true;
         ThemeConfig.passiveMode = true;
+        LockConfig.passiveMode = true;
+        CalendarEvents.passiveMode = true;
+        Weather.passiveMode = true;
         root.refreshPamProbe();
         wallpaperProc.running = true;
         notifCountProc.running = true;

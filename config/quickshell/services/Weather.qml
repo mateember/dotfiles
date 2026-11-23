@@ -11,6 +11,7 @@ import qs
 Singleton {
     id: root
 
+    property bool passiveMode: false // true inside lock.qml: read shared cache only, never spawn curl/python
     property bool ready: false     // true once any data (cached or fresh) is parsed
     property bool stale: false     // last fetch failed; showing cached data or error
     property bool loading: false
@@ -79,7 +80,8 @@ Singleton {
 
     readonly property string icon: info(code, isDay).icon
     readonly property string description: info(code, isDay).text
-    readonly property string cacheFile: Quickshell.cachePath("weather.json")
+    readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/quickshell"
+    readonly property string cacheFile: cacheDir + "/hcs-weather.json"
     readonly property string hungarometScript: Quickshell.shellPath("scripts/hungaromet.py")
 
     readonly property string displayLocation: {
@@ -480,7 +482,7 @@ Singleton {
 
     // ---- Refresh & Fetching ----
     function refresh() {
-        if (!WeatherConfig.ready) return;
+        if (root.passiveMode || !WeatherConfig.ready) return;
         if (root.loading) {
             root._pendingRefresh = true;
             return;
@@ -612,20 +614,33 @@ Singleton {
     Connections {
         target: WeatherConfig
         function onLocationConfigChanged() {
-            root.refresh();
+            if (!root.passiveMode) root.refresh();
         }
         function onSourceConfigChanged() {
             if (root._lastForecastJson)
                 root.applyPayload(root._lastForecastJson, root._lastForecastMeta);
-            root.refresh();
+            if (!root.passiveMode) root.refresh();
         }
+    }
+
+    Process {
+        id: cacheMkdirProc
+        command: ["mkdir", "-p", root.cacheDir]
+    }
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            if (!root.passiveMode && !cacheMkdirProc.running) cacheMkdirProc.running = true;
+        });
     }
 
     FileView {
         id: cache
         path: root.cacheFile
         atomicWrites: true
+        watchChanges: root.passiveMode
         printErrors: false
+        onFileChanged: if (root.passiveMode) reload()
         onLoaded: root.parseCache(text())
     }
 
@@ -762,7 +777,7 @@ Singleton {
 
     Timer {
         interval: Math.max(5, WeatherConfig.refreshMinutes) * 60 * 1000
-        running: WeatherConfig.ready
+        running: !root.passiveMode && WeatherConfig.ready
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refresh()

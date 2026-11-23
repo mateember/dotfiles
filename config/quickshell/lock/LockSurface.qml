@@ -34,6 +34,8 @@ Item {
     )
     readonly property string wallpaperUrl: !controller.wallpaperReady ? ""
         : (controller.wallpaperFor(screenName) || Wallpapers.urlForScreen(screenName))
+    readonly property bool wallpaperSettled: stage.useSceneBackdrop
+        || (controller.wallpaperReady && (stage.wallpaperUrl === "" || wallImage.status === Image.Ready || wallImage.status === Image.Error))
     property bool showPassword: false
 
     opacity: 0
@@ -297,6 +299,18 @@ Item {
         spacing: Theme.spaceS
 
         Rectangle {
+            id: avatarBadge
+            property bool useFallback: false
+            readonly property string targetSource: {
+                if (!stage.wallpaperSettled || !LockConfig.avatarPath) return "";
+                return useFallback ? LockConfig.avatarFallbackUrl : LockConfig.avatarThumbUrl;
+            }
+            Connections {
+                target: LockConfig
+                function onAvatarPathChanged() { avatarBadge.useFallback = false; }
+                function onAvatarThumbUrlChanged() { avatarBadge.useFallback = false; }
+            }
+
             Layout.alignment: Qt.AlignHCenter
             width: 68
             height: 68
@@ -311,10 +325,17 @@ Item {
                 Image {
                     id: avatarImg
                     anchors.fill: parent
-                    source: LockConfig.avatarPath ? ("file://" + LockConfig.avatarPath) : ""
+                    source: avatarBadge.targetSource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     smooth: true
+                    cache: false
+                    sourceSize: Qt.size(136, 136)
+                    onStatusChanged: {
+                        if (status === Image.Error && !avatarBadge.useFallback && LockConfig.avatarFallbackUrl !== "") {
+                            avatarBadge.useFallback = true;
+                        }
+                    }
                 }
             }
 
