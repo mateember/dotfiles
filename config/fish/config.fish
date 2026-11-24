@@ -6,12 +6,13 @@ set fish_greeting
 
 starship init fish | source
 zoxide init fish | source
+direnv hook fish | source
 
 # Added by LM Studio CLI (lms)
 set -gx PATH $PATH /home/mate/.lmstudio/bin
 # End of LM Studio CLI section
 
 
- if test "$TERM_PROGRAM" = "kiro"
+ if test "$TERM_PROGRAM" = "kiro-cli"
         . (kiro --locate-shell-integration-path fish)
  end
